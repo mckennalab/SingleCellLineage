@@ -60,21 +60,30 @@ object AlignmentManager {
 
     var refToEvent = List[Alignment]()
     var targetIndexToSequence = List[StringBuilder]()
-    cutSites.fullSites.foreach { fullCutSite => targetIndexToSequence :+= new StringBuilder() }
+    var targetIndexToRefSequence = List[StringBuilder]()
+
+    cutSites.sites.foreach { fullCutSite => {
+      targetIndexToSequence :+= new StringBuilder()
+      targetIndexToRefSequence :+= new StringBuilder()
+    }}
+
 
     if (debugInfo) {
       println(reference)
       println(read)
     }
+
+    // traverse over the reference and the read looking for mismatches, indels, scars, and other marks left by genome editing
     reference.zip(read).foreach { case (refBase: Char, readBase: Char) => {
 
-      // first add to our target sequence object if we overlap target
-      cutSites.fullSites.zipWithIndex.foreach { case (fullCut, index) =>
-        if (fullCut._2 <= referencePos && fullCut._3 >= referencePos) {
+      // if the base we're looking at
+      cutSites.sites.zipWithIndex.foreach { case (cutObj, index) =>
+        if (cutObj.startPos <= referencePos && cutObj.endPos >= referencePos) {
           if (debugInfo) {
-            println("adding reference " + referencePos + " to window " + fullCut._2 + "," + fullCut._3)
+            println("adding reference " + referencePos + " to window " + cutObj.startPos + "," + cutObj.endPos)
           }
           targetIndexToSequence(index) += readBase
+          targetIndexToRefSequence(index) += refBase
         }
       }
 
@@ -116,10 +125,76 @@ object AlignmentManager {
       }
     }}
 
-    // return the filtered list of the edits, plus the list of sequences over each target region
+
+
+    // get the filtered list of the edits, plus the list of sequences over each target region
     // for filtering get a bit aggressive here -- start from both ends -- strip off insertions and deletions until we hit a match or mismatch of at least 10 bases
-    return (filterEnds(refToEvent, minMatchOnEnd, debugInfo),targetIndexToSequence.map{bld => bld.result()}.toList)
+    var filteredList = filterEnds(refToEvent, minMatchOnEnd, debugInfo)
+    val targetSeqs = targetIndexToSequence.map{bld => bld.result()}
+    val refSeqs = targetIndexToRefSequence.map{bld => bld.result()}
+
+    // now we want to check each of the read sequences over the target cut sites for scars
+    cutSites.sites.zipWithIndex.foreach{case(cutSiteObj, index) => {
+      findScar(cutSiteObj.startPos, refSeqs(index), targetSeqs(index), cutSiteObj.cutPosition).map{case(newEvt) => filteredList :+= newEvt}
+    }}
+
+    // return our new appended filtered list of events with scars
+    (filteredList,targetSeqs)
   }
+
+
+  /**
+    * given the read and reference strings, as well as cutsite position, determine if we've actually generated some sort of scar over the cutsite
+    *
+    * @param offset where we are in the reference sequence
+    * @param readSeq the read sequence over the target
+    * @param refSeq the reference sequence over the target
+    * @param cutSitePos the cutsite position, zero based at the start of the reference
+    * @param minScarSize the minimum scar size we'll consider for a scar event
+    * @param maxScarSize the maximum scar size we allow
+    * @param minScarredProp the number of scarred bases we allow
+    * @return an optional alignment, or None if it's wildtype over the region
+    */
+  def findScar(offset: Int, refSeq: String, readSeq: String, cutSitePos: Int, minScarSize: Int = 3, maxScarSize: Int = 10, minScarredProp: Double = 0.75): Option[Alignment] = {
+
+    // make sure our read and reference sequences are the same size
+    if (readSeq.size != refSeq.size)
+      throw new IllegalArgumentException("Unable to check scars with a read and reference of different lengths: read: " + readSeq.size + ", ref: " + refSeq.size)
+
+
+    // now look for the mismatch window with the highest proportion of bases that exceed the threshold
+    // set the window from the cutsite
+    val startingPosition = math.max(0,cutSitePos - maxScarSize)
+    val stopPosition = math.max(cutSitePos + maxScarSize,readSeq.size)
+
+    // state storage
+    var maxPosition = -1
+    var maxMismatches = 0
+    var maxMismatchProp = 0.0
+    var windowSize = 0
+
+    (startingPosition until stopPosition).foreach{position => {
+      (minScarSize until maxScarSize).foreach{activeWindowSize => {
+        val mismatches = readSeq.slice(position,position+activeWindowSize).zip(refSeq.slice(position,position+activeWindowSize)).map{case(b1,b2) => if (b1 == b2 || b1 == '-' || b2 == '-') 0 else 1}.sum
+        val prop = mismatches.toDouble / activeWindowSize.toDouble
+
+        // do we want to record this event as the best scar we've found?
+        if (mismatches > maxMismatches && prop >= maxMismatchProp && prop >= minScarredProp) {
+          maxPosition = position
+          maxMismatches = mismatches
+          maxMismatchProp = prop
+          windowSize = activeWindowSize
+        }
+      }}
+    }}
+
+    // we don't have to check minScarredProp as we check when recording the maxMismatches field
+    if (maxMismatches >= minScarSize)
+      Some(Alignment(offset + maxPosition, refSeq.slice(maxPosition, maxPosition + windowSize), readSeq.slice(maxPosition, maxPosition + windowSize), "S"))
+    else
+      None
+  }
+
 
   /**
    * filter the alignments, when we have poor matches on the ends that allow us to accept and indel, peel back alignments until we've matched enough bases
@@ -276,7 +351,7 @@ object AlignmentManager {
     var retTargetSeq = Array[String]()
     var collision = false
 
-    cutSites.windows.zipWithIndex.foreach { case ((start, cut, end), cutSiteIndex) => {
+    cutSites.sites.zipWithIndex.foreach { case (cutObj, cutSiteIndex) => {
       var candidates = Array[String]()
       var cigarMatchOverlapsEdit = false
       var nonWildType = Array[String]()
@@ -288,8 +363,8 @@ object AlignmentManager {
 
           referenceSeq :+= readSequences(readIndex)(cutSiteIndex)
 
-          if ((edit.cigarCharacter == "D" && overlap(start, end, edit.refPos, edit.refPos + edit.refBase.length)) ||
-            edit.cigarCharacter == "I" && overlap(start, end, edit.refPos, edit.refPos)) {
+          if ((edit.cigarCharacter == "D" && overlap(cutObj.downstreamWindowPos, cutObj.upstreamWindowPos, edit.refPos, edit.refPos + edit.refBase.length)) ||
+            edit.cigarCharacter == "I" && overlap(cutObj.downstreamWindowPos, cutObj.upstreamWindowPos, edit.refPos, edit.refPos)) {
             // check that we haven't already added this exact edit to the list -- this will happen in paired reads where the edits agree
 
             if (!(nonWildType contains readSequences(readIndex)(cutSiteIndex)))
@@ -297,7 +372,7 @@ object AlignmentManager {
 
             singleSampleEvent :+= edit.toEditString
 
-          } else if (edit.cigarCharacter == "M" && span(edit.refPos, edit.refPos + edit.refBase.length, start, end)) {
+          } else if (edit.cigarCharacter == "M" && span(edit.refPos, edit.refPos + edit.refBase.length, cutObj.downstreamWindowPos, cutObj.upstreamWindowPos)) {
             cigarMatchOverlapsEdit = true
           }
         }}
@@ -307,7 +382,7 @@ object AlignmentManager {
       }
 
       if (debug) {
-        println("Site: " + start + "-" + end + ": " + candidates.mkString("\t") + "<<<")
+        println("Site: " + cutObj.downstreamWindowPos + "-" + cutObj.upstreamWindowPos + ": " + candidates.mkString("\t") + "<<<")
       }
 
       // create target strings
