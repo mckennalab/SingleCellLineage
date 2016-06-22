@@ -1,6 +1,6 @@
 package main.scala
 
-import _root_.aligner.{AlignmentManager, MAFFT}
+import _root_.aligner.{Aligner, AlignmentManager, MAFFT}
 import _root_.utils.CutSites
 import aligner._
 import main.scala.stats.{StatsContainer, StatsOutput}
@@ -24,7 +24,8 @@ object UMIMerger {
                     primers: List[String],
                     sample: String,
                     minSurvivingReads: Int,
-                    index: Int): Int = {
+                    index: Int,
+                    aligner: Aligner): Int = {
 
 
     // some constants we should probably bubble-up
@@ -38,8 +39,8 @@ object UMIMerger {
 
     if (preparedFWD.size > 1 && preparedREV.size > 1) {
 
-      val mergedF = MAFFT.alignTo(preparedFWD, None)
-      val mergedR = MAFFT.alignTo(preparedREV, None)
+      val mergedF = aligner.alignTo(preparedFWD, None)
+      val mergedR = aligner.alignTo(preparedREV, None)
 
       // remove the reads that are a really poor match
       val fwdCleanedUp = Consensus.removeMismatchedReads(mergedF)

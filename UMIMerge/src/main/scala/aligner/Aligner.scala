@@ -8,7 +8,6 @@ import scala.main.{ConsensusRead, SequencingRead}
 trait Aligner {
   def alignTo(reads: Array[SequencingRead], ref: Option[String], debug: Boolean = false): Array[SequencingRead]
 
-
 }
 
 object Aligner {

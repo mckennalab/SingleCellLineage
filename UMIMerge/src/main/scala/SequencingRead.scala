@@ -126,165 +126,6 @@ case class SequencingRead(name: String, bases: String, quals: String, readOrient
     (firstNonDash,lastNonDash)
   }
 
-  /**
-   * generate a cigar string from the read aligned another sequence (the reference most likely).  The difference
-   * here is that we consider a unique situation -- if we find mismatches attached on either end to an indel, we roll those
-   * bases into the indel event.  This hopefully will lower the diversity of indels we have in our final alignment
-   *
-   * @param otherRead the read to align to
-   * @return a tuple of cigar elements and their lengths
-   */
-  def callCigarsAgainstOtherRead(otherRead: SequencingRead): Array[CigarHit] = {
-
-    // find the first and last real letter of the other read -- most likely the reference read
-    val fwdFirstAndLast = this.firstAndLastActualBases()
-
-    // lets not assume they're the same size, assert that they are
-    if (otherRead.length != this.length)
-      throw new IllegalStateException("Unable to compare two reads of different sizes")
-
-    var events = Array[CigarEvent]()
-    //(0 until bases.length).foreach {position => {
-    (fwdFirstAndLast._1 until fwdFirstAndLast._2 + 1).foreach {position => {
-      if (bases(position) != '-' && otherRead.bases(position) != '-' && bases(position) == otherRead.bases(position))
-        events :+= Match
-      else if (bases(position) != '-' && otherRead.bases(position) != '-')
-        events :+= Mismatch
-      else if (bases(position) == '-' && otherRead.bases(position) != '-')
-        events :+= Deletion
-      else if (bases(position) != '-' && otherRead.bases(position) == '-')
-        events :+= Insertion
-      //else
-      //  throw new IllegalStateException("WHY!!! " + bases(position) + " and " + otherRead.bases(position))
-    }}
-
-
-    // now track through the edits and fold in events
-    var lastEvent: CigarEvent = Unset
-    var currentEventSize = 0
-    var currentMismatchesToClaim = 0
-    var returnEvents = Array[CigarHit]()
-    var startingPos = fwdFirstAndLast._1
-
-    // large state machine -- spelled out to be as clear as I can
-    events.foreach { evt => {
-      evt match {
-        case Match => {
-          lastEvent match {
-            case Match => {
-              // match - match, just extend
-              currentEventSize += (1 + currentMismatchesToClaim)
-            }
-            case Mismatch => {
-              // convert the mismatch into a match, we would of added it to a indel if it terminated an indel event
-              lastEvent = Match
-              currentEventSize += (1 + currentMismatchesToClaim)
-            }
-            case Unset => {
-              lastEvent = Match
-              currentEventSize += 1
-            }
-            case _ => {
-              // match - indel - push an indel event and reset to match
-              returnEvents :+= CigarHit(lastEvent, currentEventSize, startingPos)
-              startingPos += currentEventSize
-              lastEvent = Match
-              currentEventSize = 1
-            }
-          }
-          currentMismatchesToClaim = 0 // reclaim all mismatches
-        }
-
-        case Mismatch => {
-          lastEvent match {
-            case Mismatch => {
-              // one more mismatch to figure out later
-            }
-            case Match => {
-              // start a tally of mismatches
-              currentMismatchesToClaim += 1
-            }
-            case Unset => {
-              lastEvent = Mismatch
-              currentMismatchesToClaim += 1
-            }
-            case _ => {
-              // add this mismatch to the previous event
-              currentEventSize += 1
-            }
-          }
-        }
-        case Insertion => {
-          lastEvent match {
-            case Insertion => {
-              currentEventSize += 1
-            }
-            case Match => {
-              returnEvents :+= CigarHit(lastEvent, currentEventSize, startingPos)
-              startingPos += currentEventSize
-              lastEvent = Insertion
-              currentEventSize = (1 + currentMismatchesToClaim)
-            }
-            case Mismatch => {
-              // claim this mismatch into the current indel
-              lastEvent = Insertion
-              currentEventSize += (1 + currentMismatchesToClaim)
-            }
-            case Deletion => {
-              // maybe raise a flag here, this is suspect.....
-              returnEvents :+=CigarHit(lastEvent, currentEventSize, startingPos)
-              startingPos += currentEventSize
-              lastEvent = Insertion
-              currentEventSize = 1
-            }
-            case Unset => {
-              lastEvent = Insertion
-              currentEventSize += 1
-            }
-          }
-          currentMismatchesToClaim = 0
-        }
-        case Deletion => {
-          lastEvent match {
-            case Deletion => {
-              currentEventSize += 1
-            }
-            case Match => {
-              returnEvents :+=CigarHit(lastEvent, currentEventSize, startingPos)
-              startingPos += currentEventSize
-              lastEvent = Deletion
-              currentEventSize = (1 + currentMismatchesToClaim)
-            }
-            case Mismatch => {
-              // convert the mismatch into a match
-              lastEvent = Deletion
-              currentEventSize += (1 + currentMismatchesToClaim)
-            }
-            case Insertion => {
-              returnEvents :+=CigarHit(lastEvent, currentEventSize, startingPos)
-              startingPos += currentEventSize
-              currentEventSize = 1
-            }
-            case Unset => {
-              lastEvent = Deletion
-              currentEventSize += 1
-            }
-          }
-          currentMismatchesToClaim = 0
-        }
-        case Unset => {
-          // do nothing
-          currentMismatchesToClaim = 0
-        }
-      }
-    }
-    }
-    if (currentEventSize > 0)
-      returnEvents :+= CigarHit(lastEvent, currentEventSize + currentMismatchesToClaim, startingPos)
-
-    //println(returnEvents.map{ty => ty.event.toString}.mkString(","))
-    return returnEvents
-  }
 }
 
 
@@ -324,7 +165,7 @@ object SequencingRead {
   }
 
   /**
-   * this is for testing
+   * this function is for creating reads during testing
     *
     * @param name read name
    * @param bases bases as a string
@@ -352,7 +193,7 @@ object SequencingReadQualOrder extends Ordering[SequencingRead] {
 }
 
 /**
- * the cigar event
+ * the cigar event -- encoding our basic cigar characters, which are different than the SAM specification
   *
   * @param encoding the encodings string
  */
@@ -361,7 +202,8 @@ case object Unset extends CigarEvent("U")
 case object Insertion extends CigarEvent("I")
 case object Deletion extends CigarEvent("D")
 case object Match extends CigarEvent("M")
-case object Mismatch extends CigarEvent("m") // this isn't a valid output state, just for bookkeeping
+case object Scar extends CigarEvent("S")
+case object Mismatch extends CigarEvent("m") // this isn't a valid output state, just for book keeping
 
 /**
  * enumerate out the possible read orientations: forward, reverse, consensus, and reference

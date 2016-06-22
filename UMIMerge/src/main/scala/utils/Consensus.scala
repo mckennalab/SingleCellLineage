@@ -11,43 +11,50 @@ import scala.main._
 object Consensus {
 
   /**
-   * develop a consensus over the read -- look at each aligned position and find the most common character and it's proportion
-   * return the consensus read and proportion of bases at each position that match the called base
-   *
-   * @param reads the reads to make a consensus over
-   * @return a tuple, representing the concensus read and the per-base error rate over positions in that read
-   */
-  def consensus(reads: Array[SequencingRead], name: String = "Consensus"): SequencingRead = {
-    // each string should be the same length coming back from CLUSTAL
+    * develop a consensus over the read -- look at each aligned position and find the most common character and it's proportion
+    * return the consensus read and proportion of bases at each position that match the called base
+    * @param reads the sequencing reads to consider when making a consensus
+    * @param name the name to give the resulting read
+    * @param minReadProportion the minimum percentage of the reads requred to call a base.  As reads drop off their ends we want to stop building a consensus
+    * @return a consensus read made from the reads passed in
+    */
+  def consensus(reads: Array[SequencingRead], name: String = "Consensus", minReadProportion: Double = 0.50): SequencingRead = {
+
+    // each read should be properly aligned from previous steps
     var highestOccuringBase = Array[Char]()
     var highestOccuringBaseProp = Array[Double]()
 
-    // get our read length, if we have any reads
-    val readLength = if (reads.length > 0) reads(0).bases.length else 0
+    // get our read length, if we have any reads, else 0
+    val maxLeadLength = reads.foldLeft(0)((b,a) => Math.max(b,a.length))
 
-    (0 until readLength).foreach { index => {
+    (0 until maxLeadLength).foreach { index => {
       var bases = new HashMap[Char, Int]()
 
       // add reads base at the current position
-      reads.foreach { read => bases(read.bases(index)) = bases.getOrElse(read.bases(index), 0) + 1}
+      reads.foreach { read => {
+        if (index < read.length)
+          bases(read.bases(index)) = bases.getOrElse(read.bases(index), 0) + 1
+      }}
 
-      var maxChar = 'U'
-      var total = 0
-      bases.foreach { case (base, count) => {
-        if (maxChar == 'U' || count > bases(maxChar)) maxChar = base
-        if (count == bases(maxChar) && maxChar == '-') maxChar = base // favor a base over a dash
-        total += count
-      }
-      }
+      if (bases.foldLeft(0)((b,a) => b + a._2).toDouble / reads.size.toDouble >= minReadProportion) {
+        var maxChar = 'U'
+        var total = 0
+        bases.foreach { case (base, count) => {
+          if (maxChar == 'U' || count > bases(maxChar)) maxChar = base
+          if (count == bases(maxChar) && maxChar == '-') maxChar = base // favor a base over a dash
+          total += count
+        }
+        }
 
-      highestOccuringBase :+= maxChar
-      highestOccuringBaseProp :+= (if (bases contains maxChar) bases(maxChar).toDouble / total.toDouble else 0.0)
+        highestOccuringBase :+= maxChar
+        highestOccuringBaseProp :+= (if (bases contains maxChar) bases(maxChar).toDouble / total.toDouble else 0.0)
+      }
     }
     }
 
     SequencingRead(name,
       highestOccuringBase.mkString(""),
-      "I" * highestOccuringBase.length, //highestOccuringBaseProp.map{pr => Utils.probabilityOfErrorToPhredChar(1.0 - pr)}.mkString(""), //
+      "I" * highestOccuringBase.length, // everyone's Q40ish now
       if (reads.size == 0) ForwardReadOrientation else reads(0).readOrientation,
       "")
   }
@@ -76,7 +83,8 @@ object Consensus {
 
   /**
    * split a pile of reads out into a Tuple3 of fwd, rev, and reference reads
-   * @param reads a mixed array of reads
+    *
+    * @param reads a mixed array of reads
    * @return a tuple3 of forward reads, reverse reads, and reference reads
    */
   def splitReadsToFwdRevRefArrays(reads: Array[SequencingRead], throwExceptionIfNoRef: Boolean = false): (Array[SequencingRead], Array[SequencingRead], Array[SequencingRead]) = {
@@ -92,7 +100,8 @@ object Consensus {
 
   /**
    * given forward and backwards reads (throw in a reference read to be sure), call cigar events from it
-   * @param reads the reads to develop a consensus from, including a reference read
+    *
+    * @param reads the reads to develop a consensus from, including a reference read
    * @return a read with the dashes split-out
 
   def callEvents(reads: Array[SequencingRead], minReadLength: Int, minMeanQualScore: Double): (SequencingRead, SequencingRead, Array[CigarHit]) = {
@@ -120,7 +129,8 @@ object Consensus {
   /**
    * given the reference sequence as the first read in a multiread alignment, strip off columns before the reference's
    * first base (read into the adapter), after the reference last base (into the other adapter)
-   * @param reads the reads, of which the reference read is the first
+    *
+    * @param reads the reads, of which the reference read is the first
    * @return an array of reads with adapter and other non-sense stripped off the ends
    */
   def referenceStrip(reads: Array[SequencingRead]): Array[SequencingRead] = {

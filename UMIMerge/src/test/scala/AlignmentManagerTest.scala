@@ -1,11 +1,11 @@
 import java.io.File
 
-import aligner.{Aligner, MAFFT, AlignmentManager, AlignmentManager$, Alignment}
+import aligner._
 import org.scalatest.{Matchers, FlatSpec}
 import utils.{IndividualCutSite, CutSites}
 
 import scala.collection.mutable
-import scala.main.{ForwardReadOrientation, SequencingRead}
+import scala.main._
 
 /**
  * Created by aaronmck on 11/18/15.
@@ -18,18 +18,18 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val ref =     "AAATAAAAT"
     val readFwd = "AAAA-AAAA"
     val cutSites = CutSites.fromIntervals(Array[Tuple3[Int,Int,Int]]((3,5,7)))
-    val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites)
+    val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites, true)
     testCalls._1.length should be (3)
-    testCalls._1(0).cigarCharacter should be ("M")
+    testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("AAAA")
     testCalls._1(0).refBase should be ("AAAT")
     testCalls._1(0).refBase should be ("AAAT")
 
-    testCalls._1(1).cigarCharacter should be ("D")
+    testCalls._1(1).cigarCharacter should be (Deletion)
     testCalls._1(1).readBase should be ("-")
     testCalls._1(1).refBase should be ("A")
 
-    testCalls._1(2).cigarCharacter should be ("M")
+    testCalls._1(2).cigarCharacter should be (Match)
     testCalls._1(2).readBase should be ("AAAA")
     testCalls._1(2).refBase should be ("AAAT")
   }
@@ -40,15 +40,15 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val cutSites = CutSites.fromIntervals(Array[Tuple3[Int,Int,Int]]((3,5,7)))
     val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites)
     testCalls._1.length should be (3)
-    testCalls._1(0).cigarCharacter should be ("M")
+    testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("AAAA")
     testCalls._1(0).refBase should be ("AAAT")
 
-    testCalls._1(1).cigarCharacter should be ("D")
+    testCalls._1(1).cigarCharacter should be (Deletion)
     testCalls._1(1).readBase should be ("---")
     testCalls._1(1).refBase should be ("AAA")
 
-    testCalls._1(2).cigarCharacter should be ("M")
+    testCalls._1(2).cigarCharacter should be (Match)
     testCalls._1(2).readBase should be ("AA")
     testCalls._1(2).refBase should be ("AA")
   }
@@ -60,17 +60,17 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites)
     testCalls._1.length should be (3)
 
-    testCalls._1(0).cigarCharacter should be ("M")
+    testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("AA")
     testCalls._1(0).refBase should be ("AA")
     testCalls._1(0).refPos should be (2)
 
-    testCalls._1(1).cigarCharacter should be ("D")
+    testCalls._1(1).cigarCharacter should be (Deletion)
     testCalls._1(1).readBase should be ("---")
     testCalls._1(1).refBase should be ("AAA")
     testCalls._1(1).refPos should be (4)
 
-    testCalls._1(2).cigarCharacter should be ("M")
+    testCalls._1(2).cigarCharacter should be (Match)
     testCalls._1(2).readBase should be ("AA")
     testCalls._1(2).refBase should be ("AA")
     testCalls._1(2).refPos should be (7)
@@ -82,17 +82,17 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val cutSites = CutSites.fromIntervals(Array[Tuple3[Int,Int,Int]]((3,5,7)))
     val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites)
     testCalls._1.length should be (3)
-    testCalls._1(0).cigarCharacter should be ("M")
+    testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("AAAA")
     testCalls._1(0).refBase should be ("AAAT")
     testCalls._1(0).refPos should be (0)
 
-    testCalls._1(1).cigarCharacter should be ("I")
+    testCalls._1(1).cigarCharacter should be (Insertion)
     testCalls._1(1).readBase should be ("T")
     testCalls._1(1).refBase should be ("-")
     testCalls._1(1).refPos should be (4)
 
-    testCalls._1(2).cigarCharacter should be ("M")
+    testCalls._1(2).cigarCharacter should be (Match)
     testCalls._1(2).readBase should be ("AAAA")
     testCalls._1(2).refBase should be ("AAAA")
     testCalls._1(2).refPos should be (4)
@@ -105,7 +105,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val cutSites = CutSites.fromIntervals(Array[Tuple3[Int,Int,Int]]((3,5,7)))
     val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites)
     testCalls._1.length should be (1)
-    testCalls._1(0).cigarCharacter should be ("M")
+    testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("TAAAA")
     testCalls._1(0).refBase should be  ("AAAAA")
     testCalls._1(0).refPos should be (4)
@@ -196,6 +196,22 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     combined._2(1) should be ("2D+14")
   }
 
+  "Alignment manager" should "call a real scar from real data correctly" in {
+    val ref1 =     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTAATGATACGGCGACCACCGAGATCTACACNNNNNNNNCTAAATGGCTGTGAGAGAGCTCAGNNNNNNNNNNTAGTGTATGTGCAGTGAGCCCCTTTTCCTCTAACTGAAAGAAGGAAAAAAAAATGGAACCCAAAATATTCTACATAGTTTCCATGTCACAGCCAGGGCTGGGCAGTCTCCTGTTATTTCTTTTAAAATAAATATATCATTTAAATGCATAAATAAGCAAACCCTGCTCGGGAATGGGAGGGAGAGTCTCTGGAGTCCACCCCTTCTCGGCCCTGGCTCTGCAGATAGTGCTATCAAAGCCCTGACAGAGCCCTGCCCATTGCTGGGCCTTGGAGTGAGTCAGCCTAGTAGAGAGGCAGGGCAAGCCATCTCATAGCTGCTGAGTGGGAGAGAGAAAAGGGCTCATTGTCTATAAACTCAGGTCATGGCTATTCTTATTCTCACACTAAGAAAAAGAATGAGATGTCTACATATACCCTGCGTCCCCTCTTGTGTACTGGGGTCCCCAAGAGCTCTCTAAAAGTGATGGCAAAGTCATTGCGCTAGATGCCATCCCATCTATTATAAACCTGCATTTGTCTCCACACACCAGTCATGGACGGTTTGGAGCGAGATTGATAAAGTNNNNNNNNNNTGAACGCTTATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    val readFwd1 = "-----------------------------------------------------------------------------------------------------TAGTGTATGTGCAGTGAGCCCCTTTTCCTCTAACTGAAAGAAGGAAAAAAAAATGGAACCCAAAATATTCTACATAGTTTCC-TGTCACAGCagacGCTGGGCAGTCTCCTGTTATTTCTTTTAAAATAAATATATCATTTAAATGCATAAATAAGCAAACCCTGCTCGGGAATGGGAGGGAGAGTCTCTGGAGTCCACCCCTTCTCGGCCCTGGCTCTGCAGATAGTGCTATCAAAGCCCTGACAGAGCCCTGCCCATTGCTGGGCCTTGGAGTGAGTCA----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+    println("BIG TEST TIME!!")
+    val cutSites = CutSites.fromFile(new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/2016_03_07_Mollys_stuff/data/MGreference.fa.cutSites"),3)
+    val testCalls = AlignmentManager.callEdits(ref1,readFwd1,1,cutSites)
+
+    println(testCalls._3(0))
+    println(testCalls._3(0))
+    println(testCalls._2(0))
+    val scarsHopefully = AlignmentManager.findScar(0, testCalls._3(0), testCalls._2(0), cutSites.sites(0).cutPosition - cutSites.sites(0).startPos)
+    println(scarsHopefully.isDefined)
+    scarsHopefully should not be None
+    scarsHopefully.get.cigarCharacter should be (Scar)
+  }
 
   "Alignment manager" should "process basic scars correctly" in {
     // we should find a 4 base scar from this sequence
@@ -208,7 +224,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     testCalls1.get.readBase should be ("ATTT")
     testCalls1.get.refBase should be ("AAAA")
     testCalls1.get.refPos should be (3)
-    testCalls1.get.cigarCharacter should be ("S")
+    testCalls1.get.cigarCharacter should be (Scar)
   }
 
   "Alignment manager" should "process a 50/50 basic scars correctly" in {
@@ -222,7 +238,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     testCalls1.get.readBase should be ("ATAT")
     testCalls1.get.refBase should be ("AAAA")
     testCalls1.get.refPos should be (3)
-    testCalls1.get.cigarCharacter should be ("S")
+    testCalls1.get.cigarCharacter should be (Scar)
   }
 
   "Alignment manager" should "work with real data4" in {
@@ -241,8 +257,8 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
   }
 
   "Alignment manager" should "recover the wild type sequence when there is no event called" in {
-    val fakeReferenceBases1 = Alignment(/*val refPos: Int */ 5, /*refBase: String*/ "AAAAAAAAAA", /*readBase: String*/ "----------", /*cigarCharacter: String*/ "M")
-    val fakeReferenceBases2 = Alignment(/*val refPos: Int */ 5, /*refBase: String*/ "AAAAAAAAAA", /*readBase: String*/ "AAAAAAAAAA", /*cigarCharacter: String*/ "M")
+    val fakeReferenceBases1 = Alignment(/*val refPos: Int */ 5, /*refBase: String*/ "AAAAAAAAAA", /*readBase: String*/ "----------", /*cigarCharacter: String*/ Match)
+    val fakeReferenceBases2 = Alignment(/*val refPos: Int */ 5, /*refBase: String*/ "AAAAAAAAAA", /*readBase: String*/ "AAAAAAAAAA", /*cigarCharacter: String*/ Match)
 
     val cutsites = new CutSites()
     cutsites.cutSites(0) = 10

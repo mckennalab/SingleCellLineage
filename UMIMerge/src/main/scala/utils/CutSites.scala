@@ -65,7 +65,7 @@ object CutSites {
     triples.zipWithIndex.foreach { case (trip, idx) => {
       cut.cutSites(idx) = trip._2
       cut.startSites(idx) = trip._2 // not right but ok for testing
-      cut.sites :+=IndividualCutSite("UKNOWN", 0, trip._1, trip._2, trip._3, trip._3 + 6)
+      cut.sites :+=IndividualCutSite("UKNOWN", 0, trip._1, trip._2, trip._3, trip._3 + 10)
     }
     }
 

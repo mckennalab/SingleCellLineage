@@ -2,6 +2,7 @@ package main.scala
 
 import java.util
 
+import _root_.aligner.BasicAligner
 import _root_.utils.{CutSites}
 import main.scala.stats.StatsOutput
 import main.scala.utils.{RankedReadContainer, Utils}
@@ -217,11 +218,12 @@ object UMIProcessing extends App {
           primers,
           config.samplename,
           config.minimumSurvivingUMIReads,
-          index)
+          index,
+          BasicAligner)
 
         passingUMI += res
       }
-      if (index % 50 == 0) {
+      if (index % 1000 == 0) {
         println("INFO: Processed " + index + " umis so far")
       }
       index += 1
