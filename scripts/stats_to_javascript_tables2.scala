@@ -15,6 +15,7 @@ case object Deletion extends IndelType { override val toInt = 1; def toStr(): St
 case object Match extends IndelType { override val toInt = 0; def toStr(): String = "M"}
 case object Insertion extends IndelType { override val toInt = 2; def toStr(): String = "I"}
 case object NoneType extends IndelType { override val toInt = 3; def toStr(): String = "NONE"}
+case object Scar extends IndelType { override val toInt = 4; def toStr(): String = "S"}
 
 // various data storage classes we have
 case class Cutsite(sequence: String, start: Int, cutsite:Int)
@@ -34,6 +35,7 @@ case class HMID(events: Array[Event]) {
         (adjPos until (adjPos + evt.size)).foreach{pos => {
           evt.classOf match {
             case Deletion => eventInts(pos) = evt.classOf.toInt
+            case Scar => eventInts(pos) = evt.classOf.toInt
             case Insertion if pos == adjPos => eventInts(pos) = evt.classOf.toInt
             case Insertion => eventInts(pos) = 0
             case _ => throw new IllegalStateException("Unable to match classOf")
@@ -89,6 +91,7 @@ object Event {
       case "D" => Deletion
       case "I" => Insertion
       case "M" => Match
+      case "S" => Scar
       case _ => throw new IllegalStateException("Unknown type >" + tokens(0).slice(tokens(0).length-1,tokens(0).length) + "<")
     }
     Event(site,size, typeOf,if(tokens.length == 3) Some(tokens(2)) else None, tokens(1).toInt)
@@ -229,20 +232,22 @@ perBaseEventsNew.close()
 // -----------------------------------------------------------------------------
 val insertionCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
 val deletionCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
+val scarCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
 
 var totalReads = 0
 statsObj.sortedEvents.foreach{case(hmid,hmidEvents) => {
   hmidEvents.eventToPerBase(startPosition, endPosition).zipWithIndex.foreach{case(event,index) => event match {
     case Deletion.toInt => deletionCounts(index) += hmidEvents.count
     case Insertion.toInt => insertionCounts(index) += hmidEvents.count
+    case Scar.toInt => scarCounts(index) += hmidEvents.count
     case _ => {}
   }}
   totalReads += hmidEvents.count
 }}
 
-occurances.write("index\tmatch\tinsertion\tdeletion\n")
+occurances.write("index\tmatch\tinsertion\tdeletion\tscar\n")
 insertionCounts.zip(deletionCounts).zipWithIndex.foreach{case((ins,del),index) => {
   val matchProp = 1.0 - ((ins + del).toDouble / totalReads.toDouble)
-  occurances.write(index + "\t" + matchProp + "\t" + (ins.toDouble/totalReads.toDouble) + "\t" + (del.toDouble/totalReads.toDouble) + "\n")
+  occurances.write(index + "\t" + matchProp + "\t" + (ins.toDouble/totalReads.toDouble) + "\t" + (del.toDouble/totalReads.toDouble) + "\t" + (scarCounts(index).toDouble/totalReads.toDouble) + "\n")
 }}
 occurances.close()
