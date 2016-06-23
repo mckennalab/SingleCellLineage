@@ -170,6 +170,11 @@ class DNAQC extends QScript {
   @Argument(doc = "the cost of a gap extend", fullName = "gapextend", shortName = "gapextend", required = false)
   var gapextend: Double = 0.5
 
+  @Argument(doc = "where to find the EDA file for alignment with NW", fullName = "eda", shortName = "eda", required = false)
+  var edaMatrix = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL"
+
+  @Argument(doc = "which aligner to use", fullName = "aligner", shortName = "aligner", required = false)
+  var aligner = "needle"
 
   /** **************************************************************************
     * Global Variables
@@ -509,20 +514,6 @@ class DNAQC extends QScript {
     this.isIntermediate = false
   }
 
-  // Needleman-Wunsch aligner for single ended (or merged) reads
-  // ********************************************************************************************************
-  case class NeedlemanAllFasta(reference: File, inFastq: File, outputFasta: File, reverse: Boolean) extends CommandLineFunction with ExternalCommonArgs {
-    @Input(doc = "the merged read fastq") var fq = inFastq
-    @Argument(doc = "the reference fasta/fa") var ref = reference
-    @Output(doc = "the output fasta file") var outFasta = outputFasta
-
-    //-sreverse2
-    def commandLine = needlePath + " -datafile /net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL -snucleotide1 -snucleotide2 " + (if (reverse) "-sreverse2 " else " ") + "-aformat3 fasta -gapextend " + gapextend + " -gapopen " + gapopen + " -asequence " + ref + " -bsequence " + fq + " -outfile " + outFasta
-
-    this.analysisName = queueLogDir + outFasta + ".needle"
-    this.jobName = queueLogDir + outFasta + ".needle"
-  }
-
   // call out the alignment task to 
   // ********************************************************************************************************
   case class PerformAlignment(reference: File,
@@ -536,10 +527,10 @@ class DNAQC extends QScript {
 
     @Argument(doc = "the reference fasta/fa") var ref = reference
 
-    @Output(doc = "the output fasta file") var outMergedFasta = outputMergedFasta
-    @Output(doc = "the output fasta file") var outPairedFasta = outputPairedFasta
+    @Output(doc = "the output merged fasta file") var outMergedFasta = outputMergedFasta
+    @Output(doc = "the output paired fasta file") var outPairedFasta = outputPairedFasta
 
-    def commandLine = scalaPath + " " + alignmentScripts + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta
+    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta 
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"
