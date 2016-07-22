@@ -5,7 +5,11 @@ import java.util
 import _root_.aligner.{Alignment, AlignmentManager}
 import _root_.utils.{CutSites}
 import main.scala.stats.{StatsContainer, StatsOutput}
-import main.scala.utils.{RefReadPair, ReadPair, UnmergedReadParser, ReadPairParser}
+import main.scala.utils.ReadPair
+import main.scala.utils.ReadPairParser
+import main.scala.utils.RefReadPair
+import main.scala.utils.UnmergedReadParser
+import main.scala.utils._
 
 import scala.io._
 import java.io._
@@ -45,6 +49,7 @@ case class DeepConfig(inputFileUnmerged: File = new File(DeepSeq.NOTAREALFILENAM
                       cutSites: File = new File(DeepSeq.NOTAREALFILENAME),
                       primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
+                      primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to four
                       samplename: String = "TEST")
 
 
@@ -62,6 +67,7 @@ object DeepSeq extends App {
     opt[File]("inputMerged") required() valueName ("<file>") action { (x, c) => c.copy(inputMerged = x) } text ("the merged read file")
     opt[File]("outputStats") required() valueName ("<file>") action { (x, c) => c.copy(outputStats = x) } text ("the output stats file")
     opt[File]("cutSites") required() valueName ("<file>") action { (x, c) => c.copy(cutSites = x) } text ("the location of the cutsites")
+    opt[Int]("primerMismatches") required() valueName ("<int>") action { (x, c) => c.copy(primerMismatches = x) } text ("the maximum number of mismatches to allow in the adapter sequences")
     opt[File]("primersEachEnd") required() valueName ("<file>") action { (x, c) => c.copy(primersEachEnd = x) } text ("the file containing the amplicon primers requred to be present, one per line, two lines total")
     opt[String]("sample") required() action { (x, c) => c.copy(samplename = x) } text ("the sample name of this run")
 
@@ -83,7 +89,8 @@ object DeepSeq extends App {
 
   /**
    * Process the merged and paired reads into the output stats file
-   * @param config our config object
+    *
+    * @param config our config object
    *
    */
   def alignedReads(config: DeepConfig): Unit = {
@@ -106,7 +113,7 @@ object DeepSeq extends App {
 
     println("traversing merged reads...")
     mergedReadIterator.foreach { pair => {
-      printMergedRead(cutsSiteObj, outputStatsFile, pair, primers)
+      printMergedRead(cutsSiteObj, outputStatsFile, pair, primers, config)
     }
     }
 
@@ -118,7 +125,8 @@ object DeepSeq extends App {
       printPairedRead(cutsSiteObj,
         outputStatsFile,
         twoReads,
-        primers)
+        primers,
+        config)
     }
     }
     outputStatsFile.close()
@@ -126,7 +134,8 @@ object DeepSeq extends App {
 
   /**
    * cycle through the merged reads, creating alignments, and dumping information out to the stats file
-   * @param cutsSiteObj the cut sites
+    *
+    * @param cutsSiteObj the cut sites
    * @param outputStatsFile the stats file we're dumping output to
    * @param mergedRead the merged read - aligned read and the matching reference string
    * @param primers the primers to look for on each end of the fragment
@@ -134,10 +143,13 @@ object DeepSeq extends App {
   def printMergedRead(cutsSiteObj: CutSites,
                       outputStatsFile: StatsOutput,
                       mergedRead: RefReadPair,
-                      primers: List[String]): Unit = {
+                      primers: List[String],
+                      config: DeepConfig): Unit = {
 
-    val containsFwdPrimer = mergedRead.read.bases.filter(bs => bs != '-').mkString("") contains primers(0)
-    val containsRevPrimer = mergedRead.read.bases.filter(bs => bs != '-').mkString("") contains primers(1)
+    val readStr = mergedRead.read.bases.filter(bs => bs != '-').mkString("")
+    val containsFwdPrimer = Utils.editDistance(readStr.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+    val containsRevPrimer = Utils.editDistance(readStr.slice(readStr.length - primers(1).size,readStr.length),primers(1)) <= config.primerMismatches
+
 
     val baseLen = mergedRead.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
@@ -162,10 +174,13 @@ object DeepSeq extends App {
   def printPairedRead(cutsSiteObj: CutSites,
                       outputStatsFile: StatsOutput,
                       readPairs: ReadPair,
-                      primers: List[String]): Unit = {
+                      primers: List[String],
+                      config: DeepConfig): Unit = {
 
-    val containsFwdPrimer = readPairs.pair1.read.bases.filter(bs => bs != '-').mkString("") contains primers(0)
-    val containsRevPrimer = readPairs.pair2.read.bases.filter(bs => bs != '-').mkString("") contains primers(1)
+    val readStrFWD = readPairs.pair1.read.bases.filter(bs => bs != '-').mkString("")
+    val readStrREV = readPairs.pair2.read.bases.filter(bs => bs != '-').mkString("")
+    val containsFwdPrimer = Utils.editDistance(readStrFWD.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+    val containsRevPrimer = Utils.editDistance(readStrREV.slice(readStrREV.length - primers(1).size,readStrREV.length),primers(1)) <= config.primerMismatches
 
     val base1Len = readPairs.pair1.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
     val base2Len = readPairs.pair2.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
