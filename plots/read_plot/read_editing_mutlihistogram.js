@@ -8,7 +8,7 @@
 
 // the total width of the plots on the right and left sides
 
-var numberToType = {"0": "match", "1": "deletion", "2": "insertion"};
+var numberToType = {"0": "match", "1": "deletion", "2": "insertion", "4": "scar"};
 
 // sizes for various bounding boxes
 var global_width = 1000;
@@ -32,8 +32,9 @@ var top_width = 800;
 // 1) color for unedited
 // 2) color for deletions
 // 3) color for insertions
-// 3) color for mismatch? might be useful for TYR data
-var heatmap_colors = ['#FFFFFF', '#FF0000', '#1A63FF', '#00FF00'];
+// 4) color for mismatch? might be useful for TYR data
+var heatmap_colors = [d3.color("rgba(255, 255, 255, 1.0)"),d3.color("rgba(255, 0, 0, 1.0)"),d3.color("rgba(26, 99, 255, 1.0)"),d3.color("rgba(0,255,0,1.0)"),d3.color("rgba(0,0,0,1.0)")];
+// var heatmap_colors = ['#FFFFFF', '#FF0000', '#1A63FF', '#00FF00','#000000'];
 
 // the labels for types of events we support in the input data
 var mutation_values = ["reference", "insertion", "deletion", "mismatch"];
@@ -121,7 +122,7 @@ d3.tsv(cut_site_file, function (error, data) {
 
 function redrawTheTopHistogram() {
     // make a new data set where we melt down the mutations -- effectively like melt in R
-    var muts = d3.layout.stack()(["deletion", "insertion"].map(function (mutation) {
+    var muts = d3.layout.stack()(["deletion", "insertion","scar"].map(function (mutation) {
         return histogram_top_data.map(function (d) {
             return {x: parseInt(d.index), y: +d[mutation], type: numberToType[mutation]};
         });
@@ -131,7 +132,7 @@ function redrawTheTopHistogram() {
     var minVal = startPos // d3.min(local_rbd , function (d) {return +d.position})
     var xEvents = d3.scale.linear().domain([0,maxVal - minVal]).range([margin_left, top_width]);
 
-    var yMax = Math.max(d3.max(muts[0].map(function (d) {return d.y;})),d3.max(muts[1].map(function (d) {return d.y;})))
+    var yMax =  Math.max(d3.max(muts[2].map(function (d) {return d.y;})),Math.max(d3.max(muts[0].map(function (d) {return d.y;})),d3.max(muts[1].map(function (d) {return d.y;}))));
     
     var yEvents = d3.scale.linear().domain([0, yMax]).range([top_height, 0]);
     var formatter = d3.format("2.1%");
@@ -212,7 +213,19 @@ function redrawTheTopHistogram() {
         .enter().append('rect')
         .attr('class', 'cutsites')
         .attr('x', function (d) {
-            return xEvents((+d.cutPos + 4) - minCutSite);
+	    // figure out if the cutsite is closer to the end of the events
+	    // this is very hacky -- also deal with some people not being able to camel-case their columns like what was asked of them
+	    if (typeof d.cutPos === 'undefined') {
+		if ((+d.cutpos) - (+d.position) > 10)
+		    return xEvents((+d.cutpos + 4) - minCutSite);
+		else
+		    return xEvents((+d.position - 4) - minCutSite);
+	    } else {
+		if ((+d.cutPos) - (+d.position) > 10)
+		    return xEvents((+d.cutPos + 4) - minCutSite);
+		else
+		    return xEvents((+d.position - 4) - minCutSite);
+	    }
         })
         .attr('y', 0)
         .attr('width', function (d) {
@@ -253,9 +266,11 @@ function redrawTheTopHistogram() {
     if (topScaleIsLog) {
 	svg.append("svg:path").attr("d", lineLog(muts[0])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[1]).attr("stroke-width", "3px")
 	svg.append("svg:path").attr("d", lineLog(muts[1])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[2]).attr("stroke-width", "3px")
+	svg.append("svg:path").attr("d", lineLog(muts[2])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[4]).attr("stroke-width", "3px")
     } else {
 	svg.append("svg:path").attr("d", line(muts[0])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[1]).attr("stroke-width", "3px")
 	svg.append("svg:path").attr("d", line(muts[1])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[2]).attr("stroke-width", "3px")	
+	svg.append("svg:path").attr("d", line(muts[2])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[4]).attr("stroke-width", "3px")	
     }
     
     svg.append("g")

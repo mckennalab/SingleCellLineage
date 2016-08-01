@@ -27,7 +27,7 @@
   * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
   * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
   * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   * @author Aaron
   * @date June, 2015
@@ -55,11 +55,11 @@ import java.io.File
   * Given amplicon reads from a CRISPR experiment, align and call events over those cut sites.
   *
   * PLEASE READ:
-  * 
+  *
   * - This pipeline assumes your reference file, say myref.fa, has the following additional files in the same dir:
   * - myref.fa.cutSites <-- contains the CRISPR target seq, position start, the cutsite position
-  * - myref.fa.primers <-- two lines, containing the positive strand primers on both ends of your amplicon. 
-  * 
+  * - myref.fa.primers <-- two lines, containing the positive strand primers on both ends of your amplicon.
+  *
  **/
 class DNAQC extends QScript {
   qscript =>
@@ -103,6 +103,9 @@ class DNAQC extends QScript {
 
   @Argument(doc = "the number of surviving reads required to call a successful UMI capture event, if you're using UMIs", fullName = "minimumSurvivingUMIReads", shortName = "minimumSurvivingUMIReads", required = false)
   var minimumSurvivingUMIReads = 6
+
+@Argument(doc = "Maximum number of mismatches in the adapter sequences to allow", fullName = "maxAdapterMismatches", shortName = "maxAdapterMismatches", required = false)
+  var maxAdaptMismatch = 6
 
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
   var webSite: File = "/net/shendure/vol2/www/content/members/aaron/staging/"
@@ -213,7 +216,7 @@ class DNAQC extends QScript {
       val pairedEnd = sampleObj.fastq2.exists()
 
       // **************************** Setup files and directories ******************************************
-      
+
 
       // create the per-sample output directories, verifying that they either exist already or can be made, also make the base web dir, it's ok that this is
       // duplicated, as don't try to make it if it exists
@@ -260,7 +263,7 @@ class DNAQC extends QScript {
       val toAlignFastq2 = new File(sampleOutput + File.separator + sampleTag + ".rev.fastq")
       val toAlignStats = new File(sampleOutput + File.separator + sampleTag + ".stats")
       val toAligUMICounts = new File(sampleOutput + File.separator + sampleTag + ".umiCounts")
-      
+
       val perBaseEventFile = new File(sampleOutput + File.separator + sampleTag + ".perBase")
       val topReadFile = new File(sampleOutput + File.separator + sampleTag + ".topReadEvents")
       val topReadFileNew = new File(sampleOutput + File.separator + sampleTag + ".topReadEventsNew")
@@ -514,7 +517,7 @@ class DNAQC extends QScript {
     this.isIntermediate = false
   }
 
-  // call out the alignment task to 
+  // call out the alignment task to
   // ********************************************************************************************************
   case class PerformAlignment(reference: File,
     inFastqMerged: File,
@@ -530,7 +533,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged fasta file") var outMergedFasta = outputMergedFasta
     @Output(doc = "the output paired fasta file") var outPairedFasta = outputPairedFasta
 
-    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta 
+    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"
@@ -609,7 +612,7 @@ class DNAQC extends QScript {
   }
 
 
-  // 
+  //
   // ********************************************************************************************************
   case class SetupWebAnalysis(reference: File,
     refCuts: File,
@@ -704,17 +707,17 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = scalaPath + " -J-Xmx15g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/UMIMerge.jar "
-    cmdString += " --inputFileReads1 " + inReads1 + " --inputFileReads2 " + inReads2 + " --outputFastq1 " + outFASTA1 + " --outputFastq2 " + outFASTA2 
+    var cmdString = scalaPath + " -J-Xmx23g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/UMIMerge.jar "
+    cmdString += " --inputFileReads1 " + inReads1 + " --inputFileReads2 " + inReads2 + " --outputFastq1 " + outFASTA1 + " --outputFastq2 " + outFASTA2
     cmdString += " --primersEachEnd " + primers + " --samplename " + sample
     cmdString += " --umiStart " + umiStart + " --minimumUMIReads " + minimumUMIReads + " --minimumSurvivingUMIReads " + minimumSurvivingUMIReads
-    cmdString += " --umiCounts " + outUMIs + " --umiLength " + umiLength
+    cmdString += " --umiCounts " + outUMIs + " --umiLength " + umiLength + " --primerMismatches " + maxAdaptMismatch
 
     var cmd = cmdString
 
-    this.memoryLimit = 16
-    this.residentRequest = 16
-    this.residentLimit = 16
+    this.memoryLimit = 24
+    this.residentRequest = 24
+    this.residentLimit = 24
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -741,7 +744,7 @@ class DNAQC extends QScript {
     cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
     cmdString += cutSiteFile + " --outputStats "
     cmdString += outStat + " --primersEachEnd " + primers + " --sample "
-    cmdString += sample
+    cmdString += sample + " --primerMismatches " + maxAdaptMismatch
 
     var cmd = cmdString
 
@@ -785,7 +788,7 @@ class DNAQC extends QScript {
 
   /**
    * flash -- seems to do a much better job with read overlap assembly than SeqPrep or Trimmomatic
-   * this is one of those tools where you can't specify the output file only the directory, so our 
+   * this is one of those tools where you can't specify the output file only the directory, so our
    * output file names have to be correctly formatted for what flash will output
    */
   // ********************************************************************************************************
@@ -803,7 +806,7 @@ class DNAQC extends QScript {
     this.residentRequest = 4
     this.residentLimit = 4
 
-    var cmd = flashPath + " --min-overlap 30 --max-mismatch-density 0.02 --output-directory=" + outputDr + " " + fqs(0) + " " + fqs(1) 
+    var cmd = flashPath + " --min-overlap 30 --max-mismatch-density 0.02 --output-directory=" + outputDr + " " + fqs(0) + " " + fqs(1)
 
     def commandLine = cmd
     this.isIntermediate = false
