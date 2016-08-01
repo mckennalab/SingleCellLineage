@@ -54,7 +54,8 @@ case class Config(inputFileReads1: File = new File(UMIProcessing.NOTAREALFILENAM
                   minimumUMIReads: Int = 10,
                   minimumSurvivingUMIReads: Int = 6,
                   umiInForwardRead: Boolean = true,
-                  downsampleSize: Int = 40)
+                  downsampleSize: Int = 40,
+                  primerMismatches: Int = 7)
 
 
 
@@ -77,6 +78,7 @@ object UMIProcessing extends App {
     opt[Int]("minimumUMIReads") action { (x, c) => c.copy(minimumUMIReads = x) } text ("the minimum number of reads that each UMI should have to be considered signal and not noise")
     opt[Int]("minimumSurvivingUMIReads") action { (x, c) => c.copy(minimumSurvivingUMIReads = x) } text ("the minimum number of reads that each UMI should have post filtering")
     opt[Int]("downsampleSize") action { (x, c) => c.copy(downsampleSize = x) } text ("the maximum number of top-reads we'll store for any UMI")
+    opt[Int]("primerMismatches") action { (x, c) => c.copy(primerMismatches = x) } text ("how many mismatches are allowed in primer regions")
 
     opt[Int]("umiStart") required() action { (x, c) => c.copy(umiStartPos = x) } text ("the start position, zero based, of our UMIs")
     opt[Int]("umiLength") required() action { (x, c) => c.copy(umiLength = x) } text ("the length of our UMIs")
@@ -129,26 +131,25 @@ object UMIProcessing extends App {
     // --------------------------------------------------------------------------------
     // process the reads into bins of UMIs, keep fwd/rev reads together
     // --------------------------------------------------------------------------------
-    print("Reading in sequences and parsing out UMIs (one dot per 10K reads):")
+    print("Reading in sequences and parsing out UMIs (one dot per 100K reads, carets at 1M): ")
     var readsProcessed = 0
     forwardReads foreach { fGroup => {
       val rGroup = reverseReads.next()
 
 
-      // for the forward read the UMI start position is used literally, for the reverse read (when start is negitive) we go from the end of the read backwards that much
+      // for the forward read the UMI start position is used literally,
+      // for the reverse read (when start is negitive) we go from the end of the read backwards that much. To
+      // allow UMIs to start at the zero'th base on the reverse, we say the first base is one
       var umi: Option[String] = None
 
-      // cleanup later
       if (config.umiStartPos >= 0) {
         umi = Some(fGroup(1).slice(config.umiStartPos, config.umiStartPos + config.umiLength))
-        if (readsProcessed < 100)
-          println(config.umiStartPos + "\t" + config.umiLength + "\t" + umi + "\t" + rGroup(1))
 
-        val readNoUMI = fGroup(1).slice(config.umiLength, fGroup(1).length)
-        val qualNoUMI = fGroup(3).slice(config.umiLength, fGroup(3).length)
+        val readNoUMI = fGroup(1).slice(0, config.umiStartPos) + fGroup(1).slice(config.umiStartPos + config.umiLength, fGroup(1).length)
+        val qualNoUMI = fGroup(3).slice(0, config.umiStartPos) + fGroup(3).slice(config.umiStartPos + config.umiLength, fGroup(3).length)
 
-        val containsForward = readNoUMI contains (primers(0))
-        val containsReverse = rGroup(1) contains (Utils.reverseComplement(primers(1)))
+        val containsForward = Utils.editDistance(readNoUMI.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+        val containsReverse = Utils.editDistance(rGroup(1).slice(0,primers(1).length),Utils.reverseComplement(primers(1))) <= config.primerMismatches
 
         if (!(umiReads contains umi.get))
           umiReads(umi.get) = new RankedReadContainer(umi.get, config.downsampleSize)
@@ -159,29 +160,30 @@ object UMIProcessing extends App {
         umiReads(umi.get).addRead(fwd, containsForward, rev, containsReverse)
       }
       else {
-        umi = Some(Utils.reverseComplement(rGroup(1).slice(math.abs(config.umiStartPos).toInt, math.abs(config.umiStartPos).toInt + config.umiLength)))
-        if (readsProcessed < 100)
-          println(umi + "\t" + rGroup(1))
+        val umiStartPos = math.abs(config.umiStartPos).toInt - 1
+        umi = Some(rGroup(1).slice(umiStartPos, umiStartPos + config.umiLength))
 
-        val readNoUMI = fGroup(1)
-        val qualNoUMI = fGroup(3)
+        val readNoUMI = rGroup(1).slice(0, umiStartPos) + rGroup(1).slice(umiStartPos + config.umiLength, rGroup(1).length)
+        val qualNoUMI = rGroup(3).slice(0, umiStartPos) + rGroup(3).slice(umiStartPos + config.umiLength, rGroup(3).length)
 
-        val containsForward = readNoUMI contains (primers(0))
-        val containsReverse = rGroup(1) contains (Utils.reverseComplement(primers(1)))
+        val containsForward = Utils.editDistance(fGroup(1).slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+        val containsReverse = Utils.editDistance(readNoUMI.slice(0,primers(1).length),Utils.reverseComplement(primers(1))) <= config.primerMismatches
+        //println(readNoUMI.slice(0,primers(1).length) + "\t" + primers(1) + "\t")
 
         if (!(umiReads contains umi.get))
           umiReads(umi.get) = new RankedReadContainer(umi.get,config.downsampleSize)
 
-        val fwd = SequencingRead(fGroup(0), readNoUMI, qualNoUMI, ForwardReadOrientation, umi.get)
-        val rev = SequencingRead(rGroup(0), rGroup(1), rGroup(3), ReverseReadOrientation, umi.get)
+        val fwd = SequencingRead(fGroup(0), fGroup(1), fGroup(3), ForwardReadOrientation, umi.get)
+        val rev = SequencingRead(rGroup(0), readNoUMI, qualNoUMI, ReverseReadOrientation, umi.get)
 
         umiReads(umi.get).addRead(fwd, containsForward, rev, containsReverse)
       }
 
       readsProcessed += 1
-      if (readsProcessed % 10000 == 0)
+      if (readsProcessed % 100000 == 0)
         print(".")
-
+      if (readsProcessed % 1000000 == 0)
+        print("^")
     }
     }
 
