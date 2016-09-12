@@ -3,10 +3,9 @@ package test.scala
 
 import aligner._
 import org.scalatest.{FlatSpec, Matchers}
-import reads.Consensus
+import reads._
 import utils.CutSites
 
-import scala.main.SequencingRead
 
 /**
   * Created by aaronmck on 6/21/16.

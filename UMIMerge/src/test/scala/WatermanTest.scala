@@ -1,12 +1,10 @@
 package test.scala
 
-
-import aligner.aligner.Waterman
-import aligner.{Aligner, MAFFT, AlignmentManager, AlignmentManager$}
+import aligner._
 import org.scalatest.{Matchers, FlatSpec}
 import utils.CutSites
 
-import scala.main.SequencingRead
+import reads._
 
 /**
  * Created by aaronmck on 12/1/15.

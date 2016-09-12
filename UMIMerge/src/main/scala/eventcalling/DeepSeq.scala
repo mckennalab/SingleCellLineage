@@ -159,7 +159,7 @@ object DeepSeq extends App {
     val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate > .85 &&
       callEvents.matchingBaseCount> 50 && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
 
-    outputStatsFile.outputStatEntry(StatsContainer(mergedRead.read.name, pass, callEvents.collision, containsFwdPrimer, containsRevPrimer,
+    outputStatsFile.outputStatEntry(new StatsContainer(mergedRead.read.name, pass, callEvents.collision, containsFwdPrimer, containsRevPrimer,
       false, true, baseLen, -1, 1, 1, callEvents.matchingRate, -1.0, callEvents.matchingBaseCount, -1,
       callEvents.alignments, callEvents.basesOverTargets, None, None, Some(mergedRead.read.bases), None, None, Some(mergedRead.reference.bases)))
 
@@ -200,7 +200,7 @@ object DeepSeq extends App {
       !callEvents.collision
 
     outputStatsFile.outputStatEntry(
-      StatsContainer(readPairs.pair1.read.name,
+      new StatsContainer(readPairs.pair1.read.name,
         pass,
         callEvents.collision,
         containsFwdPrimer,

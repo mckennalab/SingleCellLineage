@@ -1,9 +1,10 @@
-import main.scala.utils.Utils
+
 import org.scalatest.junit.JUnitSuite
 
-import scala.main.{ForwardReadOrientation, SequencingRead}
+import reads._
 import org.scalatest._
 import reads.ForwardReadOrientation
+import utils._
 
 /**
  * Created by aaronmck on 10/22/15.

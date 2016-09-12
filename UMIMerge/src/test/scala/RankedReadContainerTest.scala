@@ -1,11 +1,10 @@
 package test.scala
 
-import main.scala.utils.{SortedReads, Utils}
+import utils._
 import org.scalatest.junit.JUnitSuite
 
-import scala.main.SequencingRead
 import org.scalatest._
-import reads.{RankedReadContainer, SortedReads}
+import reads._
 
 /**
  * Created by aaronmck on 2/11/16.

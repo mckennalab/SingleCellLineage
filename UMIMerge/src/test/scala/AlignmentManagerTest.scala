@@ -2,11 +2,10 @@ import java.io.File
 
 import aligner._
 import org.scalatest.{FlatSpec, Matchers}
-import reads.{Deletion, Insertion, Match, Scar}
+import reads._
 import utils.{CutSites, IndividualCutSite}
 
 import scala.collection.mutable
-import scala.main._
 
 /**
  * Created by aaronmck on 11/18/15.

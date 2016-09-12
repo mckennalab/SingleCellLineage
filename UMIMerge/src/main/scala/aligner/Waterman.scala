@@ -1,5 +1,4 @@
 package aligner
-package aligner
 
 import java.io._
 
