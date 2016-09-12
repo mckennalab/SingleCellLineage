@@ -3,6 +3,7 @@ import org.scalatest.junit.JUnitSuite
 
 import scala.main.{ForwardReadOrientation, SequencingRead}
 import org.scalatest._
+import reads.ForwardReadOrientation
 
 /**
  * Created by aaronmck on 10/22/15.

@@ -1,10 +1,9 @@
-package main.scala.utils
+package reads
 
 import java.io.File
 
 import scala.collection.mutable.ArrayBuilder
 import scala.io.Source
-import scala.main.SequencingRead
 
 /**
  * Created by aaronmck on 12/6/15.
@@ -60,21 +59,3 @@ class ReadPairParser(readFile: File) extends Iterator[RefReadPair] {
     return ret
   }
 }
-
-
-class PeekFilelineIterator(iter: Iterator[String]) extends Iterator[String] {
-
-  var nextString: Option[String] = if (iter.hasNext) Some(iter.next()) else None
-
-  override def hasNext: Boolean = nextString isDefined
-
-  override def next(): String = {
-    val ret = nextString.get
-    nextString = if (iter.hasNext) Some(iter.next()) else None
-    return ret
-  }
-
-  def peek: String = nextString.get
-}
-
-case class RefReadPair(reference: SequencingRead, read: SequencingRead, aligned: Boolean = false)

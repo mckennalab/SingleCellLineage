@@ -1,6 +1,6 @@
 package aligner
 
-import scala.main.SequencingRead
+import reads.SequencingRead
 
 /**
   * a basic approach to aligning multiple reads -- just assume that all of the reads the same length and find the

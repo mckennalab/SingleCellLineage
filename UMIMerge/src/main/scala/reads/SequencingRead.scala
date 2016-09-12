@@ -1,6 +1,7 @@
-package scala.main
+package reads
 
-import main.scala.utils.Utils
+import scala.collection._
+import utils._
 
 /**
  * holds a sequencing read
@@ -12,6 +13,21 @@ case class SequencingRead(name: String, bases: String, quals: String, readOrient
   val intQuals = quals.map{qual => Utils.phredCharToQscore(qual)}.toArray
   def length = bases.length
   var reverseCompAlign = false
+
+
+  // reads can store metadata in their names, a series of double underscore tags at the end of the read like __number->10
+  var metaData = Array[Tuple2[String,String]]()
+
+  if (name contains "__") {
+    name.split("__").foreach{possibleTag => {
+      if (possibleTag contains "->") {
+        val tagSplit = possibleTag.split("->")
+        if (tagSplit.size == 2)
+          metaData :+= (tagSplit(0),tagSplit(1))
+      }
+    }}
+  }
+
 
   /**
    * find the last base in the string before a series of dashes
@@ -128,7 +144,6 @@ case class SequencingRead(name: String, bases: String, quals: String, readOrient
 
 }
 
-
 object SequencingRead {
   /**
    * produce a reverse complement of a read, taking some care to correspond the bases and quals
@@ -186,32 +201,26 @@ object SequencingRead {
   def readFromNameAndSeq(name: String, bases: String, qualBase: String): SequencingRead = {
     SequencingRead(name,bases,qualBase*bases.length,ForwardReadOrientation,"UNKNOWN")
   }
+
+  /**
+    * given a set of reads, aggregate the meta data from the reads into a summary which can be output
+    * @param reads
+    * @return
+    */
+  def aggregateMetaData(reads: Array[SequencingRead]): String = {
+    val mapping = new mutable.HashMap[String,mutable.HashMap[String,Int]]()
+
+    reads.foreach{case(read) => {
+      read.metaData.foreach{case(metaName,metaValue) => {
+        val annotationValue = mapping.getOrElse(metaName,new mutable.HashMap[String,Int]())
+        annotationValue(metaValue) = annotationValue.getOrElse(metaValue,0) + 1
+        mapping(metaName) = annotationValue
+      }}
+    }}
+
+    // now compose a string representation
+    return mapping.map{case(hashKey,hashContainer) => {
+      hashKey + "->" + hashContainer.map{case(hashValue,count) => hashValue + "=" + count}.mkString(";")
+    }}.mkString("__")
+  }
 }
-
-object SequencingReadQualOrder extends Ordering[SequencingRead] {
-  def compare(a:SequencingRead, b:SequencingRead) = a.averageQual() compare b.averageQual()
-}
-
-/**
- * the cigar event -- encoding our basic cigar characters, which are different than the SAM specification
-  *
-  * @param encoding the encodings string
- */
-sealed abstract class CigarEvent(var encoding: String = "U")
-case object Unset extends CigarEvent("U")
-case object Insertion extends CigarEvent("I")
-case object Deletion extends CigarEvent("D")
-case object Match extends CigarEvent("M")
-case object Scar extends CigarEvent("S")
-case object Mismatch extends CigarEvent("m") // this isn't a valid output state, just for book keeping
-
-/**
- * enumerate out the possible read orientations: forward, reverse, consensus, and reference
- */
-sealed trait ReadDirection 
-case object ForwardReadOrientation extends ReadDirection
-case object ReverseReadOrientation extends ReadDirection
-case object ReferenceRead extends ReadDirection
-case object ConsensusRead extends ReadDirection
-
-case class CigarHit(event: CigarEvent, length: Int, position: Int)

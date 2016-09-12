@@ -1,8 +1,9 @@
 import java.io.File
 
 import aligner._
-import org.scalatest.{Matchers, FlatSpec}
-import utils.{IndividualCutSite, CutSites}
+import org.scalatest.{FlatSpec, Matchers}
+import reads.{Deletion, Insertion, Match, Scar}
+import utils.{CutSites, IndividualCutSite}
 
 import scala.collection.mutable
 import scala.main._

@@ -3,12 +3,11 @@ package aligner
 
 import java.io._
 
-import _root_.aligner.MAFFT._
-import main.scala.utils.Utils
+import utils.Utils
 
 import scala.collection.mutable._
 import scala.io._
-import scala.main.{ReadDirection, SequencingRead}
+import reads.SequencingRead
 import scala.sys.process._
 
 /**

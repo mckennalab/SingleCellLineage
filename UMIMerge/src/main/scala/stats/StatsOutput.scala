@@ -1,4 +1,4 @@
-package main.scala.stats
+package stats
 
 import java.io._
 

@@ -1,9 +1,7 @@
-package main.scala
-
-import main.scala.utils.Utils
+package reads
 
 import scala.collection.mutable._
-import scala.main._
+import reads._
 
 /**
  * Functional transforms that revolve around merging reads down to consensus, filtering out poor hits, etc
@@ -23,6 +21,8 @@ object Consensus {
     // each read should be properly aligned from previous steps
     var highestOccuringBase = Array[Char]()
     var highestOccuringBaseProp = Array[Double]()
+
+    // when aggregating reads, make sure to aggregate any metadata they store
 
     // get our read length, if we have any reads, else 0
     val maxLeadLength = reads.foldLeft(0)((b,a) => Math.max(b,a.length))
@@ -52,7 +52,7 @@ object Consensus {
     }
     }
 
-    SequencingRead(name,
+    SequencingRead(name + "__" + SequencingRead.aggregateMetaData(reads: Array[SequencingRead]),
       highestOccuringBase.mkString(""),
       "I" * highestOccuringBase.length, // everyone's Q40ish now
       if (reads.size == 0) ForwardReadOrientation else reads(0).readOrientation,
@@ -74,9 +74,10 @@ object Consensus {
 
     var newReads = Array[SequencingRead]()
     reads.foreach { read => {
-      val differences = consensusValue.bases.zip(read.bases).map { case (concBase, readBase) => if (readBase != concBase) 1 else 0 }.sum.toDouble / read.bases.length.toDouble
-      if (read.bases.length > minReadLength && differences <= differenceThreshold)
-        newReads :+= read
+      val differences = consensusValue.bases.zip(read.bases).map {
+        case (concBase, readBase) => if (readBase != concBase) 1 else 0 }.sum.toDouble / read.bases.length.toDouble
+        if (read.bases.length > minReadLength && differences <= differenceThreshold)
+          newReads :+= read
     }}
     newReads
   }

@@ -1,6 +1,7 @@
 package aligner
 
-import scala.main.{ConsensusRead, SequencingRead}
+import reads.ConsensusRead
+import reads.SequencingRead
 
 /**
  * Created by aaronmck on 11/17/15.

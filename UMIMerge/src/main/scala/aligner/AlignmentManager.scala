@@ -1,15 +1,14 @@
 package aligner
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
-import _root_.aligner.aligner.Waterman
-import main.scala.Consensus
-import main.scala.utils.{RefReadPair, Utils}
+import aligner.Waterman
+import utils._
+import reads._
 import utils.CutSites
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import scala.main._
 import scala.sys.process._
 
 /**

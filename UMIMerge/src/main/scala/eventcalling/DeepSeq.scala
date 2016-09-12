@@ -1,20 +1,15 @@
-package main.scala
+package eventcalling
 
-import java.util
-
-import _root_.aligner.{Alignment, AlignmentManager}
-import _root_.utils.{CutSites}
-import main.scala.stats.{StatsContainer, StatsOutput}
-import main.scala.utils.ReadPair
-import main.scala.utils.ReadPairParser
-import main.scala.utils.RefReadPair
-import main.scala.utils.UnmergedReadParser
-import main.scala.utils._
-
-import scala.io._
 import java.io._
+
+import aligner.AlignmentManager
+import utils.CutSites
+import stats._
+import utils._
+import reads.{ReadPair, ReadPairParser, RefReadPair, UnmergedReadParser}
+
 import scala.collection.mutable._
-import scala.main.SequencingRead
+import scala.io._
 
 /**
  * created by aaronmck on 2/13/14
@@ -50,6 +45,7 @@ case class DeepConfig(inputFileUnmerged: File = new File(DeepSeq.NOTAREALFILENAM
                       primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
                       primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to four
+                      primersToCheck: String = "BOTH",
                       samplename: String = "TEST")
 
 
@@ -70,6 +66,7 @@ object DeepSeq extends App {
     opt[Int]("primerMismatches") required() valueName ("<int>") action { (x, c) => c.copy(primerMismatches = x) } text ("the maximum number of mismatches to allow in the adapter sequences")
     opt[File]("primersEachEnd") required() valueName ("<file>") action { (x, c) => c.copy(primersEachEnd = x) } text ("the file containing the amplicon primers requred to be present, one per line, two lines total")
     opt[String]("sample") required() action { (x, c) => c.copy(samplename = x) } text ("the sample name of this run")
+    opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
 
     // some general command-line setup stuff
     note("process aligned reads from non-UMI samples\n")
@@ -147,9 +144,13 @@ object DeepSeq extends App {
                       config: DeepConfig): Unit = {
 
     val readStr = mergedRead.read.bases.filter(bs => bs != '-').mkString("")
-    val containsFwdPrimer = Utils.editDistance(readStr.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
-    val containsRevPrimer = Utils.editDistance(readStr.slice(readStr.length - primers(1).size,readStr.length),primers(1)) <= config.primerMismatches
+    val containsFwdPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD")
+      Utils.editDistance(readStr.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+    else true
 
+    val containsRevPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "REVERSE")
+      Utils.editDistance(readStr.slice(readStr.length - primers(1).size,readStr.length),primers(1)) <= config.primerMismatches
+    else true
 
     val baseLen = mergedRead.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
@@ -179,8 +180,13 @@ object DeepSeq extends App {
 
     val readStrFWD = readPairs.pair1.read.bases.filter(bs => bs != '-').mkString("")
     val readStrREV = readPairs.pair2.read.bases.filter(bs => bs != '-').mkString("")
-    val containsFwdPrimer = Utils.editDistance(readStrFWD.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
-    val containsRevPrimer = Utils.editDistance(readStrREV.slice(readStrREV.length - primers(1).size,readStrREV.length),primers(1)) <= config.primerMismatches
+    val containsFwdPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD")
+      Utils.editDistance(readStrFWD.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
+    else true
+
+    val containsRevPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "REVERSE")
+      Utils.editDistance(readStrREV.slice(readStrREV.length - primers(1).size,readStrREV.length),primers(1)) <= config.primerMismatches
+    else true
 
     val base1Len = readPairs.pair1.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
     val base2Len = readPairs.pair2.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum

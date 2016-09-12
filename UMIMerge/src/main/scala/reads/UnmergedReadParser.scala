@@ -1,4 +1,4 @@
-package main.scala.utils
+package reads
 
 import java.io.File
 
@@ -41,6 +41,3 @@ class UnmergedReadParser(readFiles: File) extends Iterator[ReadPair] {
 
 
 }
-
-// the pair of reference and read from the fasta file
-case class ReadPair(pair1: RefReadPair, pair2: RefReadPair)

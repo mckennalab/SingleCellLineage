@@ -1,13 +1,14 @@
 package aligner
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
-import main.scala.utils.Utils
+import utils.Utils
+import reads.ReadDirection
 import utils.CutSites
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
-import scala.main.{ReadDirection, ReverseReadOrientation, ForwardReadOrientation, SequencingRead}
+import reads.{ForwardReadOrientation, SequencingRead}
 import scala.sys.process._
 
 /**

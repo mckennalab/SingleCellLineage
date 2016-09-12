@@ -2,8 +2,8 @@ package test.scala
 
 
 import aligner._
-import main.scala.Consensus
-import org.scalatest.{Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, Matchers}
+import reads.Consensus
 import utils.CutSites
 
 import scala.main.SequencingRead

@@ -1,4 +1,4 @@
-package main.scala.utils
+package utils
 
 import scala.io._
 import java.io._

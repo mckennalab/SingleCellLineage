@@ -2,11 +2,12 @@ package aligner
 
 import java.io._
 
-import main.scala.utils.Utils
+import utils.Utils
+import reads.ReadDirection
 
 import scala.collection.mutable._
 import scala.io._
-import scala.main.{ReadDirection, SequencingRead}
+import reads.{ReadDirection, SequencingRead}
 import scala.sys.process._
 
 /**

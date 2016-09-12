@@ -5,7 +5,7 @@ import utils.CutSites
 
 import org.scalatest.{Matchers, FlatSpec}
 
-import scala.main.{ForwardReadOrientation, SequencingRead}
+import scala.main.SequencingRead
 
 /**
  * Created by aaronmck on 11/29/15.

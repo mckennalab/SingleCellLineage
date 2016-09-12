@@ -1,8 +1,6 @@
-package main.scala.utils
+package reads
 
 import scala.collection.mutable
-import scala.main.SequencingRead
-import scala.math.Ordering.Implicits._
 
 /**
   * evaluate reads on the fly, limiting our container to a specified size of high-quality reads, but recording the total numbers we saw
@@ -73,8 +71,6 @@ case class SortedReads(read1: SequencingRead, read2: SequencingRead, rankByQual:
 
   // choose what to rank by -- qual or length
   val rankVal = if (rankByQual) totalAverageQual else totalAverageLength
-
-  implicitly[Ordering[Tuple2[Int, Int]]].compare((1, 2), (2, 3))
 
   // compare the events in reverse order -- we want to drop sorted reads in anti qual order
   def compare(that: SortedReads): Int =
