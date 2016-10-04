@@ -198,7 +198,7 @@ function redrawTheTopHistogram() {
         .enter().append('rect')
         .attr('class', 'target')
         .attr('x', function (d) {
-            return xEvents(+d.position - minCutSite);
+            return xEvents(+d.position - (minVal + 20));
         })
         .attr('y', 0)
         .attr('width', function (d) {
@@ -217,14 +217,14 @@ function redrawTheTopHistogram() {
 	    // this is very hacky -- also deal with some people not being able to camel-case their columns like what was asked of them
 	    if (typeof d.cutPos === 'undefined') {
 		if ((+d.cutpos) - (+d.position) > 10)
-		    return xEvents((+d.cutpos + 4) - minCutSite);
+		    return xEvents((+d.cutpos + 4) - (minVal + 20));
 		else
-		    return xEvents((+d.position - 4) - minCutSite);
+		    return xEvents((+d.position - 4) - (minVal + 20 ));
 	    } else {
 		if ((+d.cutPos) - (+d.position) > 10)
-		    return xEvents((+d.cutPos + 4) - minCutSite);
+		    return xEvents((+d.cutPos + 4) - (minVal + 20));
 		else
-		    return xEvents((+d.position - 4) - minCutSite);
+		    return xEvents((+d.position - 4) - (minVal + 20));
 	    }
         })
         .attr('y', 0)
@@ -542,36 +542,38 @@ function redraw_read_block() {
     var xScale = d3.scale.linear().domain([minVal,maxVal]).range([margin_left, heat_width]);
     var maxXPlot = xScale(maxVal)
 
-    var dmt = xScale.domain().length;
+    var dmt = xScale.domain().end;
     var gridWidth = parseInt((heat_width - margin_left) / dmt);
     var readCount = parseInt(d3.max(local_rbd, function (d) {
         return +d.array;
     })) + 1;
     var gridOffset = parseInt(gridWidth + (gridWidth / 2));
     var max = d3.entries(local_rbd ).sort(function (a, b) {
-            return d3.descending(+a.value.position, +b.value.position);
+            return d3.descending(+a.value.start, +b.value.start);
         }
-    )[0].value.position;
+    )[0].value.start;
 
     var min = d3.entries(local_rbd ).sort(function (a, b) {
-            return d3.ascending(+a.value.position, +b.value.position);
+            return d3.ascending(+a.value.start, +b.value.start);
         }
-    )[0].value.position;
+    )[0].value.start;
 
     var heatMap = svg.selectAll(".heatmap")
         .data(local_rbd )
         .enter().append("svg:rect")
         .attr("x", function (d, i) {
-            return xScale(+d.position)
+	    var lowBound = Math.max(minVal,+d.start)
+            return xScale(lowBound)
         })
         .attr("y", function (d, i) {
             return yScale(+d.array) + ((1.0 - cropHeightProp) * gridHeight)
         })
         .attr("width", function (d) {
-	    if (xScale(+d.position) + xScale(((+d.length) - (+d.position))) > maxXPlot) {
-		return maxXPlot - (xScale(+d.position));
+	    // if the far end of the bar is past the end of the plot, cap it at the end of the plot
+	    if (+d.end > maxVal) {
+		return maxXPlot - xScale(+d.start); //  - (xScale(+d.position));
 	    } else {
-		return xScale((+d.length) - (+d.position) + minVal) - xScale(minVal);
+		return xScale((+d.end - +d.start) + minVal) - xScale(minVal);
 	    }
         })
         .attr("height", function (d) {
