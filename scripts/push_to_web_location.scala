@@ -63,13 +63,17 @@ cutSiteLines.foreach{line => {
   val sp = line.split("\t")
   val start = sp(1).toInt
   val cutPos = sp(2).toInt
+  val maxPos = math.max(start,cutPos)
+  val minPos = math.min(start,cutPos)
 
-  if ((start - 20) < startPos)
-    startPos = start - 20
-  if ((cutPos + 20) > endPos)
-    endPos = cutPos + 20
+  if (startPos > minPos)
+    startPos = start
+  if (endPos < maxPos)
+    endPos = cutPos
 }}
 
+startPos = startPos - upAndDownstream
+endPos = endPos + upAndDownstream
 
 // now in the web directory make a little javascript file that tells the main JS which files to use
 val fileList = new PrintWriter(webLocation + File.separator + "JS_files.js")
