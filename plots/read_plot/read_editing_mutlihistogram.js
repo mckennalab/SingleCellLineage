@@ -101,23 +101,35 @@ function logTheTop() {
 
 var histogram_top_data = ""
 var cut_site_data = ""
+var aux_data = ""
 
 // ************************************************************************************************************
 // histrogram of events over the length of our amplicon -- taken from all reads
 // ************************************************************************************************************
 d3.tsv(per_base_histogram_data, function (error, data) {
     histogram_top_data = data
-    if (histogram_top_data != "" && cut_site_data != "") {
+    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
 	redrawTheTopHistogram()
     }
 })
 
 d3.tsv(cut_site_file, function (error, data) {
     cut_site_data = data
-    if (histogram_top_data != "" && cut_site_data != "") {
+    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
 	redrawTheTopHistogram()
     }    
 })
+
+// if we have additional annotations, load them, and add them to the plot
+d3.tsv("highlight_region.txt", function (error, data) {
+    aux_data = data
+
+    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
+	redrawTheTopHistogram()
+    }
+})
+
+
 
 
 function redrawTheTopHistogram() {
@@ -290,7 +302,6 @@ function redrawTheTopHistogram() {
 
     var legendText = "Editing (%)"
 
-    //var zero = d3.round(
     // if we're logged we need to adjust the legend text and manualy remove a bunch of labels /ticks from the y axis
     if (topScaleIsLog) {
 	legendText = "Editing percent (log)"
@@ -322,6 +333,33 @@ function redrawTheTopHistogram() {
         .style("font-size", "20px")
         .text(legendText)
         .attr("transform", "rotate(-90)");
+
+    // ------------------------------------------------------------------------------------------------------------------------
+    // now check if we've been supplied additional annotations; if so plot them
+    // ------------------------------------------------------------------------------------------------------------------------
+    if (!(aux_data === "")) {
+	svg.selectAll('.highlightBoxes')
+            .data(aux_data)
+            .enter().append('rect')
+            .attr('class', 'cutsites')
+            .attr('x', function (d) {
+		var min = Math.min((+d.start) - (minVal + 20),maxVal);
+		return xEvents(min);
+            })
+            .attr('y', 0)
+            .attr('width', function (d) {
+		var width = +d.end - +d.start;
+		var pos = Math.min((+d.start) - (minVal + 20),maxVal);
+		if (xEvents(width) + xEvents(pos) > xEvents(maxVal))
+		    return xEvents(maxVal - +d.start)
+		else
+		    return xEvents(width)
+            })
+            .attr('height', top_height)
+            .attr("fill-opacity", .6)
+            .attr("fill", "blue")
+    }
+    
 }; 
 
 function changeHistogram() {
@@ -469,25 +507,6 @@ function redrawHistogram() {
                 }
             });
     }
-    /* this is really hacky, but I can't seem to slim down the number of ticks on the x axis in log mode, so do it by hand
-    if (xScaleIsLog) {
-        svg.selectAll(".tick")
-            .each(function (d, i) {
-                if (d == 0 || this.textContent == "" || !(Math.log10(+this.textContent) % 1 === 0)) {
-                    this.remove();
-                } else {
-                    var valueToConvert = +this.textContent
-                    this.children[1].textContent = "10" + formatPower(Math.log10(valueToConvert))
-                }
-            });
-    } else {
-        svg.selectAll(".tick")
-            .each(function (d, i) {
-                if (i % 2 == 0) {
-                    this.remove();
-                }
-            });
-    }*/
 
     //Add the text legend
     svg.append("text")
