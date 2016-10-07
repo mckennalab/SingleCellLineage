@@ -28,38 +28,39 @@ case class HMID(events: Array[Event]) {
   var count = 0
   def isWT(): Boolean = events.map{evt => if (evt.classOf == NoneType) 0 else 1}.sum == 0
 
-  def eventToPerBase(startPosition: Int, endPosition: Int): Array[Int] = {
-    val eventInts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
+  // for the histogram in the D3 plots
+  def eventToPerBase(referenceLength: Int): Array[Int] = {
+    val eventInts = Array.fill[Int](referenceLength)(0)
     events.foreach{evt => {
-      val adjPos = evt.position - startPosition
-      val evtMin = math.max(0,adjPos)
-      val evtMax = math.min(adjPos + evt.size,eventInts.size)
-
-      //(adjPos until (adjPos + evt.size)).foreach{pos => {
-      (evtMin until evtMax).foreach{pos => {
-        evt.classOf match {
-          case Deletion => eventInts(pos) = evt.classOf.toInt
-          case Scar => eventInts(pos) = evt.classOf.toInt
-          case Insertion if pos == adjPos => eventInts(pos) = evt.classOf.toInt
-          case Insertion => eventInts(pos) = 0
-          case _ => throw new IllegalStateException("Unable to match classOf")
-        }
-          eventInts(pos) = evt.classOf.toInt
+      (evt.position until (evt.position + evt.size)).foreach{pos => {
+        eventInts(pos) = evt.classOf.toInt
       }}
     }}
     return eventInts
   }
 
-  // convert the events to ber base segments
-  def eventToPerBase2(startPosition: Int, endPosition: Int): Array[ETPB] = {
+  // do we have a non-WT event over the target interval?
+  def activeEventOverlap(start: Int, end: Int): Boolean = {
+    events.map{evt =>
+      if (((evt.position >= start && evt.position <= end) ||
+        ((evt.position + evt.size) >= start && (evt.position + evt.size)<= end)) ||
+        (evt.position <= start && (evt.position + evt.size) >= end))
+        1 else 0
+    }.sum > 0
+  }
+
+  // convert the events to a format that the D3 plotting understands
+  def eventToETPB(referenceLength: Int): Array[ETPB] = {
     var eventPBs = Array[ETPB]()
 
     events.foreach{evt => {
-      // if the type is not NONE, pad check to see if we need to pad with NONEs to 1) the beginning if we're the first event,
-      // or 2) pad to the last event if there's a gap, then add the event
       if (evt.classOf != NoneType) {
-        if (eventPBs.size == 0 && evt.position > startPosition)
-          eventPBs :+= ETPB(startPosition, evt.position, 0)
+
+        // if the type is not NONE, pad check to see if we need to pad with NONEs to
+        // 1) the beginning if we're the first event, or
+        // 2) pad to the last event if there's a gap, then add the event
+        if (eventPBs.size == 0 && evt.position > 0)
+          eventPBs :+= ETPB(0, evt.position, 0)
         else if (eventPBs.size > 0 && eventPBs(eventPBs.size - 1).stop < evt.position)
           eventPBs :+= ETPB(eventPBs(eventPBs.size - 1).stop, evt.position, 0)
 
@@ -68,15 +69,16 @@ case class HMID(events: Array[Event]) {
     }}
 
     // pad to the end: if we didn't have any non-NONE events, pad for the whole read with a NONE
-    if (eventPBs.size > 0 && eventPBs(eventPBs.size - 1).stop < endPosition) {
-      eventPBs :+= ETPB(eventPBs(eventPBs.size - 1).stop, endPosition, 0)
+    if (eventPBs.size > 0 && eventPBs(eventPBs.size - 1).stop < referenceLength) {
+      eventPBs :+= ETPB(eventPBs(eventPBs.size - 1).stop, referenceLength, 0)
     } else if (eventPBs.size == 0) {
-      eventPBs :+= ETPB(startPosition, endPosition, 0)
+      eventPBs :+= ETPB(0, referenceLength, 0)
     }
     return eventPBs
   }
 }
 
+// a simple case class for our intervals
 case class ETPB(start: Int, stop: Int, event: Int)
 
 // -----------------------------------------------------------------------------
@@ -107,7 +109,7 @@ object Event {
 // -----------------------------------------------------------------------------
 // a container for HMIDs
 // -----------------------------------------------------------------------------
-class StatsFile(inputFile: String) {
+class StatsFile(inputFile: String, unknownsAsNone: Boolean) {
   val statsFile = Source.fromFile(inputFile).getLines()
   val hmidCounts = new HashMap[String,HMID]()
   val header = statsFile.next().split("\t")
@@ -124,18 +126,19 @@ class StatsFile(inputFile: String) {
 
   // process all lines in the file
   statsFile.foreach{line => {
-    if ((line contains "PASS") && !(line contains "WT")) { 
-      val (newHMIDString,newHMID) = lineToHMID(line)
+    if ((line contains "PASS") && !(line contains "WT") && (!(line contains "UNKNOWN") || unknownsAsNone)) { 
+      val (newHMIDString,newHMID) = lineToHMID(line, unknownsAsNone)
       val replacementHMID = hmidCounts.getOrElse(newHMIDString,newHMID)
       replacementHMID.count += 1
       hmidCounts(newHMIDString) = replacementHMID
+    } else {
+      // println("Dropping line: " + line)
     }
   }}
 
   val totalHMIDs = hmidCounts.map{case(str,id) => id.count}.sum
-  println("total " + totalHMIDs)
   val sortedEvents = hmidCounts.toSeq.sortBy(_._2.count).toArray.reverse
-  println("total " + sortedEvents.map{case(evt,obj) => obj.count}.sum)
+  println("total stat file events to process: " + totalHMIDs)
 
   /** process a line into an HMID **/
   def lineToHMID(line: String, unknownsToNone: Boolean = true): Tuple2[String,HMID] = {
@@ -168,33 +171,37 @@ class StatsFile(inputFile: String) {
 class CutSiteContainer(cutSiteFile:String) {
   val csFile = Source.fromFile(cutSiteFile).getLines()
   val header = csFile.next()
-  var minPosition = Int.MaxValue
-  var maxPosition = Int.MinValue
 
   val sites = csFile.map{case(line) => {
     val sp = line.split("\t")
-    println(line)
-    if (sp(1).toInt < minPosition)
-       minPosition = sp(1).toInt
-    if (sp(2).toInt < minPosition)
-       minPosition = sp(2).toInt
-    if (sp(1).toInt > maxPosition)
-       maxPosition = sp(1).toInt
-    if (sp(2).toInt > maxPosition)
-       maxPosition = sp(2).toInt
-
     Cutsite(sp(0), sp(1).toInt, sp(2).toInt)
   }}.toArray
 
-  println("Min = " + minPosition + " Max " + maxPosition)
 }
 
 // -----------------------------------------------------------------------------
 // process the input files
 // -----------------------------------------------------------------------------
-val statsObj = new StatsFile(args(0))
-val cutSites = new CutSiteContainer(args(5))
+if (!(args.size == 9 || args.size == 10))
+  throw new IllegalArgumentException("Not the correct number of arguments, we want 9 or 10, we saw " + args.size)
 
+val unknownsAsNone = args(7).toUpperCase match {
+  case "TRUE" => true
+  case "FALSE" => false
+  case _ => throw new IllegalArgumentException("Unable to determine the unknown reads -> true parameter")
+}
+val statsObj = new StatsFile(args(0),unknownsAsNone)
+val cutSites = new CutSiteContainer(args(5))
+val referenceLength = Source.fromFile(args(8)).getLines().drop(1).map{line => line.size}.sum
+
+case class HighlightRegion(start: Int, end: Int, color: String)
+var highlighedRegions: Option[Array[HighlightRegion]] = None
+if (args.size == 10) {
+  highlighedRegions = Some(Source.fromFile(args(9)).getLines().drop(1).map{line => {
+    val sp = line.split("\t")
+    HighlightRegion(sp(1).toInt,sp(2).toInt,sp(3))
+  }}.toArray)
+}
 // -----------------------------------------------------------------------------
 // now create output files
 // -----------------------------------------------------------------------------
@@ -216,22 +223,27 @@ allEventsF.close()
 // -----------------------------------------------------------------------------
 // now output the top events
 // -----------------------------------------------------------------------------
+val wt_colors = Array[String]("#888888", "#00FF00")
+
 readCounts.write("event\tarray\tproportion\trawCount\tWT\n")
-statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) =>
-  readCounts.write(hmid + "\t" + index + "\t" + (hmidEvents.count.toDouble / statsObj.totalHMIDs.toDouble) + "\t" + hmidEvents.count + "\t" + (if(hmidEvents.isWT) 1 else 2) + "\n")
-}
+statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
+  var color = if(hmidEvents.isWT) wt_colors(1) else wt_colors(0)
+  highlighedRegions.foreach{ray => ray.foreach{region => {
+    if (hmidEvents.activeEventOverlap(region.start,region.end)) {
+      color = region.color
+    }
+  }}}
+
+  readCounts.write(hmid + "\t" + index + "\t" + (hmidEvents.count.toDouble / statsObj.totalHMIDs.toDouble) + "\t" + hmidEvents.count + "\t" + color + "\n")
+}}
 readCounts.close()
 
 // -----------------------------------------------------------------------------
 // output the top events as a melted string of 0s, 1s, and 2s (encoded indels)
 // -----------------------------------------------------------------------------
-val rangeBuffer = 20
-val startPosition = cutSites.minPosition
-val endPosition = cutSites.maxPosition
-
 perBaseEvents.write("array\tposition\tevent\n")
 statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
-  hmidEvents.eventToPerBase(startPosition, endPosition).zipWithIndex.foreach{case(event,subIndex) =>
+  hmidEvents.eventToPerBase(referenceLength).zipWithIndex.foreach{case(event,subIndex) =>
     perBaseEvents.write(index + "\t" + subIndex + "\t" + event + "\n")
   }
 }}
@@ -241,12 +253,9 @@ perBaseEvents.close()
 // create a simple table of the events
 // -----------------------------------------------------------------------------
 
-// ETPB(start: Int, stop: Int, event: Int)
-println(startPosition + "\t" + endPosition)
-
 perBaseEventsNew.write("array\tstart\tend\tevent\n")
 statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
-  hmidEvents.eventToPerBase2(startPosition, endPosition).zipWithIndex.foreach{case(etpb,subIndex) =>
+  hmidEvents.eventToETPB(referenceLength).zipWithIndex.foreach{case(etpb,subIndex) =>
     perBaseEventsNew.write(index + "\t" + etpb.start + "\t" + etpb.stop + "\t" + etpb.event + "\n")
   }
 }}
@@ -255,13 +264,13 @@ perBaseEventsNew.close()
 // -----------------------------------------------------------------------------
 // output per-base information
 // -----------------------------------------------------------------------------
-val insertionCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
-val deletionCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
-val scarCounts = Array.fill[Int]((endPosition - startPosition) + 1)(0)
+val insertionCounts = Array.fill[Int](referenceLength)(0)
+val deletionCounts = Array.fill[Int](referenceLength)(0)
+val scarCounts = Array.fill[Int](referenceLength)(0)
 
 var totalReads = 0
 statsObj.sortedEvents.foreach{case(hmid,hmidEvents) => {
-  hmidEvents.eventToPerBase(startPosition, endPosition).zipWithIndex.foreach{case(event,index) => event match {
+  hmidEvents.eventToPerBase(referenceLength).zipWithIndex.foreach{case(event,index) => event match {
     case Deletion.toInt => deletionCounts(index) += hmidEvents.count
     case Insertion.toInt => insertionCounts(index) += hmidEvents.count
     case Scar.toInt => scarCounts(index) += hmidEvents.count
@@ -272,7 +281,6 @@ statsObj.sortedEvents.foreach{case(hmid,hmidEvents) => {
 
 occurances.write("index\tmatch\tinsertion\tdeletion\tscar\n")
 insertionCounts.zip(deletionCounts).zipWithIndex.foreach{case((ins,del),index) => {
-  println(index + "\t" + (ins + del) + "\t" + (totalReads) + "\t" + (ins))
   val matchProp = 1.0 - ((ins + del).toDouble / totalReads.toDouble)
   occurances.write(index + "\t" + matchProp + "\t" + (ins.toDouble/totalReads.toDouble) + "\t" + (del.toDouble/totalReads.toDouble) + "\t" + (scarCounts(index).toDouble/totalReads.toDouble) + "\n")
 }}

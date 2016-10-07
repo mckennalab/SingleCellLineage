@@ -12,6 +12,8 @@ val topReadCountsFile = new File(args(3))
 val cutSiteFile = new File(args(4))
 val allReadFile = new File(args(5))
 
+val interval_file = if (args.size == 7) Some(new File(args(6))) else None
+
 val javaScriptFile = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/plots/read_plot/read_editing_mutlihistogram.js")
 val htmlFile = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/plots/read_plot/read_editing_mutlihistogram.html")
 
@@ -52,6 +54,9 @@ if (!copyToDir(javaScriptFile,webLocation))     throw new IllegalArgumentExcepti
 if (!copyToDir(cutSiteFile,webLocation))        throw new IllegalArgumentException("unable to copy " + cutSiteFile + " to " + webLocation)
 if (!copyToDir(allReadFile,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)
 
+if (interval_file.isDefined)
+  if (!copyToDir(interval_file.get,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)
+
 // load the cutsites up, and find the start and stop positions for javascript output
 val upAndDownstream = 20
 var startPos = 1000000000
@@ -81,6 +86,6 @@ fileList.write("var occurance_file = \"" + topReadCountsFile.getName() + "\"\n")
 fileList.write("var top_read_melted_to_base = \"" + topReadsFile.getName() + "\"\n")
 fileList.write("var per_base_histogram_data = \"" + perbaseFile.getName() + "\"\n")
 fileList.write("var cut_site_file = \"" + cutSiteFile.getName() + "\"\n")
-fileList.write("var startPos = " + startPos + "\n")
-fileList.write("var endPos = " + endPos + "\n")
+if (interval_file.isDefined)
+  fileList.write("var interval_file = \"" + interval_file.get.getName() + "\"\n")
 fileList.close()

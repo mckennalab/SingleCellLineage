@@ -5,14 +5,13 @@
         svg{
             padding: 20px;
         }
-
+	.resizedTextbox {width: 100px; height: 20px}
         body {
-        /*font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;*/
-	font: 20px sans-serif;
+	font-family: Arial;
         }
 
 	.axis {
-	font: 18px sans-serif;
+	font-family: Arial;
 	}
 	
         .axis path,
@@ -69,18 +68,25 @@
 
     <div class="post">
         <div id="total" style="position:absolute;width: 1100px;">
+          <div id="header" style="height: 100px;width: 1100px;"></div>
+            <div id="left" style="position:absolute;left: 100px; width: 1200px;">
+            </div>
         </div>
     </div>
 </div> <!-- close out the container and post divs-->
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3-color.v1.min.js"></script>
 <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 <script src="JS_files.js"></script>
 <script src="read_editing_mutlihistogram.js"></script>
 
 <div id="selectors" style="position: relative;">
+  <a href="http://nytimes.github.io/svg-crowbar/">Use svg-crowbar</a> to download the SVG version of this plot
+<br>
     <input type="checkbox" id="logScale" name="logScale" onchange="changeHistogram()" checked/>Check to log scale the HMID histogram<br>
     <input type="checkbox" id="logScaleTop" name="logScaleTop" onchange="logTheTop()"/>Check to log scale the per-site lines<br>
-
+    <input type="text" id="startPosition" class="resizedTextbox" name="startPositionField" onchange="adjustPosition()"/>  Where to begin the plotting within the reference<br>
+    <input type="text" id="endPosition" class="resizedTextbox" name="endPositionField" onchange="adjustPosition()"/>  Where to end the plotting withing the reference<br>
 
     <select id="topX" onchange="changeSelection()"/>
       <option value="100">top 100 events</option>

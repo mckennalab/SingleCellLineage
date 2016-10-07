@@ -65,24 +65,12 @@ var superscript = "⁰¹²³⁴⁵⁶⁷⁸⁹",
 // ************************************************************************************************************
 // setup the SVG panels
 // ************************************************************************************************************
-/*var svgHeat = d3.select("#heatmap").append("svg")
-    .attr("width", global_width)
-    .attr("height", heat_height)
-    .append("g")*/
-
 var svg = d3.select("#left").append("svg")
     .attr("width", global_width)
     .attr("height", global_height)
     .append("g")
     .attr("transform", "translate(10,10)")
 
-    
-/*var svgHeatRight = d3.select("#heatmapRight")
-    .append("svg")
-    .attr("width", right_histo_width)
-    .attr("height", global_width)
-    .append("g")
-  */  
 function logTheTop() {
     d3.select("#topplot").select("svg").remove();
     
@@ -108,26 +96,28 @@ var aux_data = ""
 // ************************************************************************************************************
 d3.tsv(per_base_histogram_data, function (error, data) {
     histogram_top_data = data
-    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
+    if (((typeof interval_file == 'undefined') || aux_data != "") && histogram_top_data != "" && cut_site_data != "") {
 	redrawTheTopHistogram()
     }
 })
 
 d3.tsv(cut_site_file, function (error, data) {
     cut_site_data = data
-    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
+    if (((typeof interval_file == 'undefined') || aux_data != "")&& histogram_top_data != "" && cut_site_data != "") {
 	redrawTheTopHistogram()
     }    
 })
 
-// if we have additional annotations, load them, and add them to the plot
-d3.tsv("highlight_region.txt", function (error, data) {
-    aux_data = data
-
-    if (aux_data != "" && histogram_top_data != "" && cut_site_data != "") {
-	redrawTheTopHistogram()
-    }
-})
+if (typeof interval_file != 'undefined') {
+    // if we have additional annotations, load them, and add them to the plot
+    d3.tsv(interval_file, function (error, data) {
+	aux_data = data
+	
+	if (((typeof interval_file == 'undefined') || aux_data != "") && histogram_top_data != "" && cut_site_data != "") {
+	    redrawTheTopHistogram()
+	}
+    })
+}
 
 
 
@@ -140,13 +130,18 @@ function redrawTheTopHistogram() {
         });
     }));
 
-    var maxVal = endPos // d3.max(local_rbd , function (d) {return +d.length})
-    var minVal = startPos // d3.min(local_rbd , function (d) {return +d.position})
-    var xEvents = d3.scale.linear().domain([0,maxVal - minVal]).range([margin_left, top_width]);
+    var maxVal = d3.max(muts[0], function (d) {return +d.x})
+    var minVal = d3.min(muts[0], function (d) {return +d.x})
+    
+    var xEvents = d3.scale.linear().domain([minVal,maxVal]).range([margin_left, top_width]);
 
-    var yMax =  Math.max(d3.max(muts[2].map(function (d) {return d.y;})),Math.max(d3.max(muts[0].map(function (d) {return d.y;})),d3.max(muts[1].map(function (d) {return d.y;}))));
+    var yMax =  Math.max(d3.max(muts[2].map(function (d) {return d.y;})),
+			 Math.max(d3.max(muts[0].map(function (d) {return d.y;})),
+				  d3.max(muts[1].map(function (d) {return d.y;}))));
     
     var yEvents = d3.scale.linear().domain([0, yMax]).range([top_height, 0]);
+
+    // deal with y-axis format issues when the editing rate drops low, and one sig digit isn't enough
     var formatter = d3.format("2.1%");
     if (yMax < 0.001) {
 	formatter = d3.format("2.2%");
@@ -200,17 +195,13 @@ function redrawTheTopHistogram() {
     // ************************************************************************************************************
     // load in the cutsite data and draw that onto the plot -- this is nested to use the x and y axis object from above
     // ************************************************************************************************************
-    
-    var minCutSite = d3.min(cut_site_data, function(d) {
-	return(+d.position);
-    }) - 19;
-    
+        
     svg.selectAll('.target')
         .data(cut_site_data)
         .enter().append('rect')
         .attr('class', 'target')
         .attr('x', function (d) {
-            return xEvents(+d.position - (minVal + 20));
+            return xEvents(+d.position);
         })
         .attr('y', 0)
         .attr('width', function (d) {
@@ -229,14 +220,14 @@ function redrawTheTopHistogram() {
 	    // this is very hacky -- also deal with some people not being able to camel-case their columns like what was asked of them
 	    if (typeof d.cutPos === 'undefined') {
 		if ((+d.cutpos) - (+d.position) > 10)
-		    return xEvents((+d.cutpos + 4) - (minVal + 20));
+		    return xEvents(+d.cutpos + 4)
 		else
-		    return xEvents((+d.position - 4) - (minVal + 20 ));
+		    return xEvents(+d.position - 4)
 	    } else {
 		if ((+d.cutPos) - (+d.position) > 10)
-		    return xEvents((+d.cutPos + 4) - (minVal + 20));
+		    return xEvents(+d.cutPos + 4)
 		else
-		    return xEvents((+d.position - 4) - (minVal + 20));
+		    return xEvents(+d.position - 4)
 	    }
         })
         .attr('y', 0)
@@ -343,23 +334,17 @@ function redrawTheTopHistogram() {
             .enter().append('rect')
             .attr('class', 'cutsites')
             .attr('x', function (d) {
-		var min = Math.min((+d.start) - (minVal + 20),maxVal);
-		return xEvents(min);
+		return xEvents(+d.start);
             })
             .attr('y', 0)
             .attr('width', function (d) {
 		var width = +d.end - +d.start;
-		var pos = Math.min((+d.start) - (minVal + 20),maxVal);
-		if (xEvents(width) + xEvents(pos) > xEvents(maxVal))
-		    return xEvents(maxVal - +d.start)
-		else
-		    return xEvents(width)
+		return xEvents(width) - xEvents(minVal)
             })
             .attr('height', top_height)
-            .attr("fill-opacity", .6)
-            .attr("fill", "blue")
+            .attr("fill-opacity", .5)
+            .attr("fill", function (d) {return d.color})
     }
-    
 }; 
 
 function changeHistogram() {
@@ -428,9 +413,6 @@ function redrawHistogram() {
 	})
     	.attr("transform", "translate(" + (top_width + right_histo_buffer_x) + "," + -1.0 * ( right_histo_height - top_height) + ")");
     
-   
-    var wt_colors = ['#000000', '#00FF00', '#555555', '#117202', '#333333'];
-
     mutbox2.selectAll(".barRightHisto")
         .data(local_occur_data)
         .enter().append("rect")
@@ -448,13 +430,12 @@ function redrawHistogram() {
             return gridHeight * cropHeightProp;
         })
         .style("fill", function (d, i) {
-            return wt_colors[+d.WT];
+            return d.WT;
         })
         .style("stroke", function (d, i) {
-            return wt_colors[+d.WT + 2];
+            return shadeColor2(d.WT,-0.5);
         })
     
-
     // this is really hacky, but I can't seem to programmaticly slim down the number of ticks on the x axis in log mode, so do it by hand
     if (xScaleIsLog) {
 	svg.append("g")
@@ -550,8 +531,8 @@ function redraw_read_block() {
     var gridHeight = Math.min(maxReadHeight, parseInt(heat_height / readCount));
     var totalHeatHeight = gridHeight * readCount
 
-    var maxVal = endPos // d3.max(local_rbd , function (d) {return +d.length})
-    var minVal = startPos // d3.min(local_rbd , function (d) {return +d.position})
+    var maxVal = d3.max(local_rbd , function (d) {return +d.end})
+    var minVal = d3.min(local_rbd , function (d) {return +d.start})
     
     // the scales and axis for the heatmap data
     var yScale = d3.scale.ordinal().domain(local_rbd.map(function (d) {
@@ -622,3 +603,15 @@ function redrawAll() {
     redraw_read_block();
     redrawHistogram();
 }    
+
+// from http://stackoverflow.com/questions/5560248/programmatically-lighten-or-darken-a-hex-color-or-rgb-and-blend-colors
+function shadeColor2(color, percent) {   
+    var f=parseInt(color.slice(1),16),
+	t=percent<0?0:255,
+	p=percent<0?percent*-1:percent,
+	R=f>>16,
+	G=f>>8&0x00FF,
+	B=f&0x0000FF;
+    
+    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
