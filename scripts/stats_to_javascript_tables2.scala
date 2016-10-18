@@ -33,7 +33,8 @@ case class HMID(events: Array[Event]) {
     val eventInts = Array.fill[Int](referenceLength)(0)
     events.foreach{evt => {
       (evt.position until (evt.position + evt.size)).foreach{pos => {
-        eventInts(pos) = evt.classOf.toInt
+        if (pos >= 0 && pos < referenceLength)
+          eventInts(pos) = evt.classOf.toInt
       }}
     }}
     return eventInts
@@ -190,6 +191,8 @@ val unknownsAsNone = args(7).toUpperCase match {
   case "FALSE" => false
   case _ => throw new IllegalArgumentException("Unable to determine the unknown reads -> true parameter")
 }
+
+val topXevents = 500
 val statsObj = new StatsFile(args(0),unknownsAsNone)
 val cutSites = new CutSiteContainer(args(5))
 val referenceLength = Source.fromFile(args(8)).getLines().drop(1).map{line => line.size}.sum
@@ -210,7 +213,6 @@ val occurances    = new PrintWriter(args(1))
 val readCounts    = new PrintWriter(args(3))
 val allEventsF    = new PrintWriter(args(4))
 val perBaseEventsNew = new PrintWriter(args(6))
-
 // -----------------------------------------------------------------------------
 // first output all of the events
 // -----------------------------------------------------------------------------
@@ -226,7 +228,7 @@ allEventsF.close()
 val wt_colors = Array[String]("#888888", "#00FF00")
 
 readCounts.write("event\tarray\tproportion\trawCount\tWT\n")
-statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
+statsObj.sortedEvents.slice(0,topXevents).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
   var color = if(hmidEvents.isWT) wt_colors(1) else wt_colors(0)
   highlighedRegions.foreach{ray => ray.foreach{region => {
     if (hmidEvents.activeEventOverlap(region.start,region.end)) {
@@ -242,7 +244,7 @@ readCounts.close()
 // output the top events as a melted string of 0s, 1s, and 2s (encoded indels)
 // -----------------------------------------------------------------------------
 perBaseEvents.write("array\tposition\tevent\n")
-statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
+statsObj.sortedEvents.slice(0,topXevents).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
   hmidEvents.eventToPerBase(referenceLength).zipWithIndex.foreach{case(event,subIndex) =>
     perBaseEvents.write(index + "\t" + subIndex + "\t" + event + "\n")
   }
@@ -254,7 +256,7 @@ perBaseEvents.close()
 // -----------------------------------------------------------------------------
 
 perBaseEventsNew.write("array\tstart\tend\tevent\n")
-statsObj.sortedEvents.slice(0,100).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
+statsObj.sortedEvents.slice(0,topXevents).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
   hmidEvents.eventToETPB(referenceLength).zipWithIndex.foreach{case(etpb,subIndex) =>
     perBaseEventsNew.write(index + "\t" + etpb.start + "\t" + etpb.stop + "\t" + etpb.event + "\n")
   }

@@ -1,0 +1,136 @@
+import scala.io._
+import java.io._
+import scala.collection.mutable._
+
+// the edit distance between two strings
+def editDistance(str1: String, str2: String): Int = str1.zip(str2).map{case(b1,b2) => if (b1 == b2) 0 else 1}.sum
+case class OTHit(bases: String, editDist: Int, count: Int)
+
+// tree nodes
+class TreeNode(base: Char, depth: Int, terminal: Boolean, stopDepth: Int) {
+
+  var childCount = 0
+
+  val myBase = base
+  val myDepth = depth
+  val myTerminal = terminal
+  val myStopDepth = stopDepth
+
+  var aChild: Option[TreeNode] = None
+  var cChild: Option[TreeNode] = None
+  var gChild: Option[TreeNode] = None
+  var tChild: Option[TreeNode] = None
+
+  var guides: Option[HashMap[String,Int]] = None
+
+  // pop a base from the front, decide if we want to 
+  def addGuide(guideString: String) {
+    childCount += 1
+
+    // are we at the stopping point, where we store the remainder into a hash function?
+    if (guideString.size <= stopDepth) {
+      if (!guides.isDefined)
+        guides = Some(new HashMap[String,Int]())
+      (guides.get)(guideString) = (guides.get).getOrElse(guideString,0) + 1
+    }
+    // otherwise add the remainder of the guide to the tree
+    else {
+      val firstBase = guideString.slice(0,1)
+      val remainder = guideString.slice(1,guideString.size)
+
+      firstBase match {
+        case "A" => {
+          if (!aChild.isDefined)
+            aChild = Some(new TreeNode('A',myDepth + 1, (myDepth + 1 >= stopDepth), stopDepth))
+          aChild.get.addGuide(remainder)
+        }
+        case "C" => {
+          if (!cChild.isDefined)
+            cChild = Some(new TreeNode('C',myDepth + 1, (myDepth + 1 >= stopDepth), stopDepth))
+          cChild.get.addGuide(remainder)
+        }
+        case "G" => {
+          if (!gChild.isDefined)
+            gChild = Some(new TreeNode('G',myDepth + 1, (myDepth + 1 >= stopDepth), stopDepth))
+          gChild.get.addGuide(remainder)
+        }
+        case "T" => {
+          if (!tChild.isDefined)
+            tChild = Some(new TreeNode('T',myDepth + 1, (myDepth + 1 >= stopDepth), stopDepth))
+          tChild.get.addGuide(remainder)
+        }
+      }
+    }
+  }
+
+  // do we have the specified guide in the tree: if so return the count in the tree, otherwise 0
+  def containsGuide(guideString: String): Int = {
+    println("called with " + guideString)
+    if (guideString.size == stopDepth)
+      return guides.map{case(mp) => mp.map{case(name,count) => if (name == guideString) count else 0}.sum}.sum
+    else {
+      val remainder = guideString.slice(1,guideString.size)
+      guideString.slice(0,1) match {
+        case "A" => {if (!aChild.isDefined) return 0 else aChild.get.containsGuide(remainder)}
+        case "C" => {if (!cChild.isDefined) return 0 else cChild.get.containsGuide(remainder)}
+        case "G" => {if (!gChild.isDefined) return 0 else gChild.get.containsGuide(remainder)}
+        case "T" => {if (!tChild.isDefined) return 0 else tChild.get.containsGuide(remainder)}
+        case _ => throw new IllegalStateException("Unable to find character " + guideString.slice(0,1))
+      }
+    }
+  }
+
+  // find the set of off-target sequences for a specified guide sequence
+  def findOffTargetCandidates(seqToThisPoint: String, guideString: String, maxEditCount: Int, currentHits: Int, maxHits: Int = 300): Array[OTHit] = {
+
+    // if were here over the count, return nothing
+    if (currentHits > maxEditCount)
+      return Array[OTHit]()
+
+    println("called with " + guideString)
+    if (guideString.size == stopDepth)
+      return guides.flatMap{case(mp) =>
+        mp.map{case(name,count) => {
+          OTHit(seqToThisPoint + name,currentHits + editDistance(name, guideString),count)
+        }}
+      }.filter{case(otHit) => otHit.editDist <= maxEditCount}.toArray
+
+    else {
+      val nextBase = guideString.slice(0,1)
+      val remainder = guideString.slice(1,guideString.size)
+      val fullSeqToThisPoint = seqToThisPoint + myBase.toString
+      val aHits =
+        if (aChild.isDefined)
+          findOffTargetCandidates(fullSeqToThisPoint, remainder, maxEditCount, if (nextBase == 'A') currentHits else currentHits + 1, maxHits)
+        else Array[OTHit]()
+      val cHits =
+        if (aChild.isDefined)
+          findOffTargetCandidates(fullSeqToThisPoint, remainder, maxEditCount, if (nextBase == 'C') currentHits else currentHits + 1, maxHits)
+        else Array[OTHit]()
+      val gHits =
+        if (aChild.isDefined)
+          findOffTargetCandidates(fullSeqToThisPoint, remainder, maxEditCount, if (nextBase == 'G') currentHits else currentHits + 1, maxHits)
+        else Array[OTHit]()
+      val tHits =
+        if (aChild.isDefined)
+          findOffTargetCandidates(fullSeqToThisPoint, remainder, maxEditCount, if (nextBase == 'T') currentHits else currentHits + 1, maxHits)
+        else Array[OTHit]()
+      return aHits ++ cHits ++ gHits ++ tHits
+    }
+  }
+
+  def findOffTargetCandidates(guideString: String, maxEditCount: Int, maxHits: Int = 300): Array[OTHit] = {
+    findOffTargetCandidates("", guideString: String, maxEditCount: Int, 0, maxHits)
+  }
+}
+
+// our base tree node
+val baseTreeNode = new TreeNode('N',0, false, 10)
+baseTreeNode.addGuide("AGAGGAGGACGAGGACGACTGGG")
+baseTreeNode.addGuide("AGAGGAGGACGAGGACGACTGGG")
+println(baseTreeNode.containsGuide("AGAGGAGGACGAGGACGACTGGG"))
+println(baseTreeNode.containsGuide("AGAGGAGGACGAGGACGTCTGGG"))
+println(baseTreeNode.containsGuide("GGAGGAGGACGAGGACGACTGGG"))
+println(baseTreeNode.findOffTargetCandidates("GGAGGAGGACGAGGACGACTGGG", 2))
+
+

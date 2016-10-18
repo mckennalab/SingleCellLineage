@@ -594,10 +594,30 @@ function changeSelection() {
 function redrawAll() {
     d3.select("#left").select("svg").remove();
 
-    svg = d3.select("#left").append("svg")
-	.attr("width", global_width)
-	.attr("height", global_height)
-	.append("g")
+    if (topHMIDs > 100) {
+	// sizes for various bounding boxes
+	global_height = 1400;
+
+	// the heat size
+	heat_height = 1100;
+	right_histo_height = 1100;
+
+	svg = d3.select("#left").append("svg")
+	    .attr("width", global_width)
+	    .attr("height", global_height)
+	    .append("g")
+	
+    } else {
+	global_height = 700;
+	heat_height = 400;
+	right_histo_height = 400;
+
+	svg = d3.select("#left").append("svg")
+	    .attr("width", global_width)
+	    .attr("height", global_height)
+	    .append("g")
+    }
+
     
     redrawTheTopHistogram()
     redraw_read_block();

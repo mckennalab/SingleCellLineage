@@ -87,9 +87,11 @@
     <input type="checkbox" id="logScaleTop" name="logScaleTop" onchange="logTheTop()"/>Check to log scale the per-site lines<br>
     <input type="text" id="startPosition" class="resizedTextbox" name="startPositionField" onchange="adjustPosition()"/>  Where to begin the plotting within the reference<br>
     <input type="text" id="endPosition" class="resizedTextbox" name="endPositionField" onchange="adjustPosition()"/>  Where to end the plotting within the reference<br>
-
     <select id="topX" onchange="changeSelection()"/>
-      <option value="100">top 100 events</option>
+      <option value="500">top 500 events</option>
+      <option value="300">top 300 events</option>
+      <option value="200">top 200 events</option>
+      <option value="100" selected="selected">top 100 events</option>
       <option value="10">Top 10 events</option>
       <option value="25">Top 25 events</option>
       <option value="40">Top 40 events</option>
