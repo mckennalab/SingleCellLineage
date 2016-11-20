@@ -72,13 +72,15 @@ var svg = d3.select("#left").append("svg")
     .attr("width", global_width)
     .attr("height", global_height)
     .append("g")
-    .attr("transform", "translate(10,10)")
+    .attr("transform", "translate(40,40)")
 
 function scaleToHundred() {
-    if (highValueTop)
+    if (highValueTop) {
 	highValueTop = false
-    else
+    } else {
 	highValueTop = true
+    }
+    redrawAll()
 }
 
 function logTheTop() {
@@ -141,17 +143,18 @@ function redrawTheTopHistogram() {
     }));
 
     var maxVal = d3.max(muts[0], function (d) {return +d.x})
-    if (!highValueTop)
-	maxVal = 1.0
     
     var minVal = d3.min(muts[0], function (d) {return +d.x})
     
     var xEvents = d3.scale.linear().domain([minVal,maxVal]).range([margin_left, top_width]);
-
+    
     var yMax =  Math.max(d3.max(muts[2].map(function (d) {return d.y;})),
 			 Math.max(d3.max(muts[0].map(function (d) {return d.y;})),
 				  d3.max(muts[1].map(function (d) {return d.y;}))));
     
+    if (!highValueTop) {
+	yMax = 1.0
+    }
     var yEvents = d3.scale.linear().domain([0, yMax]).range([top_height, 0]);
 
     // deal with y-axis format issues when the editing rate drops low, and one sig digit isn't enough
@@ -621,6 +624,7 @@ function redrawAll() {
 	    .attr("width", global_width)
 	    .attr("height", global_height)
 	    .append("g")
+	    .attr("transform", "translate(40,40)")
 	
     } else {
 	global_height = 700;
@@ -631,6 +635,7 @@ function redrawAll() {
 	    .attr("width", global_width)
 	    .attr("height", global_height)
 	    .append("g")
+	    .attr("transform", "translate(40,40)")
     }
 
     
