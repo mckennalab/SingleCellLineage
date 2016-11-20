@@ -22,6 +22,7 @@ def gis(s: String) = new GZIPInputStream(new BufferedInputStream(new FileInputSt
 
 // reverse complement a string of DNA bases
 def reverseComplement(str: String) = str.map{t => compBase(t)}.reverse.mkString("")
+def reverse(str: String) = str.map{t => t}.reverse.mkString("")
 
 // forward and reverse reads are compressed
 if (args(0) endsWith ".gz") {
@@ -58,7 +59,7 @@ if (args(0) endsWith ".gz") {
     interleavedFile.write(read2(0) + "\n")
     interleavedFile.write(reverseComplement(read2(1)) + "\n")
     interleavedFile.write(read2(2) + "\n")
-    interleavedFile.write(read2(3) + "\n")
+    interleavedFile.write(reverse(read2(3)) + "\n")
   }
 
   interleavedFile.close()

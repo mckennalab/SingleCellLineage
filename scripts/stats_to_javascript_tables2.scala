@@ -258,7 +258,7 @@ perBaseEvents.close()
 perBaseEventsNew.write("array\tstart\tend\tevent\n")
 statsObj.sortedEvents.slice(0,topXevents).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
   hmidEvents.eventToETPB(referenceLength).zipWithIndex.foreach{case(etpb,subIndex) =>
-    perBaseEventsNew.write(index + "\t" + etpb.start + "\t" + etpb.stop + "\t" + etpb.event + "\n")
+    perBaseEventsNew.write(index + "\t" + math.max(0,etpb.start) + "\t" + math.min(referenceLength-1,etpb.stop) + "\t" + etpb.event + "\n")
   }
 }}
 perBaseEventsNew.close()

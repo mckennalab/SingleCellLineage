@@ -24,6 +24,9 @@ var right_histo_buffer_x = 5;
 var heat_height = 400;
 var heat_width = 800;
 
+// should we use the data's high value or 100% on the top of the plot
+var highValueTop = true
+
 // top bar dims
 var top_height = 100;
 var top_width = 800;
@@ -33,7 +36,7 @@ var top_width = 800;
 // 2) color for deletions
 // 3) color for insertions
 // 4) color for mismatch? might be useful for TYR data
-var heatmap_colors = [d3.color("rgba(255, 255, 255, 1.0)"),d3.color("rgba(255, 0, 0, 1.0)"),d3.color("rgba(26, 99, 255, 1.0)"),d3.color("rgba(0,255,0,1.0)"),d3.color("rgba(0,0,0,1.0)")];
+var heatmap_colors = [d3.color("rgba(255, 255, 255, 1.0)"),d3.color("rgba(255, 0, 0, 1.0)"),d3.color("rgba(26, 99, 255, 1.0)"),d3.color("rgba(0,255,0,1.0)"),d3.color("rgba(0,0,0,1.0)"),d3.color("rgba(255,116,0,0.5)")];
 // var heatmap_colors = ['#FFFFFF', '#FF0000', '#1A63FF', '#00FF00','#000000'];
 
 // the labels for types of events we support in the input data
@@ -70,6 +73,13 @@ var svg = d3.select("#left").append("svg")
     .attr("height", global_height)
     .append("g")
     .attr("transform", "translate(10,10)")
+
+function scaleToHundred() {
+    if (highValueTop)
+	highValueTop = false
+    else
+	highValueTop = true
+}
 
 function logTheTop() {
     d3.select("#topplot").select("svg").remove();
@@ -124,13 +134,16 @@ if (typeof interval_file != 'undefined') {
 
 function redrawTheTopHistogram() {
     // make a new data set where we melt down the mutations -- effectively like melt in R
-    var muts = d3.layout.stack()(["deletion", "insertion","scar"].map(function (mutation) {
+    var muts = d3.layout.stack()(["deletion", "insertion","scar","uncovered"].map(function (mutation) {
         return histogram_top_data.map(function (d) {
             return {x: parseInt(d.index), y: +d[mutation], type: numberToType[mutation]};
         });
     }));
 
     var maxVal = d3.max(muts[0], function (d) {return +d.x})
+    if (!highValueTop)
+	maxVal = 1.0
+    
     var minVal = d3.min(muts[0], function (d) {return +d.x})
     
     var xEvents = d3.scale.linear().domain([minVal,maxVal]).range([margin_left, top_width]);
@@ -270,10 +283,12 @@ function redrawTheTopHistogram() {
 	svg.append("svg:path").attr("d", lineLog(muts[0])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[1]).attr("stroke-width", "3px")
 	svg.append("svg:path").attr("d", lineLog(muts[1])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[2]).attr("stroke-width", "3px")
 	svg.append("svg:path").attr("d", lineLog(muts[2])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[4]).attr("stroke-width", "3px")
+	svg.append("svg:path").attr("d", lineLog(muts[3])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[5]).attr("stroke-width", "3px")
     } else {
 	svg.append("svg:path").attr("d", line(muts[0])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[1]).attr("stroke-width", "3px")
 	svg.append("svg:path").attr("d", line(muts[1])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[2]).attr("stroke-width", "3px")	
-	svg.append("svg:path").attr("d", line(muts[2])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[4]).attr("stroke-width", "3px")	
+	svg.append("svg:path").attr("d", line(muts[2])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[4]).attr("stroke-width", "3px")
+	svg.append("svg:path").attr("d", line(muts[3])).attr("class", "line").attr("fill", "none").attr("stroke", heatmap_colors[5]).attr("stroke-width", "3px")
     }
     
     svg.append("g")

@@ -144,9 +144,8 @@ weightFile.close()
 // for each event, output the name and events
 // -----------------------------------------------------------------------------------
 
-annotationFile.write("taxa\tsample\tcount\tproportion\tevent\n")
+annotationFile.write("taxa\tsample\tcount\tproportion\tevent\tcellIDs\n")
 
-// buffer the output strings
 var outputBuffer = Array[String]()
 newEventList.toArray.foreach{evt => {
   val outputStr = evt.toMixString(nextIndex)
