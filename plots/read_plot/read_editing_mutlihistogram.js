@@ -11,7 +11,7 @@
 var numberToType = {"0": "match", "1": "deletion", "2": "insertion", "4": "scar"};
 
 // sizes for various bounding boxes
-var global_width = 1000;
+var global_width = 1200;
 var global_height = 700;
 var margin_left = 80;
 
