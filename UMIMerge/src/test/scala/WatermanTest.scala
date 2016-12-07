@@ -20,7 +20,7 @@ class WatermanTest extends FlatSpec with Matchers {
     val rRead = Aligner.SequencingReadFromNameBases("rev",readRev)
 
 
-    Waterman.alignTo(Array[SequencingRead](fRead),Some(ref),true)
+    Waterman.alignTo(Array[SequencingRead](fRead),Some(ref),false)
   }
 
   "A waterman alignment" should "work2" in {
@@ -33,6 +33,6 @@ class WatermanTest extends FlatSpec with Matchers {
     val rRead = Aligner.SequencingReadFromNameBases("rev",readRev)
 
 
-    Waterman.alignTo(Array[SequencingRead](fRead,rRead),None,true)
+    Waterman.alignTo(Array[SequencingRead](fRead,rRead),None,false)
   }
 }

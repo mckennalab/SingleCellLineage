@@ -2,7 +2,8 @@ package eventcalling
 
 import java.io._
 
-import aligner.AlignmentManager
+import aligner.{AlignmentManager, NeedlemanWunsch}
+import pacbio.PacBioInverter
 import utils.CutSites
 import stats._
 import utils._
@@ -38,13 +39,14 @@ import scala.io._
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  *
  */
-case class DeepConfig(inputFileUnmerged: File = new File(DeepSeq.NOTAREALFILENAME),
+case class DeepConfig(inputFileUnmerged: Option[File] = None,
                       inputMerged: File = new File(DeepSeq.NOTAREALFILENAME),
                       outputStats: File = new File(DeepSeq.NOTAREALFILENAME),
                       cutSites: File = new File(DeepSeq.NOTAREALFILENAME),
                       primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
                       primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to four
+                      cutsiteWindow: Int = 3,
                       primersToCheck: String = "BOTH",
                       samplename: String = "TEST")
 
@@ -59,11 +61,12 @@ object DeepSeq extends App {
     head("DeepSeq", "1.0")
 
     // *********************************** Inputs *******************************************************
-    opt[File]("inputUnmerged") required() valueName ("<file>") action { (x, c) => c.copy(inputFileUnmerged = x) } text ("unmerged reads")
+    opt[File]("inputUnmerged") valueName ("<file>") action { (x, c) => c.copy(inputFileUnmerged = Some(x)) } text ("unmerged reads")
     opt[File]("inputMerged") required() valueName ("<file>") action { (x, c) => c.copy(inputMerged = x) } text ("the merged read file")
     opt[File]("outputStats") required() valueName ("<file>") action { (x, c) => c.copy(outputStats = x) } text ("the output stats file")
     opt[File]("cutSites") required() valueName ("<file>") action { (x, c) => c.copy(cutSites = x) } text ("the location of the cutsites")
     opt[Int]("primerMismatches") required() valueName ("<int>") action { (x, c) => c.copy(primerMismatches = x) } text ("the maximum number of mismatches to allow in the adapter sequences")
+    opt[Int]("cutsiteWindow") valueName ("<int>") action { (x, c) => c.copy(cutsiteWindow = x) } text ("the amount of upstream and downstream bases to consider when looking for overlapping edits")
     opt[File]("primersEachEnd") required() valueName ("<file>") action { (x, c) => c.copy(primersEachEnd = x) } text ("the file containing the amplicon primers requred to be present, one per line, two lines total")
     opt[String]("sample") required() action { (x, c) => c.copy(samplename = x) } text ("the sample name of this run")
     opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
@@ -91,7 +94,7 @@ object DeepSeq extends App {
    *
    */
   def alignedReads(config: DeepConfig): Unit = {
-    val cutsSiteObj = CutSites.fromFile(config.cutSites, 3)
+    val cutsSiteObj = CutSites.fromFile(config.cutSites, config.cutsiteWindow)
 
     val outputStatsFile = new StatsOutput(config.outputStats,cutsSiteObj.size)
 
@@ -115,16 +118,18 @@ object DeepSeq extends App {
     }
 
     // now process paired reads
-    val firstReadIterator = new UnmergedReadParser(config.inputFileUnmerged)
+    if (config.inputFileUnmerged.isDefined) {
+      val firstReadIterator = new UnmergedReadParser(config.inputFileUnmerged.get)
 
-    println("traversing unmerged reads...")
-    firstReadIterator.foreach { twoReads => {
-      printPairedRead(cutsSiteObj,
-        outputStatsFile,
-        twoReads,
-        primers,
-        config)
-    }
+      println("traversing unmerged reads...")
+      firstReadIterator.foreach { twoReads => {
+        printPairedRead(cutsSiteObj,
+          outputStatsFile,
+          twoReads,
+          primers,
+          config)
+      }
+      }
     }
     outputStatsFile.close()
   }
@@ -143,14 +148,13 @@ object DeepSeq extends App {
                       primers: List[String],
                       config: DeepConfig): Unit = {
 
-    val readStr = mergedRead.read.bases.filter(bs => bs != '-').mkString("")
-    val containsFwdPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD")
-      Utils.editDistance(readStr.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
-    else true
+    val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
+      case "BOTH" => Utils.containsBothPrimerByAlignment(mergedRead.read.bases, primers(0), primers(1),config.primerMismatches)
+      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(mergedRead.read.bases,primers(0),config.primerMismatches),true)
+      case "REVERSE" => (true,Utils.containsREVPrimerByAlignment(mergedRead.read.bases,primers(1),config.primerMismatches))
+      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
+    }
 
-    val containsRevPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "REVERSE")
-      Utils.editDistance(readStr.slice(readStr.length - primers(1).size,readStr.length),primers(1)) <= config.primerMismatches
-    else true
 
     val baseLen = mergedRead.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
@@ -163,6 +167,19 @@ object DeepSeq extends App {
       false, true, baseLen, -1, 1, 1, callEvents.matchingRate, -1.0, callEvents.matchingBaseCount, -1,
       callEvents.alignments, callEvents.basesOverTargets, None, None, Some(mergedRead.read.bases), None, None, Some(mergedRead.reference.bases)))
 
+  }
+
+  def containsAlignedPrimer(mergedRead: RefReadPair, primer: String, checkPrimers: String, mismatches: Int, revComp: Boolean): Boolean = {
+    val alignment = if (!revComp) new NeedlemanWunsch(primer) else new NeedlemanWunsch(Utils.reverseComplement(primer))
+
+    val readStr = mergedRead.read.bases.filter(bs => bs != '-').mkString("")
+    if ((checkPrimers == "BOTH" || checkPrimers == "FORWARD") && readStr.size >= primer.length) {
+        val alignedForward = alignment.align(readStr.slice(0, primer.size))
+        Utils.editDistance(alignedForward.referenceAlignment, alignedForward.queryAlignment) <= mismatches
+    } else if (readStr.size < primer.length)
+      false
+    else
+      true
   }
 
   /**
@@ -178,15 +195,13 @@ object DeepSeq extends App {
                       primers: List[String],
                       config: DeepConfig): Unit = {
 
-    val readStrFWD = readPairs.pair1.read.bases.filter(bs => bs != '-').mkString("")
-    val readStrREV = readPairs.pair2.read.bases.filter(bs => bs != '-').mkString("")
-    val containsFwdPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD")
-      Utils.editDistance(readStrFWD.slice(0,primers(0).length),primers(0)) <= config.primerMismatches
-    else true
 
-    val containsRevPrimer = if (config.primersToCheck == "BOTH" || config.primersToCheck == "REVERSE")
-      Utils.editDistance(readStrREV.slice(readStrREV.length - primers(1).size,readStrREV.length),primers(1)) <= config.primerMismatches
-    else true
+    val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
+      case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),config.primerMismatches)
+      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readPairs.pair1.read.bases,primers(0),config.primerMismatches),true)
+      case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readPairs.pair2.read.bases,primers(1),config.primerMismatches))
+      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
+    }
 
     val base1Len = readPairs.pair1.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
     val base2Len = readPairs.pair2.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
@@ -224,5 +239,14 @@ object DeepSeq extends App {
         Some(readPairs.pair2.reference.bases),
         None))
 
+  }
+
+  def containsPrimer(primer: String, config: DeepConfig, readStrFWD: String): Boolean = {
+    val containsFwdPrimer = if ((config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD") && readStrFWD.size >= primer.length)
+      Utils.editDistance(readStrFWD.slice(0, primer.length), primer) <= config.primerMismatches
+    else if (readStrFWD.size < primer.length)
+      false
+    else true
+    containsFwdPrimer
   }
 }

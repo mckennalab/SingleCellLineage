@@ -12,13 +12,13 @@ import scala.collection.mutable
  */
 class AlignmentManagerTest extends FlatSpec with Matchers {
   val readName = "TestRead1"
-
+  val debug = false
 
   "Alignment manager" should "find basic deletion correctly" in {
     val ref =     "AAATAAAAT"
     val readFwd = "AAAA-AAAA"
     val cutSites = CutSites.fromIntervals(Array[Tuple3[Int,Int,Int]]((3,5,7)))
-    val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites, true)
+    val testCalls = AlignmentManager.callEdits(ref,readFwd,1,cutSites, debug)
     testCalls._1.length should be (3)
     testCalls._1(0).cigarCharacter should be (Match)
     testCalls._1(0).readBase should be ("AAAA")
@@ -149,7 +149,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
 
     val combined = AlignmentManager.editsToCutSiteCalls(List[List[Alignment]](testCalls1._1,testCalls2._1),List[List[String]](testCalls1._2,testCalls2._2),cutSites)
     combined._2.size should be (2)
-    println(combined._2.mkString(")("))
+    //println(combined._2.mkString(")("))
     combined._2(0) should be ("WT_1D+5")
     combined._2(1) should be ("WT_2D+14")
   }
@@ -191,7 +191,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
 
     val combined = AlignmentManager.editsToCutSiteCalls(List[List[Alignment]](testCalls1._1,testCalls2._1),List[List[String]](testCalls1._2,testCalls2._2),cutSites)
     combined._2.size should be (2)
-    println(combined._2.mkString(")("))
+    //println(combined._2.mkString(")("))
     combined._2(0) should be ("1D+5")
     combined._2(1) should be ("2D+14")
   }
@@ -200,15 +200,15 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val ref1 =     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTAATGATACGGCGACCACCGAGATCTACACNNNNNNNNCTAAATGGCTGTGAGAGAGCTCAGNNNNNNNNNNTAGTGTATGTGCAGTGAGCCCCTTTTCCTCTAACTGAAAGAAGGAAAAAAAAATGGAACCCAAAATATTCTACATAGTTTCCATGTCACAGCCAGGGCTGGGCAGTCTCCTGTTATTTCTTTTAAAATAAATATATCATTTAAATGCATAAATAAGCAAACCCTGCTCGGGAATGGGAGGGAGAGTCTCTGGAGTCCACCCCTTCTCGGCCCTGGCTCTGCAGATAGTGCTATCAAAGCCCTGACAGAGCCCTGCCCATTGCTGGGCCTTGGAGTGAGTCAGCCTAGTAGAGAGGCAGGGCAAGCCATCTCATAGCTGCTGAGTGGGAGAGAGAAAAGGGCTCATTGTCTATAAACTCAGGTCATGGCTATTCTTATTCTCACACTAAGAAAAAGAATGAGATGTCTACATATACCCTGCGTCCCCTCTTGTGTACTGGGGTCCCCAAGAGCTCTCTAAAAGTGATGGCAAAGTCATTGCGCTAGATGCCATCCCATCTATTATAAACCTGCATTTGTCTCCACACACCAGTCATGGACGGTTTGGAGCGAGATTGATAAAGTNNNNNNNNNNTGAACGCTTATCTCGTATGCCGTCTTCTGCTTGAAAAAAAAAAAAAAAAAAAAAAAAAAA"
     val readFwd1 = "-----------------------------------------------------------------------------------------------------TAGTGTATGTGCAGTGAGCCCCTTTTCCTCTAACTGAAAGAAGGAAAAAAAAATGGAACCCAAAATATTCTACATAGTTTCC-TGTCACAGCagacGCTGGGCAGTCTCCTGTTATTTCTTTTAAAATAAATATATCATTTAAATGCATAAATAAGCAAACCCTGCTCGGGAATGGGAGGGAGAGTCTCTGGAGTCCACCCCTTCTCGGCCCTGGCTCTGCAGATAGTGCTATCAAAGCCCTGACAGAGCCCTGCCCATTGCTGGGCCTTGGAGTGAGTCA----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
-    println("BIG TEST TIME!!")
+    //println("BIG TEST TIME!!")
     val cutSites = CutSites.fromFile(new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/2016_03_07_Mollys_stuff/data/MGreference.fa.cutSites"),3)
     val testCalls = AlignmentManager.callEdits(ref1,readFwd1,1,cutSites)
 
-    println(testCalls._3(0))
-    println(testCalls._3(0))
-    println(testCalls._2(0))
+    //println(testCalls._3(0))
+    //println(testCalls._3(0))
+    //println(testCalls._2(0))
     val scarsHopefully = AlignmentManager.findScar(0, testCalls._3(0), testCalls._2(0), cutSites.sites(0).cutPosition - cutSites.sites(0).startPos)
-    println(scarsHopefully.isDefined)
+    //println(scarsHopefully.isDefined)
     scarsHopefully should not be None
     scarsHopefully.get.cigarCharacter should be (Scar)
   }
@@ -266,7 +266,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     cutsites.sites :+= IndividualCutSite("TestRef", 0, 5, 10, 15, 20)
 
     val edits = AlignmentManager.editsToCutSiteCalls(List[List[Alignment]](List[Alignment](fakeReferenceBases1,fakeReferenceBases2)), List[List[String]](List[String]("AAAAAAAAAA")), cutsites)
-    println("-------------------->>>>>>>>")
-    println("-->>" + edits._2.mkString(",") + "<<--" + edits._3.mkString(",") + "<<--")
+    //println("-------------------->>>>>>>>")
+    //println("-->>" + edits._2.mkString(",") + "<<--" + edits._3.mkString(",") + "<<--")
   }
 }

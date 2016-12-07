@@ -14,6 +14,7 @@ case class SequencingRead(name: String, bases: String, quals: String, readOrient
   def length = bases.length
   var reverseCompAlign = false
 
+  var alignedRead: Option[String] = None
 
   // reads can store metadata in their names, a series of double underscore tags at the end of the read like __number->10
   var metaData = Array[Tuple2[String,String]]()

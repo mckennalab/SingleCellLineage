@@ -2,9 +2,13 @@ package utils
 
 import scala.io._
 import java.io._
+
 import scala.collection.mutable._
 import scala.sys.process._
 import java.util.zip._
+
+import aligner.NeedlemanWunsch
+import reads.RefReadPair
 
 /**
   * Created by aaronmck on 10/22/15.
@@ -57,6 +61,89 @@ object Utils {
   }
 
   /**
+    * helper method: does the read start with the primer of interest?
+    * @param read the read sequence
+    * @param primer the primer sequence
+    * @param allowedMismatches the number of mismatches allowed to consider it a TRUE
+    * @return true if mismatches <= allowedMismatches
+    */
+  def containsFWDPrimerByAlignment(read: String, primer: String, allowedMismatches: Int): Boolean = {
+    editDistanceByAlignment(primer,read,true) <= allowedMismatches
+  }
+
+  /**
+    * helper method: does the read start with the primer of interest?
+    * @param read the read sequence
+    * @param primer the primer sequence, the reverse complement of which will match our read
+    * @param allowedMismatches the number of mismatches allowed to consider it a TRUE
+    * @return true if mismatches <= allowedMismatches
+    */
+  def containsREVCompPrimerByAlignment(read: String, primer: String, allowedMismatches: Int): Boolean = {
+    editDistanceByAlignment(Utils.reverseComplement(primer),read,true) <= allowedMismatches
+  }
+
+  /**
+    * helper method: does the read start with the primer of interest? IMPORTANT: this assumes the primer and read will
+    * be a match without reverse complimenting
+    *
+    * @param read the read sequence
+    * @param primer the primer sequence, the reverse complement of which will match our read
+    * @param allowedMismatches the number of mismatches allowed to consider it a TRUE
+    * @return true if mismatches <= allowedMismatches
+    */
+  def containsREVPrimerByAlignment(read: String, primer: String, allowedMismatches: Int): Boolean = {
+    // we have to subset the end of the read for the reverse primer check, and reverse complement it to match the primer
+    val endOfReadRC = Utils.reverseComplement(read.slice(read.length - primer.length,read.length))
+
+    editDistanceByAlignment(Utils.reverseComplement(primer),endOfReadRC,false) <= allowedMismatches
+  }
+
+  /**
+    * helper method: do our paired-end reads start and end with the primer of interest?
+    * @param read1 the first read seq
+    * @param read2 second read
+    * @param primer1 our first primer
+    * @param primer2 our second primer, the reverse complement of which will match our read 2
+    * @param allowedMismatches true if mismatches <= allowedMismatches
+    * @return a tuple for each read, where true means the # of mismatches <= allowedMismatches
+    */
+  def containsBothPrimerByAlignment(read1: String, read2: String, primer1: String, primer2: String, allowedMismatches: Int): Tuple2[Boolean,Boolean] = {
+    (containsFWDPrimerByAlignment(read1,primer1,allowedMismatches),containsREVCompPrimerByAlignment(read2,primer2,allowedMismatches))
+  }
+
+  /**
+    * helper method: does our read start and end with the primer of interest?
+    * @param read the sequencing read
+    * @param primer1 our first primer
+    * @param primer2 second primer, reverse complement should match the end of the read
+    * @param allowedMismatches true if mismatches <= allowedMismatches
+    * @return a tuple for each read, where true means the # of mismatches <= allowedMismatches
+    */
+  def containsBothPrimerByAlignment(read: String, primer1: String, primer2: String, allowedMismatches: Int): Tuple2[Boolean,Boolean] = {
+    (containsFWDPrimerByAlignment(read,primer1,allowedMismatches),containsREVPrimerByAlignment(read,primer2,allowedMismatches))
+  }
+
+
+  /**
+    * perform an alignment using Needleman-Wunsch between two strings and find their edit distance
+    * @param alignTo the sequence to align to
+    * @param alignWith sequence to align with
+    * @return the edit distance (int)
+    */
+  def editDistanceByAlignment(alignTo: String, alignWith: String, subsetToAlignToLength: Boolean): Int = {
+
+    // filter gaps out of each sequence before setting up the alignment
+    val reference = alignTo.filter(bs => bs != '-').mkString("")
+    val query = alignWith.filter(bs => bs != '-').mkString("")
+
+    val alignment = new NeedlemanWunsch(reference)
+
+    val subsetQuery = if (subsetToAlignToLength) query.slice(0,reference.length) else query
+    val nwResult = alignment.align(subsetQuery)
+    Utils.editDistance(nwResult.referenceAlignment, nwResult.queryAlignment)
+  }
+
+  /**
     * compute the edit distance of two base strings
     *
     * @param seq1 the first sequence
@@ -66,7 +153,7 @@ object Utils {
     */
   def editDistance(seq1: String, seq2: String): Int = {
     if (seq1.size != seq2.size)
-      throw new IllegalStateException("Unable to compare edit distances for unequal strings")
+      throw new IllegalStateException("Unable to compare edit distances for unequal strings: " + seq1 + " AND " + seq2)
     seq1.toUpperCase().zip(seq2.toUpperCase).map { case (s1, s2) => if (s1 == s2) 0 else 1 }.sum
   }
 }

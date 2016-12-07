@@ -3,8 +3,9 @@ package aligner
 import reads.SequencingRead
 
 /**
-  * a basic approach to aligning multiple reads -- just assume that all of the reads the same length and find the
-  * consensus along the length of the read
+  * a basic approach to aligning multiple reads -- don't actually do it.  just assume that all of the reads the same length and
+  * pass back the reads as-is.  For illumina reads from the same UMI, this generally works well and is super fast
+  *
   */
 object BasicAligner extends Aligner {
 

@@ -23,7 +23,7 @@ object UMIMerger {
                     sample: String,
                     minSurvivingReads: Int,
                     index: Int,
-                    aligner: Aligner): Int = {
+                    aligner: Aligner): UMIMergePairResult = {
 
 
     // some constants we should probably bubble-up
@@ -54,11 +54,14 @@ object UMIMerger {
 
         outputFastq1.write(fwdConsensus.toFastqString(umi + "FWD" + "_" + fwdCleanedUp.size + "_" + readsFCount, false, index, 0) + "\n")
         outputFastq2.write(revConsensus.toFastqString(umi + "REV" + "_" + revCleanedUp.size + "_" + readsRCount, false, index, 0) + "\n")
+
+        return UMIMergePairResult(fwdConsensus.bases,revConsensus.bases,readsF.size,readsR.size,fwdCleanedUp.size,revCleanedUp.size)
       }
 
     }
-    return 1
-
+    return UMIMergePairResult(SequencingRead.stripDownToJustBases(Consensus.consensus(preparedFWD)).bases,
+      SequencingRead.stripDownToJustBases(Consensus.consensus(preparedREV)).bases,
+      readsF.size,readsR.size,0,0)
   }
 
   def mergeTogetherSingleReads(umi: String,
@@ -70,7 +73,7 @@ object UMIMerger {
                     sample: String,
                     minSurvivingReads: Int,
                     index: Int,
-                    aligner: Aligner): Int = {
+                    aligner: Aligner): UMIMergeResult = {
 
 
     // some constants we should probably bubble-up
@@ -94,10 +97,11 @@ object UMIMerger {
         val fwdConsensus = SequencingRead.stripDownToJustBases(Consensus.consensus(fwdCleanedUp, "ConsensusFWD"))
 
         outputFastq1.write(fwdConsensus.toFastqString(umi + "FWD" + "_" + fwdCleanedUp.size + "_" + readsFCount, false, index, 0) + "\n")
+        return UMIMergeResult(fwdConsensus.bases,readsF.size,fwdCleanedUp.size)
       }
 
     }
-    return 1
+    return UMIMergeResult(SequencingRead.stripDownToJustBases(Consensus.consensus(preparedFWD)).bases, readsF.size, 0)
 
   }
 
@@ -115,3 +119,6 @@ object UMIMerger {
   }
 
 }
+
+case class UMIMergePairResult(read1Consensus: String, read2Consensus: String, read1InputCount: Int, read2InputCount: Int, read1SurvivingCount: Int, read2SurvivingCount: Int)
+case class UMIMergeResult(readConsensus: String, readInputCount: Int, readSurvivingCount: Int)

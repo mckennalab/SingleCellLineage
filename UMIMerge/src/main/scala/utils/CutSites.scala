@@ -41,6 +41,9 @@ object CutSites {
     Source.fromFile(cutsiteFile).getLines().drop(1).zipWithIndex.foreach { case (line, index) => {
       val sp = line.split("\t")
 
+      if (sp.size != 3)
+        throw new IllegalStateException("Unable to process cutsites file line: " + line + ", with token count " + sp.size + " (which should be 3)")
+
       val bases = sp(0)
       val start = sp(1).toInt - 1
       val cutSite = sp(2).toInt - 1

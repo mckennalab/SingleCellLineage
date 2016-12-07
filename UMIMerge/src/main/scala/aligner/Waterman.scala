@@ -14,7 +14,7 @@ import scala.sys.process._
  */
 // ------------------------------------------------------------------------------------------
 //
-// process reads to and from the clustalo algorithm
+// process reads to and from the smith waterman (needleall) algorithm
 //
 // ------------------------------------------------------------------------------------------
 object Waterman extends Aligner {
