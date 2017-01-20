@@ -87,15 +87,12 @@ object Utils {
     * be a match without reverse complimenting
     *
     * @param read the read sequence
-    * @param primer the primer sequence, the reverse complement of which will match our read
+    * @param primer the primer sequence
     * @param allowedMismatches the number of mismatches allowed to consider it a TRUE
     * @return true if mismatches <= allowedMismatches
     */
-  def containsREVPrimerByAlignment(read: String, primer: String, allowedMismatches: Int): Boolean = {
-    // we have to subset the end of the read for the reverse primer check, and reverse complement it to match the primer
-    val endOfReadRC = Utils.reverseComplement(read.slice(read.length - primer.length,read.length))
-
-    editDistanceByAlignment(Utils.reverseComplement(primer),endOfReadRC,false) <= allowedMismatches
+  def readEndsWithPrimerExistingDirection(read: String, primer: String, allowedMismatches: Int): Boolean = {
+    editDistanceByAlignment(primer,read.slice(read.length - primer.length,read.length),false) <= allowedMismatches
   }
 
   /**
@@ -108,19 +105,19 @@ object Utils {
     * @return a tuple for each read, where true means the # of mismatches <= allowedMismatches
     */
   def containsBothPrimerByAlignment(read1: String, read2: String, primer1: String, primer2: String, allowedMismatches: Int): Tuple2[Boolean,Boolean] = {
-    (containsFWDPrimerByAlignment(read1,primer1,allowedMismatches),containsREVCompPrimerByAlignment(read2,primer2,allowedMismatches))
+    (containsFWDPrimerByAlignment(read1,primer1,allowedMismatches),readEndsWithPrimerExistingDirection(read2,primer2,allowedMismatches))
   }
 
   /**
-    * helper method: does our read start and end with the primer of interest?
+    * helper method: does a MERGED read contain both primers?
     * @param read the sequencing read
     * @param primer1 our first primer
-    * @param primer2 second primer, reverse complement should match the end of the read
+    * @param primer2 second primer, normal complement! (read 5' to 3')
     * @param allowedMismatches true if mismatches <= allowedMismatches
     * @return a tuple for each read, where true means the # of mismatches <= allowedMismatches
     */
   def containsBothPrimerByAlignment(read: String, primer1: String, primer2: String, allowedMismatches: Int): Tuple2[Boolean,Boolean] = {
-    (containsFWDPrimerByAlignment(read,primer1,allowedMismatches),containsREVPrimerByAlignment(read,primer2,allowedMismatches))
+    (containsFWDPrimerByAlignment(read,primer1,allowedMismatches),readEndsWithPrimerExistingDirection(read,primer2,allowedMismatches))
   }
 
 

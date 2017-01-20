@@ -17,17 +17,18 @@ class UtilsTest extends FlatSpec with Matchers {
   }
 
   "containsBothPrimerByAlignment" should "find primers on both ends of a read" in {
-    val read =     "ATCGGCGTAATATA"
+    val read1 =     "ATCGGCGTATTTTTTATAGGGGGGTA"
+    val read2 =     "TTTTATAGGGGGGTAATATA"
     val primer1 =  "ATCGGCG"
     val primer2 =  "AATATA"
 
-    Utils.containsBothPrimerByAlignment(read,primer1,primer2,0) should be ((true,true))
+    Utils.containsBothPrimerByAlignment(read1,read2,primer1,primer2,0) should be ((true,true))
   }
 
   "containsBothPrimerByAlignment" should "find primers on two ends of a read" in {
-    val read =     "ATCGGCGTAATATA"
+    val read =     "ATCGGCGGGGGGGGGGGGTAATATAGGG"
     val primer1 =  "ATCGGCG"
-    val primer2 =  "AATATA"
+    val primer2 =  "AATATAGGG"
 
     Utils.containsBothPrimerByAlignment(read,primer1,primer2,0) should be ((true,true))
   }

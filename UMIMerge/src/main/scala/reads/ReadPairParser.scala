@@ -29,8 +29,8 @@ class ReadPairParser(readFile: File) extends Iterator[RefReadPair] {
       var line = reads.peek
       if ((line startsWith ">") && inRead) {
         return Some(RefReadPair(
-          SequencingRead.readFromNameAndSeq(refName, refString.result().mkString("")),
-          SequencingRead.readFromNameAndSeq(readName, readString.result().mkString("")),true))
+          SequencingRead.readFromNameAndSeq(refName, refString.result().mkString("").toUpperCase),
+          SequencingRead.readFromNameAndSeq(readName, readString.result().mkString("").toUpperCase),true))
       }
 
       else if (line startsWith ">") {

@@ -37,9 +37,11 @@ object NeedlemanWunsch {
     // now fill in the score matrix
     (1 until str1.size).foreach { index1 => {
       (1 until str2.size).foreach { index2 => {
+
         val matchedScore = scores(index1 - 1)(index2 - 1) + (if (str1(index1 - 1) == str2(index2 - 1)) matchVal else mismatchVal)
         val deletionScore = scores(index1 - 1)(index2) + gap
         val insertionScore = scores(index1)(index2 - 1) + gap
+
         (matchedScore, deletionScore, insertionScore) match {
           case (m, d, i) if m >= d && m >= i => {
             scores(index1)(index2) = matchedScore

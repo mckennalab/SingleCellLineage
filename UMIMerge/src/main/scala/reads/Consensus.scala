@@ -203,7 +203,8 @@ object Consensus {
     def prepareConsensus(reads: Array[SequencingRead],
                          minimumReadLength: Int,
                          minimumQualScore: Double): Array[SequencingRead] = {
-    // check that our reads meet the minimum thresholds to be merged
+
+      // check that our reads meet the minimum thresholds to be merged
     val filteredReads =   checkReadsMetMinimumInputQuality(reads, minimumReadLength, minimumQualScore)
 
     // create a consensus of reference, forward, and reverse reads

@@ -288,7 +288,7 @@ object UMIProcessing extends App {
 
       // for the forward read the UMI start position is used literally,
       // for the reverse read (when start is negitive) we go from the end of the read backwards that much. To
-      // allow UMIs to start at the zero'th base on the reverse, we say the first base is one
+      // allow UMIs to start at the zero'th base on the reverse, we say the first base is one, second is 2, etc.
       var umi: Option[String] = None
 
       if (config.umiStartPos >= 0) {

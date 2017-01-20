@@ -65,4 +65,13 @@ class ConsensusTest extends FlatSpec with Matchers {
     cons.length should be (9)
     cons.bases should be ("TTTTTTTAT")
   }
+
+  "Consensus" should "properly find the consensus from a single read" in {
+    val fakeRead1 = SequencingRead.readFromNameAndSeq("TEST1","TATTATTTTT") // 10 bases
+
+    val cons = Consensus.consensus(Array[SequencingRead](fakeRead1))
+
+    cons.length should be (10)
+    cons.bases should be ("TATTATTTTT")
+  }
 }

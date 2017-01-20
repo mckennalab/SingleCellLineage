@@ -47,6 +47,8 @@ case class DeepConfig(inputFileUnmerged: Option[File] = None,
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
                       primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to four
                       cutsiteWindow: Int = 3,
+                      requiredMatchingProportion: Double = 0.85, // what proportion of the match/mismatch bases must be matches?
+                      requiredRemainingBases: Int = 25, // how many matches bases are required to not fail this alignment?
                       primersToCheck: String = "BOTH",
                       samplename: String = "TEST")
 
@@ -70,6 +72,8 @@ object DeepSeq extends App {
     opt[File]("primersEachEnd") required() valueName ("<file>") action { (x, c) => c.copy(primersEachEnd = x) } text ("the file containing the amplicon primers requred to be present, one per line, two lines total")
     opt[String]("sample") required() action { (x, c) => c.copy(samplename = x) } text ("the sample name of this run")
     opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
+    opt[Double]("requiredMatchingProp") valueName ("<double>") action { (x, c) => c.copy(requiredMatchingProportion = x) } text ("what proportion of the match/mismatch bases must be matches?")
+    opt[Int]("requiredRemainingBases") valueName ("<int>") action { (x, c) => c.copy(requiredRemainingBases = x) } text ("how many matches bases are required to call this a successful alignment (x2 for merged reads)?")
 
     // some general command-line setup stuff
     note("process aligned reads from non-UMI samples\n")
@@ -151,7 +155,8 @@ object DeepSeq extends App {
     val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
       case "BOTH" => Utils.containsBothPrimerByAlignment(mergedRead.read.bases, primers(0), primers(1),config.primerMismatches)
       case "FORWARD" => (Utils.containsFWDPrimerByAlignment(mergedRead.read.bases,primers(0),config.primerMismatches),true)
-      case "REVERSE" => (true,Utils.containsREVPrimerByAlignment(mergedRead.read.bases,primers(1),config.primerMismatches))
+      case "REVERSE" => (true,Utils.readEndsWithPrimerExistingDirection(mergedRead.read.bases,primers(1),config.primerMismatches))
+      case "NONE" => (true,true)
       case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
     }
 
@@ -160,8 +165,8 @@ object DeepSeq extends App {
 
     val callEvents = AlignmentManager.cutSiteEvent(mergedRead, cutsSiteObj)
 
-    val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate > .85 &&
-      callEvents.matchingBaseCount> 50 && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
+    val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate >= config.requiredMatchingProportion &&
+      callEvents.matchingBaseCount >= (config.requiredRemainingBases * 2) && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
 
     outputStatsFile.outputStatEntry(new StatsContainer(mergedRead.read.name, pass, callEvents.collision, containsFwdPrimer, containsRevPrimer,
       false, true, baseLen, -1, 1, 1, callEvents.matchingRate, -1.0, callEvents.matchingBaseCount, -1,
@@ -200,6 +205,7 @@ object DeepSeq extends App {
       case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),config.primerMismatches)
       case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readPairs.pair1.read.bases,primers(0),config.primerMismatches),true)
       case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readPairs.pair2.read.bases,primers(1),config.primerMismatches))
+      case "NONE" => (true,true)
       case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
     }
 
@@ -209,8 +215,8 @@ object DeepSeq extends App {
     val callEvents = AlignmentManager.cutSiteEventsPair(readPairs.pair1, readPairs.pair2, cutsSiteObj)
 
     val pass = containsFwdPrimer && containsRevPrimer &&
-      callEvents.matchingRate1 > .85 && callEvents.matchingRate2 > .85 &&
-      callEvents.matchingBaseCount1 > 25 && callEvents.matchingBaseCount2 > 25 &&
+      callEvents.matchingRate1 >= config.requiredMatchingProportion && callEvents.matchingRate2 >= config.requiredMatchingProportion &&
+      callEvents.matchingBaseCount1 >= config.requiredRemainingBases && callEvents.matchingBaseCount2 >= config.requiredRemainingBases &&
       !(callEvents.alignments.mkString("") contains "WT_") &&
       !callEvents.collision
 
