@@ -11,7 +11,7 @@ import scala.collection.mutable
   */
 class NeedlemanWunschTest extends FlatSpec with Matchers {
   val reference = "ATCGATCGGGG"
-/*
+
   "Needleman Wunsch" should "do a basic alignment correctly" in {
     val nwa = new NeedlemanWunsch(reference)
     val read1 = "ATCATCG"
@@ -39,15 +39,15 @@ class NeedlemanWunschTest extends FlatSpec with Matchers {
     alignment.queryAlignment should be ("AATCGAT-GGGG")
   }
 
-  "Needleman Wunsch" should "handle a complex, long alignment well" in {
+  "Needleman Wunsch" should "work on a trivial primer alignment" in {
+    val part1 = "TCGAACTGAGTCCAGACACCCGGACGCCACC"
+    val part2 = "GAACTGAGTCCAGACACCCGGACGCCACC"
+    val nwa = new NeedlemanWunsch(part1)
+    val alignment = nwa.align(part2)
 
-
-
-    val alignment = nwa.align(read1)
-    alignment.referenceAlignment should be ("-ATCGATCGGGG")
-    alignment.queryAlignment should be ("AATCGAT-GGGG")
+    alignment.referenceAlignment should be ("TCGAACTGAGTCCAGACACCCGGACGCCACC")
+        alignment.queryAlignment should be ("--GAACTGAGTCCAGACACCCGGACGCCACC")
   }
-
 
   def readAlignments(fasta: String): Unit = {
 
@@ -57,6 +57,5 @@ class NeedlemanWunschTest extends FlatSpec with Matchers {
     def read = alignedRead.filter{case(c) => c != '-'}.mkString("")
     def ref = alignedRef.filter{case(c) => c != '-'}.mkString("")
   }
-*/
 }
 

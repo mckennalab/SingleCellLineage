@@ -35,4 +35,5 @@ class WatermanTest extends FlatSpec with Matchers {
 
     Waterman.alignTo(Array[SequencingRead](fRead,rRead),None,false)
   }
+
 }

@@ -21,7 +21,7 @@ object NeedlemanWunsch {
                       str2: String,
                       matchVal: Double = 5.0,
                       mismatchVal: Double = -4.0,
-                      gap: Double = -10.0,
+                      gap: Double = -7.0,
                       printMatrix: Boolean = false): Tuple2[String, String] = {
 
     // our data matrix -- an extra row at the beginning for initialized values

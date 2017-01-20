@@ -45,7 +45,7 @@ case class DeepConfig(inputFileUnmerged: Option[File] = None,
                       cutSites: File = new File(DeepSeq.NOTAREALFILENAME),
                       primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
-                      primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to four
+                      primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to zero
                       cutsiteWindow: Int = 3,
                       requiredMatchingProportion: Double = 0.85, // what proportion of the match/mismatch bases must be matches?
                       requiredRemainingBases: Int = 25, // how many matches bases are required to not fail this alignment?
@@ -60,7 +60,7 @@ object DeepSeq extends App {
 
   // parse the command line arguments
   val parser = new scopt.OptionParser[DeepConfig]("DeepSeq") {
-    head("DeepSeq", "1.0")
+    head("DeepSeq", "1.1")
 
     // *********************************** Inputs *******************************************************
     opt[File]("inputUnmerged") valueName ("<file>") action { (x, c) => c.copy(inputFileUnmerged = Some(x)) } text ("unmerged reads")
@@ -171,7 +171,6 @@ object DeepSeq extends App {
     outputStatsFile.outputStatEntry(new StatsContainer(mergedRead.read.name, pass, callEvents.collision, containsFwdPrimer, containsRevPrimer,
       false, true, baseLen, -1, 1, 1, callEvents.matchingRate, -1.0, callEvents.matchingBaseCount, -1,
       callEvents.alignments, callEvents.basesOverTargets, None, None, Some(mergedRead.read.bases), None, None, Some(mergedRead.reference.bases)))
-
   }
 
   def containsAlignedPrimer(mergedRead: RefReadPair, primer: String, checkPrimers: String, mismatches: Int, revComp: Boolean): Boolean = {
