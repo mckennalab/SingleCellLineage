@@ -18,7 +18,7 @@ case class BestTree(treeFile: File) {
   val trees = one_line.split(";").zipWithIndex.map{case(tree,index) => {
     val treeString = tree.split("\\[")
     val score = treeString(1).stripSuffix("]").toDouble
-    if (score >= bestScore) {
+    if (score > bestScore) {
       bestScore = score
       maxIndex = index
     }

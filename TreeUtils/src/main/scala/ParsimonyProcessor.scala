@@ -32,7 +32,7 @@ class ParsimonyProcessor(mixTrees: File,
   val mixParser = new MixParser(mixOutput.getAbsolutePath, eventsToNumbers.getAbsolutePath, bestTreeContainer.maxIndex)
 
   // load our tree
-  val treeParser = new TreeParser(bestTreeContainer.bestTreeString, false, true, true, 1)
+  val treeParser = new TreeParser(bestTreeContainer.bestTreeString, false, true, true, bestTreeContainer.maxIndex)
 
   // load up any annotations we have
   val annotationMapping = new AnnotationsManager(annotations, sampleToClade, eventColorsFile)

@@ -227,16 +227,20 @@ allEventsF.close()
 // -----------------------------------------------------------------------------
 val wt_colors = Array[String]("#888888", "#00FF00")
 
-readCounts.write("event\tarray\tproportion\trawCount\tWT\n")
+readCounts.write("event\tarray\tproportion\trawCount\tWT\thighlightMembership\n")
 statsObj.sortedEvents.slice(0,topXevents).zipWithIndex.foreach{case((hmid,hmidEvents),index) => {
   var color = if(hmidEvents.isWT) wt_colors(1) else wt_colors(0)
+  var highlightMembership = Array[String]()
   highlighedRegions.foreach{ray => ray.foreach{region => {
     if (hmidEvents.activeEventOverlap(region.start,region.end)) {
       color = region.color
+      highlightMembership :+= region.start + "-" + region.end + "_" + region.color.stripPrefix("#").stripPrefix("\"").stripSuffix("\"")
     }
   }}}
 
-  readCounts.write(hmid + "\t" + index + "\t" + (hmidEvents.count.toDouble / statsObj.totalHMIDs.toDouble) + "\t" + hmidEvents.count + "\t" + color + "\n")
+  val hlString = if (highlightMembership.size == 0) "NONE" else highlightMembership.mkString(",")
+
+  readCounts.write(hmid + "\t" + index + "\t" + (hmidEvents.count.toDouble / statsObj.totalHMIDs.toDouble) + "\t" + hmidEvents.count + "\t" + color + "\t" + hlString + "\n")
 }}
 readCounts.close()
 

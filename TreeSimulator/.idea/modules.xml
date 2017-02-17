@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DiagMKModeler.iml" filepath="$PROJECT_DIR$/DiagMKModeler.iml" />
+      <module fileurl="file://$PROJECT_DIR$/TreeSimulator.iml" filepath="$PROJECT_DIR$/TreeSimulator.iml" />
     </modules>
   </component>
 </project>

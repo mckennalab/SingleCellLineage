@@ -59,17 +59,7 @@ class MixParser(mixOutput: String, eventsToNumbers: String, treeToUse: Int) {
           if (currentTreeNumber == treeToUse) {
             treeToGenotypes(currentTreeNumber) = new ArrayBuffer[Edge]()
           }
-          //println("New tree" + currentTreeNumber)
-        }
-        else if (inGenotypeSection && !line.contains(".")) {
-          inGenotypeSection = false
-          if (currentGenotype.isDefined) {
-            treeToGenotypes(currentTreeNumber) += currentGenotype.get
-            println("tree size = " + treeToGenotypes(currentTreeNumber).size)
-          }
-
-          currentGenotype = None
-          currentTreeNumber += 1
+          println("New tree" + currentTreeNumber)
         }
         else if (inGenotypeSection && (line.contains("yes") || line.contains("no"))) {
           if (currentTreeNumber == treeToUse) {
@@ -80,6 +70,16 @@ class MixParser(mixOutput: String, eventsToNumbers: String, treeToUse: Int) {
             currentGenotype = Some(Edge(sp(0), sp(1), sp(2) == "yes", currentTreeNumber))
             currentGenotype.get.addChars(sp.slice(3, sp.size).mkString(""))
           }
+        }
+        else if (inGenotypeSection && line.map{chr => if (chr == ' ' || chr == '1' || chr == '.') 0 else 1}.sum > 0) {
+          inGenotypeSection = false
+          if (currentGenotype.isDefined) {
+            treeToGenotypes(currentTreeNumber) += currentGenotype.get
+            println("tree size = " + treeToGenotypes(currentTreeNumber).size)
+          }
+
+          currentGenotype = None
+          currentTreeNumber += 1
         }
         else if (inGenotypeSection) {
           if (currentTreeNumber == treeToUse) {
@@ -101,6 +101,7 @@ class MixParser(mixOutput: String, eventsToNumbers: String, treeToUse: Int) {
     currentTreeNumber += 1
 
     activeTree = Some(treeToGenotypes(treeToUse).toArray)
+    treeToGenotypes(treeToUse).toArray.foreach{case(edg) => println(edg.from + " -> " + edg.to)}
   }
 
 

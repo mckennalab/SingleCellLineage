@@ -10,7 +10,10 @@ import scala.io.Source
   * for each node name to a set of annotations.  On request,
   * annotate each node with it's appropriate info
   */
-class AnnotationsManager(annotations: File, sampleToClade: File, cladeIdentities: Option[File]) {
+class AnnotationsManager(annotations: File,
+                         sampleToClade: File,
+                         cladeIdentities: Option[File]
+                        ) {
   // annotationMapping
   // taxa    sample  count   proportion      event
   // N0      17_Brain        3501    0.14872557349192864     1D+141_NONE_NONE_1D+220_10D+237_1I+273+T_10D+289_67D+322_67D+322_67D+322

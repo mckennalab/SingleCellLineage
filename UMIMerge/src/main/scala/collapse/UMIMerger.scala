@@ -13,8 +13,8 @@ import reads.SequencingRead
 object UMIMerger {
 
   def mergeTogether(umi: String,
-                    readsF: Array[SequencingRead],
-                    readsR: Array[SequencingRead],
+                    readsF: List[SequencingRead],
+                    readsR: List[SequencingRead],
                     readsFCount: Int,
                     readsRCount: Int,
                     outputFastq1: PrintWriter,
@@ -32,8 +32,8 @@ object UMIMerger {
     val debug = false
 
     // use MSA to align all the reads
-    val preparedFWD = Consensus.prepareConsensus(readsF, minReadLength, minMeanQualScore)
-    val preparedREV = Consensus.prepareConsensus(readsR, minReadLength, minMeanQualScore)
+    val preparedFWD = Consensus.prepareConsensus(readsF.toArray, minReadLength, minMeanQualScore)
+    val preparedREV = Consensus.prepareConsensus(readsR.toArray, minReadLength, minMeanQualScore)
 
     if (preparedFWD.size > 1 && preparedREV.size > 1) {
 
@@ -65,9 +65,8 @@ object UMIMerger {
   }
 
   def mergeTogetherSingleReads(umi: String,
-                    readsF: Array[SequencingRead],
+                    readsF: List[SequencingRead],
                     readsFCount: Int,
-                    readsRCount: Int,
                     outputFastq1: PrintWriter,
                     primers: List[String],
                     sample: String,
@@ -82,7 +81,7 @@ object UMIMerger {
     val debug = false
 
     // use MSA to align all the reads
-    val preparedFWD = Consensus.prepareConsensus(readsF, minReadLength, minMeanQualScore)
+    val preparedFWD = Consensus.prepareConsensus(readsF.toArray, minReadLength, minMeanQualScore)
 
     if (preparedFWD.size > 1) {
 

@@ -56,9 +56,8 @@ case class RichNode(originalNd: Node,
   var childrenEvents = Array[String]()
 
   originalNd.getChildren.asScala.foreach { nd => {
-    children :+= RichNode(nd, annotations, Some(this),numberOfTargets)
-  }
-  }
+    children :+= RichNode(nd, annotations, Some(this), numberOfTargets)
+  }}
 
   // ******************************************************************************************************
   // our member methods

@@ -68,7 +68,7 @@ object Utils {
     * @return true if mismatches <= allowedMismatches
     */
   def containsFWDPrimerByAlignment(read: String, primer: String, allowedMismatches: Int): Boolean = {
-    println("ALLOWED " + allowedMismatches + " PRIMER " + primer  + " READ " + read + " ==> " + editDistanceByAlignment(primer,read,true))
+    //println("ALLOWED " + allowedMismatches + " PRIMER " + primer  + " READ " + read + " ==> " + editDistanceByAlignment(primer,read,true))
     editDistanceByAlignment(primer,read,true) <= allowedMismatches
   }
 
@@ -93,7 +93,7 @@ object Utils {
     * @return true if mismatches <= allowedMismatches
     */
   def readEndsWithPrimerExistingDirection(read: String, primer: String, allowedMismatches: Int): Boolean = {
-    println("REVERSE!!!!")
+    //println("REVERSE!!!!")
     val filteredRead = read.filter(bs => bs != '-').mkString("")
     editDistanceByAlignment(primer,filteredRead.slice(filteredRead.length - primer.length,filteredRead.length),false) <= allowedMismatches
   }
@@ -140,7 +140,7 @@ object Utils {
 
     val subsetQuery = if (subsetToAlignToLength) query.slice(0,reference.length) else query
     val nwResult = alignment.align(subsetQuery)
-    println(nwResult.queryAlignment,nwResult.referenceAlignment)
+    //println(nwResult.queryAlignment,nwResult.referenceAlignment)
     Utils.editDistance(nwResult.referenceAlignment, nwResult.queryAlignment)
   }
 

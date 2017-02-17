@@ -45,7 +45,7 @@ class DNAQC extends QScript {
   var generateTree: File = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/TreeUtils/target/scala-2.11/TreeUtils-assembly-1.1.jar")
 
   @Argument(doc = "where we drop out final tree files", fullName = "treedir", shortName = "treedir", required = false)
-  var treedir: File = new File("/net/shendure/vol2/www/content/members/aaron/fate_map/all_trees/tree_data/")
+  var treedir: File = new File("/net/shendure/vol10/www/content/members/aaron/fate_map/all_trees/tree_data/")
 
   /** **************************************************************************
     * Global Variables
@@ -164,7 +164,7 @@ class DNAQC extends QScript {
     @Input(doc = "the allele event to the mix assigned number") var eventToNum = eventToNumber
     @Output(doc = "the output tree we make") var outTree = outputTree
 
-    def commandLine = "java -Xmx5g -jar " + generateTree + " --inputTree " + tree + " --inputGenotypes " + geno + " --inputAnnotations " + annot + " --inputSampleToClade " + sampleToClade +
+    def commandLine = "/net/gs/vol3/software/modules-sw/java/8u25/Linux/RHEL6/x86_64/bin/java -Xmx5g -jar " + generateTree + " --inputTree " + tree + " --inputGenotypes " + geno + " --inputAnnotations " + annot + " --inputSampleToClade " + sampleToClade +
       " --inputEventsToNumbers " + eventToNumber + " --outputTree " + outTree
 
     this.analysisName = queueLogDir + outTree + ".tree"

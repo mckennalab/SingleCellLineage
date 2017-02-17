@@ -4,9 +4,10 @@ import java.io._
 
 import aligner.{BasicAligner, NeedlemanWunsch}
 import utils.Utils
-import reads.{ForwardReadOrientation, RankedReadContainer, ReverseReadOrientation, SequencingRead, SingleRankedReadContainer}
+import reads._
 
-import scala.collection.mutable
+import scala.annotation.switch
+import scala.collection.{Iterator, mutable}
 import scala.io._
 
 /**
@@ -93,10 +94,7 @@ object UMIProcessing extends App {
   // run the actual read processing -- our argument parser found all of the parameters it needed
   parser.parse(args, Config()) map {
     config: Config => {
-      if (config.outputFastq2.isDefined && !config.processSingleReads)
         umiAnalysis(config)
-      else
-        umiAnalysisSingleEnd(config)
     }
   } getOrElse {
     println("Unable to parse the command line arguments you passed in, please check that your parameters are correct")
@@ -110,14 +108,17 @@ object UMIProcessing extends App {
     * @param config our config object
    */
   def umiAnalysis(config: Config): Unit = {
+
+
     // our output files
     val outputFastq1File = new PrintWriter(config.outputFastq1.get)
-    val outputFastq2File = new PrintWriter(config.outputFastq2.get)
+    val outputFastq2File: Option[PrintWriter] = if (config.outputFastq2.isDefined) Some(new PrintWriter(config.outputFastq2.get)) else None
 
     // setup clustered input of the fastq files
     // ------------------------------------------------------------------------------------------
     val forwardReads = Source.fromInputStream(Utils.gis(config.inputFileReads1.get.getAbsolutePath)).getLines().grouped(4)
-    val reverseReads = Source.fromInputStream(Utils.gis(config.inputFileReads2.get.getAbsolutePath)).getLines().grouped(4)
+    val reverseReads: Option[ scala.collection.Iterator[Seq[String] ]] = if (config.inputFileReads2.isDefined) Some(Source.fromInputStream(Utils.gis(config.inputFileReads2.get.getAbsolutePath)).getLines().grouped(4)) else None
+    val hasReverseReads = reverseReads.isDefined // for conveinence
 
     val primers = Source.fromFile(config.primersEachEnd.get.getAbsolutePath).getLines().map { line => line }.toList
     if (primers.length != 2)
@@ -137,10 +138,11 @@ object UMIProcessing extends App {
 
     var readsProcessed = 0
     forwardReads foreach { fGroup => {
-      val rGroup = reverseReads.next()
+
+      val rGroup: Option[Seq[String]] = if (hasReverseReads) Some(reverseReads.get.next()) else None
 
       // for the forward read the UMI start position is used literally,
-      // for the reverse read (when start is negitive) we go from the end of the read backwards that much.
+      // for the reverse read (when start is negative) we go from the end of the read backwards that much.
       // for instance to allow UMIs to start at the zero'th base on the reverse, they would have provided -1 as the input
       var umi: Option[String] = None
 
@@ -151,9 +153,11 @@ object UMIProcessing extends App {
         val qualNoUMI = fGroup(3).slice(0, config.umiStartPos) + fGroup(3).slice(config.umiStartPos + config.umiLength, fGroup(3).length)
 
         val (containsForward, containsReverse) = config.primersToCheck match {
-          case "BOTH" => Utils.containsBothPrimerByAlignment(readNoUMI,rGroup(1), primers(0), primers(1),config.primerMismatches)
+          case "BOTH" if hasReverseReads => Utils.containsBothPrimerByAlignment(readNoUMI,(rGroup.get)(1), primers(0), primers(1),config.primerMismatches)
+          case "BOTH" if !( hasReverseReads )=> throw new IllegalStateException("Unable to check for both primers in single-ended reads, please set the primer check parameter to FORWARD")
           case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readNoUMI,primers(0),config.primerMismatches),true)
-          case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(rGroup(1),primers(1),config.primerMismatches))
+          case "REVERSE" if hasReverseReads => (true,Utils.containsREVCompPrimerByAlignment((rGroup.get)(1),primers(1),config.primerMismatches))
+          case "REVERSE" if !( hasReverseReads ) => (true,Utils.containsREVCompPrimerByAlignment((rGroup.get)(1),primers(1),config.primerMismatches))
           case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
         }
 
@@ -161,16 +165,21 @@ object UMIProcessing extends App {
           umiReads(umi.get) = new RankedReadContainer(umi.get, config.downsampleSize)
 
         val fwd = SequencingRead(fGroup(0), readNoUMI, qualNoUMI, ForwardReadOrientation, umi.get)
-        val rev = SequencingRead(rGroup(0), rGroup(1), rGroup(3), ReverseReadOrientation, umi.get)
+        val rev: Option[SequencingRead] = if (hasReverseReads) Some(SequencingRead((rGroup.get)(0), (rGroup.get)(1), (rGroup.get)(3), ReverseReadOrientation, umi.get)) else None
 
-        umiReads(umi.get).addRead(fwd, containsForward, rev, containsReverse)
+        if (hasReverseReads)
+          umiReads(umi.get).addBundle(SortedReadPair(fwd, rev.get, containsForward, containsReverse))
+        else
+          umiReads(umi.get).addBundle(SortedRead(fwd, containsForward))
       }
       else {
-        val umiStartPos = math.abs(config.umiStartPos).toInt - 1
-        umi = Some(rGroup(1).slice(umiStartPos, umiStartPos + config.umiLength))
+        require(rGroup.isDefined, "We can't parse UMIs off of the reverse read if the reverse read isnt' defined")
 
-        val readTwoNoUMI = rGroup(1).slice(0, umiStartPos) + rGroup(1).slice(umiStartPos + config.umiLength, rGroup(1).length)
-        val qualNoUMI = rGroup(3).slice(0, umiStartPos) + rGroup(3).slice(umiStartPos + config.umiLength, rGroup(3).length)
+        val umiStartPos = math.abs(config.umiStartPos).toInt - 1
+        umi = Some((rGroup.get)(1).slice(umiStartPos, umiStartPos + config.umiLength))
+
+        val readTwoNoUMI = (rGroup.get)(1).slice(0, umiStartPos) + (rGroup.get)(1).slice(umiStartPos + config.umiLength, (rGroup.get)(1).length)
+        val qualNoUMI = (rGroup.get)(3).slice(0, umiStartPos) + (rGroup.get)(3).slice(umiStartPos + config.umiLength, (rGroup.get)(3).length)
 
         val (containsForward, containsReverse) = config.primersToCheck match {
           case "BOTH" => Utils.containsBothPrimerByAlignment(fGroup(1),readTwoNoUMI, primers(0), primers(1),config.primerMismatches)
@@ -183,9 +192,9 @@ object UMIProcessing extends App {
           umiReads(umi.get) = new RankedReadContainer(umi.get,config.downsampleSize)
 
         val fwd = SequencingRead(fGroup(0), fGroup(1), fGroup(3), ForwardReadOrientation, umi.get)
-        val rev = SequencingRead(rGroup(0), readTwoNoUMI, qualNoUMI, ReverseReadOrientation, umi.get)
+        val rev = SequencingRead((rGroup.get)(0), readTwoNoUMI, qualNoUMI, ReverseReadOrientation, umi.get)
 
-        umiReads(umi.get).addRead(fwd, containsForward, rev, containsReverse)
+        umiReads(umi.get).addBundle(SortedReadPair(fwd, rev, containsForward, containsReverse))
       }
 
       readsProcessed += 1
@@ -196,8 +205,17 @@ object UMIProcessing extends App {
     }
     }
 
+
     var passingUMI = 0
     var totalWithUMI = 0
+
+
+    // --------------------------------------------------------------------------------
+    // take the collection of UMIs and cluster them down to a core set of UMIs, and
+    // output an error rate based on that clustering
+    // --------------------------------------------------------------------------------
+    // TODO: val clustering = new UmiClustering(config.umiLength, umiReads)
+
 
     // --------------------------------------------------------------------------------
     // for each UMI -- process the collection of reads
@@ -215,155 +233,52 @@ object UMIProcessing extends App {
       val greaterThanMinimumReads = reads.size >= config.minimumUMIReads
 
       if (greaterThanMinimumReads) {
-        val (fwdReads, revReads) = reads.toPairedFWDREV()
+        val readBundle = reads.result()
 
-        val res = UMIMerger.mergeTogether(umi,
-          fwdReads,
-          revReads,
-          reads.totalPassedReads,
-          reads.totalPassedReads,
-          outputFastq1File,
-          outputFastq2File,
-          primers,
-          config.samplename,
-          config.minimumSurvivingUMIReads,
-          index,
-          BasicAligner)
+        (readBundle.size : @switch) match {
+          case 1 => {
+            val res = UMIMerger.mergeTogether(umi,
+              readBundle(0).toReadSet,
+              readBundle(1).toReadSet,
+              reads.totalPassedReads,
+              reads.totalPassedReads,
+              outputFastq1File,
+              outputFastq2File.get,
+              primers,
+              config.samplename,
+              config.minimumSurvivingUMIReads,
+              index,
+              BasicAligner)
 
-        outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
-          reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-          reads.noPrimer2 + "\t" + res.read1SurvivingCount + "\t" + res.read2SurvivingCount + "\t" + res.read1Consensus + ";" + res.read2Consensus + "\n")
+            outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
+              reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
+              reads.noPrimer2 + "\t" + res.read1SurvivingCount + "\t" + res.read2SurvivingCount + "\t" + res.read1Consensus + ";" + res.read2Consensus + "\n")
 
-      } else {
-        outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
-          reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-          "NA\tNA\t" + reads.noPrimer2 + "\tNOTENOUGHREADS\n")
-      }
+          }
+          case 2 => {
+            val res = UMIMerger.mergeTogetherSingleReads(umi,
+              readBundle(0).toReadSet,
+              reads.totalPassedReads,
+              outputFastq1File,
+              primers,
+              config.samplename,
+              config.minimumSurvivingUMIReads,
+              index,
+              BasicAligner)
 
+            outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
+              reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
+              reads.noPrimer2 + "\t" + res.readSurvivingCount + "\tNA\t" + res.readConsensus + ";NA\n")
 
-      if (index % 1000 == 0) {
-        println("INFO: Processed " + index + " umis so far")
-      }
-      index += 1
-    }
-    }
-
-    if (outputUMIData.isDefined)
-      outputUMIData.get.close()
-    outputFastq1File.close()
-    outputFastq2File.close()
-  }
-
-
-  /**
-    * given UMIed reads, process per UMI, merging reads and calling events
-    *
-    * @param config our config object
-    */
-  def umiAnalysisSingleEnd(config: Config): Unit = {
-    // our output files
-    val outputFastq1File = new PrintWriter(config.outputFastq1.get)
-
-    // setup clustered input of the fastq files
-    // ------------------------------------------------------------------------------------------
-    val forwardReads = Source.fromInputStream(Utils.gis(config.inputFileReads1.get.getAbsolutePath)).getLines().grouped(4)
-
-    val primers = Source.fromFile(config.primersEachEnd.get.getAbsolutePath).getLines().map { line => line }.toList
-    if (primers.length != 2)
-      throw new IllegalStateException("You should only provide a primer file with two primers")
-
-    // our containers for forward and reverse reads
-    var umiReads = new mutable.HashMap[String, SingleRankedReadContainer]()
-
-    var tooFewReadsUMI = 0
-    var downsampledUMI = 0
-    var justRightUMI = 0
-
-    // --------------------------------------------------------------------------------
-    // process the reads into bins of UMIs
-    // --------------------------------------------------------------------------------
-    print("Reading in sequences and parsing out UMIs (one dot per 100K reads, carets at 1M): ")
-    var readsProcessed = 0
-    forwardReads foreach { fGroup => {
-
-      // for the forward read the UMI start position is used literally,
-      // for the reverse read (when start is negitive) we go from the end of the read backwards that much. To
-      // allow UMIs to start at the zero'th base on the reverse, we say the first base is one, second is 2, etc.
-      var umi: Option[String] = None
-
-      if (config.umiStartPos >= 0) {
-        umi = Some(fGroup(1).slice(config.umiStartPos, config.umiStartPos + config.umiLength))
-
-        val readNoUMI = fGroup(1).slice(0, config.umiStartPos) + fGroup(1).slice(config.umiStartPos + config.umiLength, fGroup(1).length)
-        val qualNoUMI = fGroup(3).slice(0, config.umiStartPos) + fGroup(3).slice(config.umiStartPos + config.umiLength, fGroup(3).length)
-
-        val containsForward = if (config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD") {
-          //println("Compare " + readNoUMI.slice(0, primers(0).length) + " to " + primers(0))
-          Utils.editDistance(readNoUMI.slice(0, primers(0).length), primers(0)) <= config.primerMismatches
+          }
         }
-        else true
-
-        if (!(umiReads contains umi.get))
-          umiReads(umi.get) = new SingleRankedReadContainer(umi.get, config.downsampleSize)
-
-        val fwd = SequencingRead(fGroup(0), readNoUMI, qualNoUMI, ForwardReadOrientation, umi.get)
-
-        umiReads(umi.get).addRead(fwd, containsForward)
-      }
-      else {
-        throw new IllegalStateException("Unable to pull UMIs from reverse read in single-end mode")
-      }
-
-      readsProcessed += 1
-      if (readsProcessed % 100000 == 0)
-        print(".")
-      if (readsProcessed % 1000000 == 0)
-        print("^")
-    }
-    }
-
-    var passingUMI = 0
-    var totalWithUMI = 0
-
-    // --------------------------------------------------------------------------------
-    // for each UMI -- process the collection of reads
-    // --------------------------------------------------------------------------------
-    var index = 1
-    val outputUMIData : Option[PrintWriter] = if (config.outputUMIStats.get.getAbsolutePath != NOTAREALFILE.getAbsolutePath)
-      Some(new PrintWriter(config.outputUMIStats.get.getAbsolutePath)) else None
-
-    if (outputUMIData.isDefined)
-      outputUMIData.get.write("umi\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\n")
-
-
-    println("\n\nTotal UMIs to process: " + umiReads.size)
-    umiReads.foreach { case (umi, reads) => {
-
-      val greaterThanMinimumReads = reads.size >= config.minimumUMIReads
-
-      if (greaterThanMinimumReads) {
-        val (fwdReads, revReads) = reads.toPairedFWDREV()
-
-        val res = UMIMerger.mergeTogetherSingleReads(umi,
-          fwdReads,
-          reads.totalPassedReads,
-          reads.totalPassedReads,
-          outputFastq1File,
-          primers,
-          config.samplename,
-          config.minimumSurvivingUMIReads,
-          index,
-          BasicAligner)
-
-        outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
-          reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-          reads.noPrimer2 + res.readSurvivingCount + "\tNA\t" + "\t" + res + "\n")
 
       } else {
         outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
           reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
           "NA\tNA\t" + reads.noPrimer2 + "\tNOTENOUGHREADS\n")
       }
+
 
       if (index % 1000 == 0) {
         println("INFO: Processed " + index + " umis so far")
@@ -375,5 +290,6 @@ object UMIProcessing extends App {
     if (outputUMIData.isDefined)
       outputUMIData.get.close()
     outputFastq1File.close()
+    if (outputFastq2File.isDefined) outputFastq2File.get.close()
   }
 }

@@ -93,7 +93,7 @@ class DNAQC extends QScript {
   var scalaPath: File = new File("/net/gs/vol1/home/aaronmck/tools/bin/scala")
 
   @Input(doc = "Invert the pacbio reads", fullName = "invert", shortName = "invert", required = false)
-  var invertPacbio: File = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/invert_pacbios.scala")
+  var invertPacbio: File = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/PacBioInverter.jar")
 
   @Input(doc = "the script to analyze the per site edits", fullName = "writeweb", shortName = "wwwrite", required = false)
   var writeWebFiles: File = "/net/gs/vol1/home/aaronmck/source/sandbox/aaron/projects/CRISPR/scripts/write_web_files.scala"
@@ -106,6 +106,9 @@ class DNAQC extends QScript {
 
   @Argument(doc = "move the data over to the web location", fullName = "webpub", shortName = "webpub", required = false)
   var toWebPublishScript = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/push_to_web_location.scala"
+
+  @Argument(doc = "move the data over to the web location", fullName = "invertScript", shortName = "invertScript", required = false)
+  var checkInversionScript = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/check_pacbio_inversion.scala"
 
   @Argument(doc = "where to find the EDA file for alignment with NW", fullName = "eda", shortName = "eda", required = false)
   var edaMatrix = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL"
@@ -161,10 +164,11 @@ class DNAQC extends QScript {
 
       val primersFile = new File(sampleObj.reference.getAbsolutePath + ".primers")
       val cutSites = new File(sampleObj.reference.getAbsolutePath + ".cutSites")
-      val invertedFastq = new File(sampleOutput + File.separator + sampleTag + ".inverted.fasta")
-      val alignedFastq = new File(sampleOutput + File.separator + sampleTag + ".aligned.fasta")
+      val orientedFasta = new File(sampleOutput + File.separator + sampleTag + ".oriented.fasta")
+      val orientedPassedFasta = new File(sampleOutput + File.separator + sampleTag + ".oriented.passed.fasta")
+      val orientedPassedFastaCalls = new File(sampleOutput + File.separator + sampleTag + ".oriented.passed.fasta.calls")
+      val alignedFasta = new File(sampleOutput + File.separator + sampleTag + ".aligned.fasta")
       val alignedStats = new File(sampleOutput + File.separator + sampleTag + ".aligned.stats")
-
       
       val perBaseEventFile = new File(sampleOutput + File.separator + sampleTag + ".perBase")
       val topReadFile = new File(sampleOutput + File.separator + sampleTag + ".topReadEvents")
@@ -172,11 +176,13 @@ class DNAQC extends QScript {
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
 
-      add(InvertPacbio(sampleObj.fastq, invertedFastq, primersFile))
-      add(PerformAlignment(sampleObj.reference, invertedFastq, alignedFastq))
+      add(InvertPacbio(sampleObj.fastq, orientedFasta, primersFile))
+      add(CheckForLargeInversions(sampleObj.reference,orientedFasta,orientedPassedFastaCalls,orientedPassedFasta, 100))
+
+      add(PerformAlignment(sampleObj.reference, orientedPassedFasta, alignedFasta))
 
       
-      add(ReadsToStats(alignedFastq,
+      add(ReadsToStats(alignedFasta,
         alignedStats,
         cutSites,
         primersFile,
@@ -324,6 +330,21 @@ class DNAQC extends QScript {
     this.jobName = queueLogDir + outFasta + ".aligner"
   }
 
+  // call out the alignment task to
+  // ********************************************************************************************************
+  case class CheckForLargeInversions(reference: File,orientedFasta: File, inversionResults: File, orientedPassedFasta: File, readLenThreshold: Int) extends CommandLineFunction with ExternalCommonArgs {
+    @Argument(doc = "the reference fasta/fa") var ref = reference
+    @Argument(doc = "the inversion results") var invResults = inversionResults
+    @Argument(doc = "the inversion threshold") var rlThresh = readLenThreshold
+    @Input(doc = "the oriented fasta file") var orFasta = orientedFasta
+    @Output(doc = "the reads passing the inversion check") var orPassFasta = orientedPassedFasta
+
+    def commandLine = scalaPath + " -J-Xmx2g " + checkInversionScript + " " + ref + " " + orFasta + " " + invResults + " " + orPassFasta + " " + rlThresh
+
+    this.analysisName = queueLogDir + orPassFasta + ".checkLI"
+    this.jobName = queueLogDir + orPassFasta + ".checkLI"
+  }
+
   // gzip a bunch of fastqs into a single gzipped fastq
   // ********************************************************************************************************
   case class ConcatFastqs(inFastqs: List[File], outFastq: File) extends ExternalCommonArgs {
@@ -344,7 +365,7 @@ class DNAQC extends QScript {
     @Input(doc = "the primers file") var primers = primersFile
     @Output(doc = "the output fasta") var outfa = outFasta
 
-    def commandLine = scalaPath + " " + invertPacbio + " " + inFasta + " " + outFasta + " " + primers
+    def commandLine = "java -Xmx4g -jar " + invertPacbio + " --fasta " + inFasta + " --outFile " + outFasta + " --primers " + primers
 
     this.analysisName = queueLogDir + outfa + ".invert"
     this.jobName = queueLogDir + outfa + ".invert"

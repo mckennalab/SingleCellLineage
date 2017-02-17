@@ -99,14 +99,13 @@ object Main extends App {
       // ------------------------------------------------------------------------------------------------------------------------
       // find the minimum set of events
       // ------------------------------------------------------------------------------------------------------------------------
-      //println("Performing merges (dot per merge)")
-      //val minSet = distances.minimizeSet(useConstraints)
+      println("Performing merges (dot per merge)")
+      val minSet = distances.minimizeSet(useConstraints)
 
       distances.toAnnotationFile(config.annotationFile, statsFile)
       // ------------------------------------------------------------------------------------------------------------------------
       // output the remaining nodes as tree
       // ------------------------------------------------------------------------------------------------------------------------
-      /*
       val newickFileOutput = new PrintWriter(config.newickFile)
       val nodeStats = new PrintWriter(config.mergeInformation)
 
@@ -118,7 +117,7 @@ object Main extends App {
 
       newickFileOutput.close()
       nodeStats.close()
-      */
+      
     }
   }
 

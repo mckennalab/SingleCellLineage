@@ -40,7 +40,7 @@ if (args(0) endsWith ".gz") {
     interleavedFile.write(read2(0) + "\n")
     interleavedFile.write(reverseComplement(read2(1)) + "\n")
     interleavedFile.write(read2(2) + "\n")
-    interleavedFile.write(read2(3) + "\n")
+    interleavedFile.write(reverse(read2(3)) + "\n")
   }
 
   interleavedFile.close()

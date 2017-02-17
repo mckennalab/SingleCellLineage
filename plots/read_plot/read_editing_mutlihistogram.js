@@ -11,14 +11,15 @@
 var numberToType = {"0": "match", "1": "deletion", "2": "insertion", "4": "scar"};
 
 // sizes for various bounding boxes
-var global_width = 1200;
+var default_global_width = 1200;
+var global_width = default_global_width;
 var global_height = 700;
 var margin_left = 80;
 
 // the right histo size
 var right_histo_width = 200;
 var right_histo_height = 400;
-var right_histo_buffer_x = 5;
+var right_histo_buffer_x = 10;
 
 // the heat size
 var heat_height = 400;
@@ -30,6 +31,9 @@ var highValueTop = true
 // top bar dims
 var top_height = 100;
 var top_width = 800;
+
+// the width of the bars in our set membership
+var setMemberWidth = 25
 
 // colors we use for events throughout the plots
 // 1) color for unedited
@@ -117,20 +121,35 @@ d3.tsv(cut_site_file, function (error, data) {
     cut_site_data = data
     if (((typeof interval_file == 'undefined') || aux_data != "")&& histogram_top_data != "" && cut_site_data != "") {
 	redrawTheTopHistogram()
-    }    
+    }
 })
+
+
 
 if (typeof interval_file != 'undefined') {
     // if we have additional annotations, load them, and add them to the plot
     d3.tsv(interval_file, function (error, data) {
 	aux_data = data
-	
+	global_width = default_global_width + setMemberWidth * data.length
+	right_histo_buffer_x = right_histo_buffer_x + setMemberWidth * data.length
 	if (((typeof interval_file == 'undefined') || aux_data != "") && histogram_top_data != "" && cut_site_data != "") {
 	    redrawTheTopHistogram()
 	}
+
+	if (occurance_data != "") {
+	    redrawUnsetMembership()
+	}
+	
     })
 }
 
+d3.tsv(occurance_file, function (error, data) {
+    occurance_data = data
+    if (aux_data != "") {
+	redrawUnsetMembership()
+    }
+    redrawHistogram();
+});
 
 
 
@@ -382,6 +401,128 @@ function changeHistogram() {
     redrawAll()
 }
 
+
+// ************************************************************************************************************
+// draw a set membership on the side of the panel instead of the histogram of alleles
+// ************************************************************************************************************
+function redrawUnsetMembership() {
+    var local_occur_data = occurance_data.filter(function(d){ return +d.array < topHMIDs; })
+
+    // convert the local data into a matrix:
+    // 1) figure out how many catagories there are and map them to integers
+    // 2) make a matrix of the correct size
+    // 3) fill in with the data
+
+    var positionMap = {};
+    var key_lookup = aux_data.map(function(ray, index) {
+	positionMap[ray.start + "-" + ray.end + "_" + ray.color] = index;
+	return positionMap;
+    });
+
+    var unsetData = createArray(local_occur_data.length, aux_data.length)
+    
+    /* fill in the data */
+    local_occur_data.map(function (d, i) {
+	Object.keys(positionMap).map(function(key,index) {
+	    unsetData[i][index] = 0;
+	})
+	
+	d["highlightMembership"].split(",").map(function(dInner,iInner) {
+	    var pos = positionMap[dInner];
+            unsetData[i][pos] = 1
+	})
+    });
+
+    var range = Array.apply(null, Array(aux_data.length)).map(function (_, i) {return i;})
+    
+    // make a new data set where we melt down the mutations -- effectively like melt in R
+    var typeHM = d3.layout.stack()(range.map(function (index) {
+	var col = aux_data[index]["color"]
+	var tp = aux_data[index]["region"]
+        return unsetData.map(function (d,i) {
+	    if (d[index] == 0) {
+		return {y: i, x: index, color: "#FFFFFF", type: tp};
+	    } else {
+		return {y: i, x: index, color: col, type: tp};
+	    }
+
+            });
+    }));
+    var mergedHM = []
+    range.map(function(x) {
+	mergedHM = mergedHM.concat(typeHM[x]);
+    });
+    
+    var readCount = d3.max(local_occur_data.map(function (d) {return +d.array;})) + 1;
+    var gridHeight = Math.min(maxReadHeight, parseInt(right_histo_height / readCount));
+    var totalHistoHeight = gridHeight * readCount
+    // var yScale = d3.scale.linear().domain([0,unsetData.length]).range([0, totalHistoHeight])
+    var yScale = d3.scale.ordinal().domain(typeHM[0].map(function (d) {
+        return d.y;
+    })).rangeBands([0, totalHistoHeight]);
+    var totalSetWidth = range.length * setMemberWidth
+    var xScale = d3.scale.linear().domain([0,aux_data.length]).range([0, totalSetWidth])
+    var xWidth = totalSetWidth / aux_data.length
+    var yWidth = totalHistoHeight / unsetData.length
+    var padding = 0.8
+    var shift = (1.0 - padding) / 2.0
+
+    var heatMap = svg.selectAll(".barRightHisto")
+        .data(mergedHM)
+        .enter().append("svg:rect")
+        .attr("x", function (d, i) {
+	    return xScale(d.x) + (xWidth * shift)
+        })
+        .attr("y", function (d, i) {
+	    return yScale(d.y) + (yWidth * shift)
+        })
+        .attr("width", function (d) {
+	    // if the far end of the bar is past the end of the plot, cap it at the end of the plot
+	    return xWidth * padding;
+        })
+        .attr("height", function (d) {
+	    return yWidth * padding;
+        })
+        .style("fill", function (d) {
+	    return d.color;
+        })
+	.style("stroke","#FFF") // "#333")
+	.style("shape-rendering","crispEdges")
+	.attr("transform", "translate(" + (top_width + 5) + "," + ( top_height + 1) + ")");
+// + (top_width + right_histo_buffer_x) + "," + -1.0 * ( right_histo_height - top_height) + ")");
+
+
+    var translatex = (top_width + 5)
+    var translatey = ( top_height - 10)
+    
+    var textnode = svg.selectAll(".texto")
+        .data(aux_data)
+        .enter()
+        .append("g");
+
+    textnode.append("circlePower")
+	.attr("class", "dot")
+	.attr("x", function(d,i) {
+	    return xScale(i);
+	})
+	.attr("y", function(d) { return yScale(0); })
+
+    textnode.append("text")
+	.attr("x", function(d,i) {
+	    return yScale(0);
+	})
+	.attr("y", function(d,i) {
+	    return xScale(i) + (setMemberWidth * .70);
+	})
+	.text(function(d) {
+	    return d.region;
+	})
+	.attr("transform", "rotate(-90) translate(" + -1.0 * translatey + "," + translatex + ")");
+
+}
+
+
+
 // ************************************************************************************************************
 // histogram on the right
 // ************************************************************************************************************
@@ -526,10 +667,6 @@ function redrawHistogram() {
 
 }
 
-d3.tsv(occurance_file, function (error, data) {
-    occurance_data = data
-    redrawHistogram();
-});
 
 // ************************************************************************************************************
 // read plots -- add a block for each of the high frequency reads we observe
@@ -638,7 +775,7 @@ function redrawAll() {
 	    .attr("transform", "translate(40,40)")
     }
 
-    
+    redrawUnsetMembership()
     redrawTheTopHistogram()
     redraw_read_block();
     redrawHistogram();
@@ -654,4 +791,17 @@ function shadeColor2(color, percent) {
 	B=f&0x0000FF;
     
     return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
+
+// http://stackoverflow.com/questions/966225/how-can-i-create-a-two-dimensional-array-in-javascript/966938#966938
+function createArray(length) {
+    var arr = new Array(length || 0),
+        i = length;
+
+    if (arguments.length > 1) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        while(i--) arr[length-1 - i] = createArray.apply(this, args);
+    }
+
+    return arr;
 }
