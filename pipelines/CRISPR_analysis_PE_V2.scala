@@ -194,9 +194,6 @@ class DNAQC extends QScript {
   @Argument(doc = "Use one of index runs as a UMI, and add it to read 1", fullName = "umiIndex", shortName = "umiIndex", required = false)
   var umiIndex: String = "NONE" // "index1" or "index2" are options
 
-  @Argument(doc = "process the reads as single end", fullName = "singleEnd", shortName = "singleEnd", required = false)
-  var processSingleReads: Boolean = false
-
   @Argument(doc = "Do we want to convert UNKNOWN calls into NONE calls?", fullName = "unknownToNone", shortName = "unknownToNone", required = false)
   var convertUnknownsToNone: Boolean = false
 
@@ -271,23 +268,41 @@ class DNAQC extends QScript {
 
 
       // ************************************** handle the barcodes **************************************
-      var barcodeFiles = List[File](sampleObj.fastqBarcode1,sampleObj.fastqBarcode2) // : Option[List[File]] = None // = List[File](sampleObj.fastqBarcode1,sampleObj.fastqBarcode2)
-      var barcodeSplitFiles = List[File](barcodeSplitIndex1,barcodeSplitIndex2)
-      if (!sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()) {
-        barcodeSplitFiles = List[File]()
-        barcodeFiles = List[File]() // None
-      } else if (sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()) {
-        barcodeSplitFiles = List[File](barcodeSplitIndex1)
-        barcodeFiles = List[File](sampleObj.fastqBarcode1)
-      } else if (!sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) {
-        barcodeSplitFiles = List[File](barcodeSplitIndex2)
-        barcodeFiles = List[File](sampleObj.fastqBarcode2)
+      val barcodes: Map[Int,String] = (Array[String](sampleObj.barcode1,sampleObj.barcode2)).zipWithIndex.map{case(barcode,index) => (index + 1,barcode)}.toMap
+
+      (sampleObj.fastqBarcode1,sampleObj.fastqBarcode2) match {
+        // we have no barcode 1 and no barcode 2, just pass them through
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
+        }
+
+        // we have barcode 1, but no barcode 2
+        case (f1, f2) if (sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()) => {
+          val barcodeInputs = List[File](sampleObj.fastqBarcode1)
+          val barcodeSplitFiles = List[File](barcodeSplitIndex1)
+
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+        }
+        // we have no barcode 1, but a barcode 2
+        case (f1, f2) if (!sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) => {
+          val barcodeInputs = List[File](sampleObj.fastqBarcode2)
+          val barcodeSplitFiles =  List[File](barcodeSplitIndex2)
+
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+        }
+        // we have no barcode 1, but a barcode 2
+        case (f1, f2) if (sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) => {
+          val barcodeInputs = List[File](sampleObj.fastqBarcode1,sampleObj.fastqBarcode2)
+          val barcodeSplitFiles =  List[File](barcodeSplitIndex1,barcodeSplitIndex2)
+
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+
+        }
       }
+      inputFiles = processedFastqs
+
 
       // ************************************** split the input files **************************************
-      val barcodes: Map[Int,String] = (Array[String](sampleObj.barcode1,sampleObj.barcode2)).zipWithIndex.map{case(barcode,index) => (index + 1,barcode)}.toMap
-      add(Maul(inputFiles, barcodeFiles, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
-      inputFiles = List[File](barcodeSplit1,barcodeSplit2)
+      
 
 
       val cleanedFastqs = List[File](
@@ -309,17 +324,17 @@ class DNAQC extends QScript {
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
       val cutSites = new File(sampleObj.reference + ".cutSites")
-      val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"),new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
+      val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"), new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
 
       // *******************************************************************************************
-      // from here on we propagate the cleanedTmp as the input to the next step
+      // If they've encoded the UMI into one of the index reads (Beth's approach), handle that
       // *******************************************************************************************
       var umiTemp = inputFiles
 
       umiIndex.toUpperCase match {
         case "NONE" => {
           umiTemp = inputFiles
-        } // do nothing, we're good
+        } 
         case "INDEX1" => {
           println("INDEX1")
           val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
@@ -335,8 +350,11 @@ class DNAQC extends QScript {
         case _ => throw new IllegalStateException("Unknown UMI index: " + umiIndex)
       }
 
-      println(umiTemp.map{fl => fl.getAbsolutePath}.mkString(","))
-      var cleanedTmp = List[File](new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz"),new File(sampleOutput + File.separator + sampleTag + ".cleanedInter2.fq.gz"))
+      var cleanedTmp = if (pairedEnd)
+        List[File](new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz"),new File(sampleOutput + File.separator + sampleTag + ".cleanedInter2.fq.gz"))
+      else
+        List[File](new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz"))
+
       if (!dontTrim) { // yes a double negitive...sorry: if we want to trim, do this
         add(Trimmomatic(umiTemp,adaptersFile,cleanedTmp,unpairedReads))
       } else {
@@ -344,35 +362,53 @@ class DNAQC extends QScript {
         cleanedTmp = umiTemp
       }
 
-      // if we're a UMI run, we divert here to merge the reads by UMIs, and sub back in the merged
-      // high-quality reads into the pipeline as if there hadn't been UMIs
+      // *******************************************************************************************
+      // if we're a UMI run, we divert here to merge the reads by UMIs, and put these merged reads back into the pipeline
+      // *******************************************************************************************
       if (sampleObj.UMIed) {
-        val toAlignFastq1 = new File(sampleOutput + File.separator + sampleTag + ".umi.fwd.fastq")
-        val toAlignFastq2 = new File(sampleOutput + File.separator + sampleTag + ".umi.rev.fastq")
+        // do we have a second read? handle Bushra's case here
+        if (cleanedTmp.size == 2) {
+          val toAlignFastq1 = new File(sampleOutput + File.separator + sampleTag + ".umi.fwd.fastq")
+          val toAlignFastq2 = new File(sampleOutput + File.separator + sampleTag + ".umi.rev.fastq")
 
-        // collapse the reads by their UMI and output FASTA files with the remaining quality reads
-        add(UMIProcessingPaired(
-          cleanedTmp(0),
-          cleanedTmp(1),
-          toAlignFastq1,
-          toAlignFastq2,
-          10,
-          new File(sampleObj.reference + ".primers"),
-          sampleObj.sample,
+          // collapse the reads by their UMI and output FASTA files with the remaining quality reads
+          add(UMIProcessingPaired(
+            cleanedTmp(0),
+            Some(cleanedTmp(1)),
+            toAlignFastq1,
+            Some(toAlignFastq2),
+            10,
+            new File(sampleObj.reference + ".primers"),
+            sampleObj.sample,
           toAligUMICounts))
 
-        cleanedTmp = List[File](toAlignFastq1,toAlignFastq2)
+          cleanedTmp = List[File](toAlignFastq1,toAlignFastq2)
+
+        } else if (cleanedTmp.size == 1) {
+          val toAlignFastq1 = new File(sampleOutput + File.separator + sampleTag + ".umi.fwd.fastq")
+
+          // collapse the reads by their UMI and output FASTA files with the remaining quality reads
+          add(UMIProcessingPaired(
+            cleanedTmp(0),
+            None,
+            toAlignFastq1,
+            None,
+            10,
+            new File(sampleObj.reference + ".primers"),
+            sampleObj.sample,
+          toAligUMICounts))
+
+          cleanedTmp = List[File](toAlignFastq1)
+        }
       }
 
-      //add(SeqPrep(cleanedTmp, cleanedFastqs, mergedReads, adapterOne, adapterTwo))out.extendedFrags.
-      add(Flash(cleanedTmp, cleanedFastqs, mergedReads, sampleOutput + File.separator))
+      // again handle single vs paired end reads
+      if (pairedEnd) {
+        add(Flash(cleanedTmp, cleanedFastqs, mergedReads, sampleOutput + File.separator))
+        add(ZipReadFiles(cleanedFastqs(0), cleanedFastqs(1), unmergedUnzipped))
+        add(PerformAlignment(sampleObj.reference,mergedReads, unmergedUnzipped, samMergedFasta, samUnmergedFasta))
 
-      add(ZipReadFiles(cleanedFastqs(0), cleanedFastqs(1), unmergedUnzipped))
-      //add(Gunzip(mergedReads, mergedReadUnzipped))
-
-      add(PerformAlignment(sampleObj.reference,mergedReads, unmergedUnzipped, samMergedFasta, samUnmergedFasta))
-
-      add(ReadsToStats(samUnmergedFasta,
+        add(ReadsToStats(samUnmergedFasta,
         samMergedFasta,
         toAlignStats,
         cutSites,
@@ -380,6 +416,21 @@ class DNAQC extends QScript {
         sampleObj.sample))
 
       statsFiles :+= toAlignStats
+      } else { 
+        add(PerformAlignment(sampleObj.reference,mergedReads, cleanedTmp(0), samMergedFasta, samUnmergedFasta))
+
+        // we've swapped things here, treating the unmerged (single reads) as the merged, and given them a blank unmerged
+        add(ReadsToStats(samMergedFasta,
+        samUnmergedFasta,
+        toAlignStats,
+        cutSites,
+        new File(sampleObj.reference + ".primers"),
+        sampleObj.sample))
+
+      statsFiles :+= toAlignStats
+      }
+
+      
 
       add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
       add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
@@ -779,27 +830,26 @@ class DNAQC extends QScript {
    * Process the UMIs, merging and aligning reads down to a single, high-quality concensus per UMI
    */
   // ********************************************************************************************************
-  case class UMIProcessingPaired(inMergedReads1: File, inMergedReads2: File, outputFASTA1: File, outputFASTA2: File,
+  case class UMIProcessingPaired(inMergedReads1: File, inMergedReads2: Option[File], outputFASTA1: File, outputFASTA2: Option[File],
     umiCutOff: Int, primersFile: File, sampleName: String, umiCountsFile: File) extends CommandLineFunction with ExternalCommonArgs {
 
     @Input(doc = "input reads (fwd)") var inReads1 = inMergedReads1
-    @Input(doc = "input reads (rev)") var inReads2 = inMergedReads2
     @Output(doc = "output fasta for further alignment (fwd)") var outFASTA1 = outputFASTA1
-    @Output(doc = "output fasta for further alignment (rev)") var outFASTA2 = outputFASTA2
     @Output(doc = "output a counts of the reads behind each UMI") var outUMIs = umiCountsFile
     @Argument(doc = "how many UMIs do we need to initial have to consider merging them") var umiCut = umiCutOff
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
     var cmdString = scalaPath + " -J-Xmx23g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/UMIMerge.jar "
-    cmdString += " --inputFileReads1 " + inReads1 + " --inputFileReads2 " + inReads2 + " --outputFastq1 " + outFASTA1 + " --outputFastq2 " + outFASTA2
+    cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
+
+    if (inMergedReads2.isDefined)
+      cmdString += " --inputFileReads2 " + inMergedReads2.get + " --outputFastq2 " + outputFASTA2.get
+
     cmdString += " --primersEachEnd " + primers + " --samplename " + sample
     cmdString += " --umiStart " + umiStart + " --minimumUMIReads " + minimumUMIReads + " --minimumSurvivingUMIReads " + minimumSurvivingUMIReads
     cmdString += " --umiCounts " + outUMIs + " --umiLength " + umiLength + " --primerMismatches " + maxAdaptMismatch
     cmdString += " --primersToCheck " + primersToCheck
-
-    if (processSingleReads)
-      cmdString += " --processSingleReads true "
 
     var cmd = cmdString
 

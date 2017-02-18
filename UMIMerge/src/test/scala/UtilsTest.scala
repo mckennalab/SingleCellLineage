@@ -16,7 +16,7 @@ class UtilsTest extends FlatSpec with Matchers {
     Utils.containsFWDPrimerByAlignment(read,primer,0) should be (true)
   }
 
-  "containsBothPrimerByAlignment" should "find primers on both ends of a read" in {
+  "containsBothPrimerByAlignment" should "find primers on both ends of each read" in {
     val read1 =     "ATCGGCGTATTTTTTATAGGGGGGTA"
     val read2 =     "TTTTATAGGGGGGTAATATA"
     val primer1 =  "ATCGGCG"

@@ -91,7 +91,7 @@ def touchFile(fq: String, outFasta: String): Boolean = {
 }
 
 // check that there are reads in each of the input read files
-val mergedLength = Source.fromFile(mergedReads).getLines().size
+val mergedLength = if ((new File(mergedReads)).exists) Source.fromFile(mergedReads).getLines().size else 0
 val pairedLength = Source.fromFile(alignedPairs).getLines().size
 println("Merged length " + mergedLength)
 println("Paired length " + pairedLength)

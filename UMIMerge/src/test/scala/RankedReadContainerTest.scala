@@ -31,7 +31,7 @@ class RankedReadContainerTest extends FlatSpec with Matchers {
     val read2 = SequencingRead.readFromNameAndSeq("test1","AAAAA","A")
     val read2R = SequencingRead.readFromNameAndSeq("test1","AAAAA","A")
 
-    val container = new RankedReadContainer("test",1)
+    val container = new RankedReadContainer("test",1,true)
 
     val rankedContainer1 = SortedReadPair(read1,read1R,true,true)
     val rankedContainer2 = SortedReadPair(read2,read2R,true,true)
