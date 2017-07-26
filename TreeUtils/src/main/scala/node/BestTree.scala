@@ -1,8 +1,8 @@
-package main.scala
-import scala.io._
-import java.io._
-import scala.math._
+package main.scala.node
 
+import java.io.File
+
+import scala.io.Source
 
 /**
   * Given a set of tree's output from MIX, find the best one (by proportion field of the output)

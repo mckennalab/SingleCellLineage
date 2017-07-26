@@ -108,7 +108,7 @@ class DNAQC extends QScript {
   var matchProportion = 0.80
 
   @Argument(doc = "what is the minimum number of matched bases to consider a read alignment PASSing? (default 25) ", fullName = "matchCount", shortName = "matchCount", required = false)
-  var matchCount = 25
+  var matchCount = 15
 
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
   var webSite: File = "/net/shendure/vol10/www/content/members/aaron/staging/"
@@ -173,6 +173,12 @@ class DNAQC extends QScript {
   @Argument(doc = "the second adapter sequence", fullName = "adaptTwo", shortName = "adaptTwo", required = false)
   var adapterTwo = "CGAAGCTTGAGCTCGAGATCTG"
 
+  @Argument(doc = "where to start trimming in the first read", fullName = "trimStart", shortName = "trimStart", required = false)
+  var trimStart: Int = 0
+
+  @Argument(doc = "where to stop trimming in the first read", fullName = "trimStop", shortName = "trimStop", required = false)
+  var trimStop: Int = 0
+
   @Argument(doc = "the cost of a gap open", fullName = "gapopen", shortName = "gapopen", required = false)
   var gapopen: Double = 10
 
@@ -196,6 +202,9 @@ class DNAQC extends QScript {
 
   @Argument(doc = "Do we want to convert UNKNOWN calls into NONE calls?", fullName = "unknownToNone", shortName = "unknownToNone", required = false)
   var convertUnknownsToNone: Boolean = false
+
+  @Argument(doc = "do we want to do the whole web publishing thing?", fullName = "dontweb", shortName = "dontweb", required = false)
+  var dontWebPublish: Boolean = false
 
   /** **************************************************************************
     * Global Variables
@@ -272,7 +281,14 @@ class DNAQC extends QScript {
 
       (sampleObj.fastqBarcode1,sampleObj.fastqBarcode2) match {
         // we have no barcode 1 and no barcode 2, just pass them through
-        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() && (trimStop - trimStart > 0)  => {
+          val barcodeInputs = List[File]()
+          val barcodeSplitFiles = List[File]()
+          println("HERE")
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
+        }
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()  => {
+          processedFastqs = inputFiles
         }
 
         // we have barcode 1, but no barcode 2
@@ -280,21 +296,21 @@ class DNAQC extends QScript {
           val barcodeInputs = List[File](sampleObj.fastqBarcode1)
           val barcodeSplitFiles = List[File](barcodeSplitIndex1)
 
-          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
         }
         // we have no barcode 1, but a barcode 2
         case (f1, f2) if (!sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) => {
           val barcodeInputs = List[File](sampleObj.fastqBarcode2)
           val barcodeSplitFiles =  List[File](barcodeSplitIndex2)
 
-          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
         }
         // we have no barcode 1, but a barcode 2
         case (f1, f2) if (sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) => {
           val barcodeInputs = List[File](sampleObj.fastqBarcode1,sampleObj.fastqBarcode2)
           val barcodeSplitFiles =  List[File](barcodeSplitIndex1,barcodeSplitIndex2)
 
-          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile))
+          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
 
         }
       }
@@ -416,8 +432,13 @@ class DNAQC extends QScript {
         sampleObj.sample))
 
       statsFiles :+= toAlignStats
-      } else { 
-        add(PerformAlignment(sampleObj.reference,mergedReads, cleanedTmp(0), samMergedFasta, samUnmergedFasta))
+      } else {
+        var newTempMerged = cleanedTmp(0)
+        if (cleanedTmp(0).getAbsolutePath.endsWith("gz")) {
+          newTempMerged = cleanedTmp(0).getAbsolutePath + ".unzipped"
+          add(Gunzip(cleanedTmp(0), newTempMerged))
+        }
+        add(PerformAlignment(sampleObj.reference, mergedReads, newTempMerged, samMergedFasta, samUnmergedFasta))
 
         // we've swapped things here, treating the unmerged (single reads) as the merged, and given them a blank unmerged
         add(ReadsToStats(samMergedFasta,
@@ -431,9 +452,10 @@ class DNAQC extends QScript {
       }
 
       
-
-      add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
-      add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
+      if (!dontWebPublish) {
+        add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
+        add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
+      }
     })
 
     // agg. all of the stats together into a single file
@@ -582,13 +604,25 @@ class DNAQC extends QScript {
   }
 
   // ********************************************************************************************************
-  case class Maul(inputFastqs: List[File], barcodeFiles: List[File], barcodes: Map[Int,String], outputFastqs: List[File], outputIndexFastqs: List[File], barcodeStats: File, barcodeConfusion: File, overlap: File) extends ExternalCommonArgs {
+  case class Maul(inputFastqs: List[File],
+    barcodeFiles: List[File],
+    barcodes: Map[Int,String],
+    outputFastqs: List[File],
+    outputIndexFastqs: List[File],
+    barcodeStats: File,
+    barcodeConfusion: File,
+    overlap: File,
+    trimStart: Int,
+  trimStop: Int) extends ExternalCommonArgs {
+
     @Input(doc = "the input fastqs") var inputFQs = inputFastqs
     @Output(doc = "the output fastq files") var outputFQs = outputFastqs
     @Output(doc = "the output index fastq files") var outputIndexFQs = outputIndexFastqs
     @Argument(doc = "the output barcode counts") var outStats = barcodeStats
     @Argument(doc = "the output barcode confusion file") var outBCC = barcodeConfusion
     @Argument(doc = "the output overlap file") var outOver = overlap
+    @Argument(doc = "where to start trimming from the reads") var tStart = trimStart
+    @Argument(doc = "where to stop trimming from the reads") var tStop = trimStop
 
 
     //if ((barcodeFiles.isDefined) && barcodeFiles.size != outputIndexFastqs.size)
@@ -607,6 +641,10 @@ class DNAQC extends QScript {
       case 2 => baseCmd += " --barcodes2 " + barcode
       case _ => throw new IllegalStateException("Unknown barcode")
     }}
+
+    if (tStop - tStart > 0) {
+      baseCmd += " --trimStart " + tStart + " --trimStop " + tStop
+    }
 
     //if (barcodeFiles.isDefined)
     barcodeFiles.size match {
@@ -652,7 +690,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged fasta file") var outMergedFasta = outputMergedFasta
     @Output(doc = "the output paired fasta file") var outPairedFasta = outputPairedFasta
 
-    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta
+    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta + " " + gapopen + " " + gapextend
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"

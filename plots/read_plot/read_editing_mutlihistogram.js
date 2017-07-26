@@ -775,7 +775,10 @@ function redrawAll() {
 	    .attr("transform", "translate(40,40)")
     }
 
-    redrawUnsetMembership()
+
+    if (aux_data != "") {
+	redrawUnsetMembership()
+    }
     redrawTheTopHistogram()
     redraw_read_block();
     redrawHistogram();

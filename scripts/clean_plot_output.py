@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 for root, dirs, files in os.walk(args.dir):
     for file in files:
-        if file.startswith(".") and file.endswith(".allReadCount.done"):
+        if file.startswith(".") and file.endswith(".UM.fasta.done"):
             real_version = file.lstrip(".").rstrip(".done")
             if not os.path.exists(os.path.join(root, real_version)):
                 print "removing " + file + " as " + real_version + " doesn't exist"

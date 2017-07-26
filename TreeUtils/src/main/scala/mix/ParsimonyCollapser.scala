@@ -1,14 +1,14 @@
-package main.scala
+package main.scala.mix
 
-import scala.collection.mutable
+import main.scala.node.RichNode
 
 /**
   * methods to collapse a parsimony tree down consistently
   */
 object ParsimonyCollapser {
   /**
-    * Given a node (usually the root), start collapsing down matching internal nodes, multiforcating
-    * previously biforcating nodes as we go
+    * Given a node (usually the root), start collapsing down matching internal nodes, multifurcating
+    * previously bifurcating nodes as we go
     *
     * @param node the node to start our collapsing at, we only consider it and it's children
     */
@@ -31,7 +31,7 @@ object ParsimonyCollapser {
       node.children = newChildren
     }
 
-    // the order here is very important -- update child list,
+    // depth first here -- update child list,
     // have them update their children lists,
     // and finally update annotations recursively
     node.children.foreach { chd => collapseNodes(chd) }

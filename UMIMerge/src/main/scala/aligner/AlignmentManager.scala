@@ -467,7 +467,7 @@ object AlignmentManager {
    * @param read the read string of the same length as the reference string
    * @return a proportion of bases that match, and the count of non-gap bases
    */
-  def percentMatch(ref: String, read: String, minimumAlignedBases: Int = 50): Tuple2[Double, Int] = {
+  def percentMatch(ref: String, read: String, minimumAlignedBases: Int = 25): Tuple2[Double, Int] = {
     var bases = 0
     var matches = 0
     var nonGap = 0

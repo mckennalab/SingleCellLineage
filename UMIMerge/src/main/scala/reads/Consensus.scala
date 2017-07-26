@@ -68,7 +68,7 @@ object Consensus {
    * @param differenceThreshold the amount of divergence we allow
    * @return
    */
-  def removeMismatchedReads(reads: Array[SequencingRead], differenceThreshold: Double = 0.9, minReadLength: Int = 50): Array[SequencingRead] = {
+  def removeMismatchedReads(reads: Array[SequencingRead], differenceThreshold: Double = 0.9, minReadLength: Int = 25): Array[SequencingRead] = {
 
     val consensusValue = consensus(reads)
 

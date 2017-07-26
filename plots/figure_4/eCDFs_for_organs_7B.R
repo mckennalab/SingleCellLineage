@@ -83,7 +83,6 @@ organ_cdfs_focused = ggplot() +
 
 ggsave(organ_cdfs_focused,file="~/Desktop/organ_focused_eCDF_fish7B.png",width=6,height=6)
 
-
 #
 #organ_cdfs_full = ggplot() + 
 #  geom_step(data=subset(total.data,experiment == "adult"),aes(array,running_prop,col=organ,group=organ),direction="vh",size=1.5) + 

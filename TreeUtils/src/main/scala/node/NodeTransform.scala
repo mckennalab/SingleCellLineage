@@ -1,9 +1,8 @@
-package main.scala
+package main.scala.node
 
 import beast.evolution.tree.Node
 
-import scala.annotation.tailrec
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 
 /**
   *

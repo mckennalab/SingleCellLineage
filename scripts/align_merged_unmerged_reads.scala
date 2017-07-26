@@ -14,6 +14,9 @@ val ref = args(4)
 val outputMergedReads = args(5)
 val outputAlignedPairs = args(6)
 
+// gap open and extend
+val gapOpen = args(7).toDouble
+val gapExt = args(8).toDouble
 
 // concat two fasta files into a temp file
 def concatTwoTemp(in1: String, readName: String, readString: String): String = {
@@ -33,8 +36,9 @@ def doAlignment(fq: String, outFasta: String): Boolean = {
   // check what aligner they'd like to use
   val aligner = alignerOpt.toLowerCase match {
     case "needle" => {
-      val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/needleall -datafile " + edaFile + " -snucleotide1 -snucleotide2 -aformat3 fasta -gapextend 0.5 -gapopen 10.0 -asequence "
-      val result = (aligner + ref + " -bsequence " + fq + " -outfile " + outFasta).!
+      val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/needleall -datafile " + edaFile + " -snucleotide1 -snucleotide2 -aformat3 fasta -gapextend " + gapExt + " -gapopen " + gapOpen + " -asequence " + ref + " -bsequence " + fq + " -outfile " + outFasta
+      println(aligner)
+      val result = (aligner).!
       if (result == 0)
         return true
       return false
@@ -42,7 +46,7 @@ def doAlignment(fq: String, outFasta: String): Boolean = {
     case "mafft" => {
       // this is a little more involved -- we have to split out each read from the input, align it, and add it to the output file
 
-      val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/mafft --maxiterate 1000 --genafpair "
+      val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/mafft --maxiterate 1000 --op " + gapOpen + " --genafpair "
       val outputWriter = new PrintWriter(outFasta)
 
 
@@ -91,7 +95,9 @@ def touchFile(fq: String, outFasta: String): Boolean = {
 }
 
 // check that there are reads in each of the input read files
+println(mergedReads + " " + (new File(mergedReads)).exists)
 val mergedLength = if ((new File(mergedReads)).exists) Source.fromFile(mergedReads).getLines().size else 0
+println(alignedPairs + " " + (new File(alignedPairs)).exists)
 val pairedLength = Source.fromFile(alignedPairs).getLines().size
 println("Merged length " + mergedLength)
 println("Paired length " + pairedLength)

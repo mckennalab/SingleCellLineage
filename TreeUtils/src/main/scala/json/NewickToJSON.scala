@@ -1,14 +1,4 @@
-package main.scala
-
-import beast.util._
-import beast.evolution.tree._
-import scala.collection.JavaConversions._
-import scala.io._
-import java.io._
-import scala.collection.mutable.{ArrayBuffer, HashMap}
-import scala.sys.process._
-import java.util.zip._
-import scala.util.Random
+package main.scala.json
 /*
 case class NewickConfig(inputTree: File = new File(NewickToJSON.NOTAREALFILENAME),
                         outputJSON: File = new File(NewickToJSON.NOTAREALFILENAME),

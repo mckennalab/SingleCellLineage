@@ -7,7 +7,7 @@ samples = c("7B_Brain","7B_Eye1","7B_Eye2","7B_Gills","7B_Intestine","7B_Upper_G
 new_samples = c("Brain","Eye #1","Eye #2","Gills","Intestine","Upper GI","Intact Heart","DHC","NCHC","Cardomyocytes","Blood")
 
 # run against my mount location -- change as needed
-hmid_base_location = "/mount/www/2016_02_10_Adult_Fish_7_9_12/"
+hmid_base_location = "/mount/www/fate_map/2016_04_08_Adult_Fish_7_9_12/"
 hmids_per_sample = NA
 for (i in seq(1,length(samples))) {
   sample = samples[i]
@@ -70,4 +70,4 @@ blood_per_organ = ggplot(blood_proportions_in_organs_melt) +
   theme(axis.title=element_text(family = "sans", size=12)) 
 
 
-ggsave(blood_per_organ,file="Blood_proportions_in_other_organs.png",width=5,height=3)
+ggsave(blood_per_organ,file="~/Desktop/Blood_proportions_in_other_organs.png",width=5,height=3)

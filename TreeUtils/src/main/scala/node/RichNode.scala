@@ -1,16 +1,18 @@
-package main.scala
+package main.scala.node
 
 import beast.evolution.tree.Node
 import beast.util.TreeParser
-import collection.JavaConverters._
-import scala.StringBuilder
-import scala.annotation.tailrec
+import main.scala.annotation.AnnotationsManager
+import main.scala.mix.MixParser
+
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
   * This class takes a root BEAST node and creates a descriptive depth-first tree.  This richer node-type can
-  * store all of the annotation data we're interested in, and need for the JSON output
+  * store all of the annotation data we're interested in, apply recursive functions, and
+  * can generate JSON output
   */
 case class RichNode(originalNd: Node,
                     annotations: AnnotationsManager,
@@ -46,7 +48,7 @@ case class RichNode(originalNd: Node,
   }
 
   // explicitly pull out our event string
-  val eventString: Option[Array[String]] = if (myAnnotations.isDefined) Some(myAnnotations.get.event.split(annotations.eventSeperator)) else None
+  val eventString: Option[Array[String]] = if (myAnnotations.isDefined) Some(myAnnotations.get.event) else None
 
   // our parsimony events
   val parsimonyEvents = Array.fill(numberOfTargets)("NONE")
@@ -62,6 +64,16 @@ case class RichNode(originalNd: Node,
   // ******************************************************************************************************
   // our member methods
   // ******************************************************************************************************
+
+  /**
+    * add a new child node; useful when we make trees piecewise
+    * @param nd the child node to graft on
+    */
+  def graftOnChild(nd: RichNode): Unit = {
+    children :+= nd
+    resetChildrenAnnotations()
+  }
+
 
   // when we change children, we have to change annotations
   def resetChildrenAnnotations(): Unit = {

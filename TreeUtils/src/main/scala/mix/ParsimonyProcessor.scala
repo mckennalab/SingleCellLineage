@@ -1,16 +1,14 @@
-package main.scala
+package main.scala.mix
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
-import beast.evolution.tree.Node
 import beast.util.TreeParser
-
-import scala.io.Source
+import main.scala.node.{BestTree, RichNode}
+import main.scala.annotation.AnnotationsManager
 
 /**
   * given all the parts we need to make a rich JSON version
   * of a parsimony tree from the MIX program, make the enhanced tree
-  * and then collapse out parsimony nodes that are
   */
 class ParsimonyProcessor(mixTrees: File,
                          mixOutput: File,
@@ -25,6 +23,7 @@ class ParsimonyProcessor(mixTrees: File,
   // TODO: add a normalization process like FigTree for proportional scaling
   // TODO: check proportions
 
+  /*
   // find the best tree from the mix output
   val bestTreeContainer = BestTree(mixTrees)
 
@@ -58,7 +57,7 @@ class ParsimonyProcessor(mixTrees: File,
   // sort the nodes
   RichNode.reorderChildrenByAlleleString(rootNode)
 
-  // add gray lines to branches where we're going to two
+  // add gray lines to branches where we're going to two identical alleles with different tissue sources
   RichNode.assignBranchColors(rootNode)
 
   // the updated numbers
@@ -76,7 +75,7 @@ class ParsimonyProcessor(mixTrees: File,
   output.write(RichNode.toJSONOutput(rootNode, None,1.0))
   output.write("}]\n")
   output.close()
-
+  */
 
 }
 

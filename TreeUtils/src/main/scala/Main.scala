@@ -3,12 +3,17 @@ package main.scala
 
 import beast.util._
 import beast.evolution.tree._
+
 import scala.collection.JavaConversions._
 import scala.io._
 import java.io._
+
 import scala.collection.mutable._
 import scala.sys.process._
 import java.util.zip._
+
+import main.scala.mix.ParsimonyProcessor
+
 import scala.util.Random
 
 /**
@@ -56,7 +61,7 @@ object Main extends App {
 
   // parse the command line arguments
   val parser = new scopt.OptionParser[TreeConfig]("UMIMerge") {
-    head("TreeUtils", "1.0")
+    head("TreeUtils", "1.1")
 
     // *********************************** Inputs *******************************************************
     opt[File]("inputTree") required() valueName ("<file>") action { (x, c) => c.copy(inputTree = x) } text ("the input tree")

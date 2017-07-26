@@ -1,19 +1,19 @@
-package main.scala
+package main.scala.input
 
 /**
-  * Created by aaronmck on 4/27/16.
+  * handle parsing events out
   */
-case class Event(eventString: String) {
-  val individualEvents = eventString.split(Event.seperator)
+case class TreeEvent(eventString: String) {
+  val individualEvents = eventString.split(TreeEvent.seperator)
   val length = individualEvents.size
 }
 
-object Event {
+object TreeEvent {
   val seperator = "_"
   val complexEventSeperator = "&"
   val empty = "NONE"
 
-  def intersection(events: Array[Event]): Option[Event] = {
+  def intersection(events: Array[TreeEvent]): Option[TreeEvent] = {
     if (events.size == 0)
       return None
 

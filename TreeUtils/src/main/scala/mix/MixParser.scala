@@ -1,6 +1,4 @@
-package main.scala
-
-import java.util
+package main.scala.mix
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -10,33 +8,23 @@ import scala.io.Source
   * Parse the output from the PHYLIP package MIX and create
   * event strings for each of the internal nodes
   */
-class MixParser(mixOutput: String, eventsToNumbers: String, treeToUse: Int) {
+class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: Int) {
 
   // first parse out the events to number data, and make a look-up table
-  val eventToNum = Source.fromFile(eventsToNumbers).getLines()
-  val eventToNumHeader = eventToNum.next()
-
-  if (eventToNumHeader != "event\tnumber\tpositions")
-    throw new IllegalStateException("Unable to parse out corect header from " + eventsToNumbers + ", saw: " + eventToNumHeader)
-
-  val numberToEvent = new mutable.HashMap[Int,String]()
+  val numberToEvent = eventsToNumbers.numberToEvent
   val eventToSites = new mutable.HashMap[String,Array[Int]]()
-
   // now load all the lines
-  eventToNum.foreach{evtLine => {
-    val sp = evtLine.split("\t")
-    if (sp.size == 3) {
-      numberToEvent(sp(1).toInt) = sp(0)
-      eventToSites(sp(0)) = sp(2).split(",").map { tk => tk.toInt }
-    } else {
-      numberToEvent(sp(1).toInt) = sp(0)
-      eventToSites(sp(0)) = Array[Int](-1)
-    }
+  eventsToNumbers.events.foreach{evt => {
+    evt.events.zipWithIndex.foreach{case(evtTk,index) => {
+      var curArray = eventToSites.getOrElse(evtTk,Array[Int]())
+      if (!(curArray contains index))
+        curArray :+= index
+      eventToSites(evtTk) = curArray
+    }}
   }}
 
   // the header line we're looking for in the file is:
   val headerLine = "From    To     Any Steps?    State at upper node"
-
 
   val inputFile = Source.fromFile(mixOutput).getLines()
 
@@ -126,14 +114,4 @@ class MixParser(mixOutput: String, eventsToNumbers: String, treeToUse: Int) {
     ret(0)
   }
 
-}
-
-case class Edge(from: String, to: String, changes: Boolean, treeNumber: Int) {
-  var chars = new ArrayBuffer[Char]()
-
-  def addChars(inputString: String): Unit = {
-    inputString.foreach{char => if (char != ' ') chars += char}
-  }
-
-  def toFancyString = from + "," + to + "," + treeNumber + "," + chars.mkString("")
 }

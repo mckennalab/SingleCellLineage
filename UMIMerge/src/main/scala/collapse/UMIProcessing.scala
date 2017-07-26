@@ -158,6 +158,7 @@ object UMIProcessing extends App {
           case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readNoUMI,primers(0),config.primerMismatches),true)
           case "REVERSE" if hasReverseReads => (true,Utils.containsREVCompPrimerByAlignment((rGroup.get)(1),primers(1),config.primerMismatches))
           case "REVERSE" if !( hasReverseReads ) => (true,Utils.containsREVCompPrimerByAlignment((rGroup.get)(1),primers(1),config.primerMismatches))
+          case "NONE" => (true,true)
           case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
         }
 
@@ -185,6 +186,7 @@ object UMIProcessing extends App {
           case "BOTH" => Utils.containsFWDandREVCompByAlignment(fGroup(1),readTwoNoUMI, primers(0), primers(1),config.primerMismatches)
           case "FORWARD" => (Utils.containsFWDPrimerByAlignment(fGroup(1),primers(0),config.primerMismatches),true)
           case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readTwoNoUMI,primers(1),config.primerMismatches))
+          case "NONE" => (true,true)
           case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
         }
 
@@ -214,7 +216,7 @@ object UMIProcessing extends App {
     // take the collection of UMIs and cluster them down to a core set of UMIs, and
     // output an error rate based on that clustering
     // --------------------------------------------------------------------------------
-    // TODO: val clustering = new UmiClustering(config.umiLength, umiReads)
+    umiReads = UmiClustering.mergeAndConvertUMIS(config.umiLength, umiReads, hasReverseReads, config.downsampleSize)
 
 
     // --------------------------------------------------------------------------------
