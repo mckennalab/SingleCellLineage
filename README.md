@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FateMappingCode
 Our collection of code from the [Shendure lab](https://github.com/shendurelab/) / [Schier lab](http://www.schierlab.fas.harvard.edu/) lineage tracing project using the CRISPR/Cas9 system. This is unsupported code, and stored here as an example of how we did our analysis in the paper, which may or may not be the way you'll want to do your own analysis.  The paper version of this repository is labeled v1, though some of the tree display code is newer than that (changes for our website).
 
@@ -28,3 +29,7 @@ There are lots (Sorry). For languages we rely upon Scala (Java/JVM), Python, Jav
 * pipelines	- pipline code, dependent on the GATK Queue processing engine
 * plots	- various plotting code, in either R, python, D3 (javascript + HTML), or Scala
 * scripts - lots of scripts used throughout the processing and analysis
+=======
+# GESTALTv2
+Updates since the paper for the GESTALT pipeline
+>>>>>>> 819a424eb6e96e3fd78148bf1822ea3f66687f8d
