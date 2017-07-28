@@ -1,5 +1,7 @@
 package main.scala.mix
 
+import main.scala.node.NodeLinker
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
@@ -8,7 +10,7 @@ import scala.io.Source
   * Parse the output from the PHYLIP package MIX and create
   * event strings for each of the internal nodes
   */
-class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: Int) {
+class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: Int, rootName: String) {
 
   // first parse out the events to number data, and make a look-up table
   val numberToEvent = eventsToNumbers.numberToEvent
@@ -32,7 +34,7 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
   var currentGenotype: Option[Edge] = None
   var currentTreeNumber = 0
 
-  var activeTree : Option[Array[Edge]] = None
+  var activeTree = new NodeLinker()
 
   { // scope this so the temp. data structures go away
 
@@ -55,7 +57,7 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
               treeToGenotypes(currentTreeNumber) += currentGenotype.get
             }
             val sp = line.trim.split(" +")
-            currentGenotype = Some(Edge(sp(0), sp(1), sp(2) == "yes", currentTreeNumber))
+            currentGenotype = Some(Edge(sp(0), sp(1), sp(2) == "yes", currentTreeNumber, rootName))
             currentGenotype.get.addChars(sp.slice(3, sp.size).mkString(""))
           }
         }
@@ -88,30 +90,10 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
     currentGenotype = None
     currentTreeNumber += 1
 
-    activeTree = Some(treeToGenotypes(treeToUse).toArray)
+    // TODO: move this out into it's own type
+    treeToGenotypes(treeToUse).toArray.foreach(edge => activeTree.addEdge(edge))
     treeToGenotypes(treeToUse).toArray.foreach{case(edg) => println(edg.from + " -> " + edg.to)}
   }
 
-
-  // **********************************************************************
-
-  /*
-   * helper functions
-   */
-
-  def lookupFroms(fromNode: String): List[Edge] = {
-    if (!activeTree.isDefined)
-      return List[Edge]()
-    activeTree.get.filter{case(mp) => mp.from == fromNode}.toList
-  }
-
-  def lookupTos(toNode: String): Edge = {
-    if (!activeTree.isDefined)
-      throw new IllegalStateException("Annotations haven't been loaded!")
-    val ret = activeTree.get.filter{case(mp) => mp.to == toNode}.toList
-    if (ret.size != 1)
-      throw new IllegalStateException("Found " + ret.size + " edges for node " + toNode)
-    ret(0)
-  }
 
 }

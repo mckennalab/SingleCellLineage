@@ -4,7 +4,6 @@ import java.io.{File, PrintWriter}
 
 import main.scala.stats.{Event}
 
-import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, HashMap, Set}
 import scala.io.Source
 
@@ -64,8 +63,11 @@ object EventIO {
     }
     }
 
+    // being lazy here -> for some reason scala really wants the internal sets to be immutable and I don't care
+    val eventsToPosImmut = eventToPositions.map{case(key,values) => (key,values.toSet)}
+
     val evtArray = builder.toArray
-    EventContainer(sample,evtArray,eventToCount,numberToEvent,eventToNumber,evtArray(0).events.size)
+    new EventContainerImpl(sample,evtArray,eventToCount,eventsToPosImmut,numberToEvent,eventToNumber,evtArray(0).events.size)
   }
 
   /**

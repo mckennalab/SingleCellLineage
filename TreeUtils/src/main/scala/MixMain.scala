@@ -2,7 +2,6 @@ package main.scala
 
 import java.io.{File, PrintWriter}
 
-import main.java.TreeParser
 import main.scala.annotation.AnnotationsManager
 import main.scala.mix._
 import main.scala.node.{BestTree, RichNode}
@@ -74,44 +73,16 @@ object MixMain extends App {
     // load up any annotations we have
     val annotationMapping = new AnnotationsManager(readEventsObj)
 
-    if (firstX > 0) {
+    // val mixPackage: MixFilePackage = MixRunner.runMix(config.mixRunLocation, readEventsObj)
 
-    }
-
-    val mixPackage: MixFilePackage = MixRunner.processIndividualMix(config, readEventsObj)
-
-
+    val rootNode = EventSplitter.splitInTwo(config.mixRunLocation,
+                                  readEventsObj,
+                                  4,
+                                  config.sample,
+                                  annotationMapping)
     // ------------------------------------------------------------
     // traverse the nodes and add names to any internal nodes without names
     // ------------------------------------------------------------
-
-
-    // reassign the names
-    val rootName = RichNode.recAssignNames(rootNode, mixParser)
-
-    // now apply the parsimony results to the root of the tree (recursively walking down the nodes)
-    RichNode.applyParsimonyGenotypes(rootNode, mixParser,readEventsObj.eventToCount.size)
-
-    // check that the nodes we assigned are consistent
-    RichNode.recCheckNodeConsistency(rootNode, mixParser)
-
-    // count nodes before
-    println("before collapsing nodes " + rootNode.countSubNodes())
-
-    // collapse nodes from the root
-    ParsimonyCollapser.collapseNodes(rootNode)
-
-    // sort the nodes
-    RichNode.reorderChildrenByAlleleString(rootNode)
-
-    // add gray lines to branches where we're going to two identical alleles with different tissue sources
-    RichNode.assignBranchColors(rootNode)
-
-    // the updated numbers
-    println("after collapsing nodes " + rootNode.countSubNodes())
-
-    // assign the colors to the nodes
-    RichNode.applyFunction(rootNode,annotationMapping.setNodeColor)
 
     // get an updated height to flip the tree around
     val maxHeight = RichNode.maxHeight(rootNode)

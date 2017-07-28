@@ -3,7 +3,7 @@ package main.scala.node
 import beast.evolution.tree.Node
 import beast.util.TreeParser
 import main.scala.annotation.AnnotationsManager
-import main.scala.mix.MixParser
+import main.scala.mix.{EventContainer, MixParser}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -72,6 +72,20 @@ case class RichNode(originalNd: Node,
   def graftOnChild(nd: RichNode): Unit = {
     children :+= nd
     resetChildrenAnnotations()
+  }
+
+  /**
+    * add a new child node to a specific sub-node. Do a tree-traversal to find the correct node
+    * and attach the node as a child
+    * @param nd the child node to graft on
+    */
+  def graftToName(name: String, nd: RichNode): Boolean = {
+    val replacedHere = if (this.name == name) {children :+= nd; true} else false
+
+    children.map{cd =>
+      cd.graftToName(name, nd)
+    }.foldLeft(replacedHere)((a,b) => a | b)
+
   }
 
 
@@ -197,10 +211,10 @@ object RichNode {
     * @param rootNode the root node, which we assume is all NONE in camin-sokal parsimony
     * @param parser   the results from the parsimony run
     */
-  def applyParsimonyGenotypes(rootNode: RichNode, parser: MixParser, numberOfTargets: Int = 10): Unit = {
+  def applyParsimonyGenotypes(rootNode: RichNode, linker: NodeLinker, container: EventContainer, numberOfTargets: Int = 10): Unit = {
     println(numberOfTargets)
     // lookup each link between a subnode and the root, and assign it's genotypes recursively
-    rootNode.children.foreach { newChild => recAssignGentoypes(rootNode, newChild, parser) }
+    rootNode.children.foreach { newChild => recAssignGentoypes(rootNode, newChild, linker, container) }
   }
 
   /**
@@ -210,27 +224,31 @@ object RichNode {
     *
     * @param parent the parent of this node
     * @param child  this node, the child
-    * @param parser the parser which contains all of the info about genotypes, etc
+    * @param linker mapping parent to children nodes
     */
-  def recAssignGentoypes(parent: RichNode, child: RichNode, parser: MixParser): Unit = {
+  def recAssignGentoypes(parent: RichNode, child: RichNode, linker: NodeLinker, eventContainer: EventContainer): Unit = {
     // copy the parents genotype over to the child
     parent.parsimonyEvents.zipWithIndex.foreach { case (edit, index) => child.parsimonyEvents(index) = edit }
 
     // find the link from out parent node -- there should only be one edge leading to this node ever
-    val link = parser.lookupTos(child.name)
+    val link = linker.lookupTos(child.name)
+    assert(link.size > 0)
+
 
     // make a list of the events that we're adding
-    link.chars.zipWithIndex.foreach { case (change, index) => change match {
+    link(0).chars.zipWithIndex.foreach { case (change, index) => change match {
       case ('.') => {
         /* do nothing */
       }
       case ('1') => {
-        val event = parser.numberToEvent(index + 1) // our first position is an edit, not NONE
-        parser.eventToSites(event).foreach { site => {
+        val event = eventContainer.numberToEvent(index + 1) // our first position is an edit, not NONE
+        eventContainer.eventToSites(event).foreach { site => {
           // check to make sure we're not conflicting and overwriting an already edited site
-          if (child.parsimonyEvents(site) != "NONE")
-            println("WARNING: Conflict at site " + site + " for parent " + parent.name + " for child " + child.name + " event " + event)
-          child.parsimonyEvents(site) = event
+          if (child.parsimonyEvents.size > site) {
+            if (child.parsimonyEvents(site) != "NONE")
+              println("WARNING: Conflict at site " + site + " for parent " + parent.name + " for child " + child.name + " event " + event)
+            child.parsimonyEvents(site) = event
+          }
         }
         }
       }
@@ -238,7 +256,7 @@ object RichNode {
     }
 
     // now for each of the children of this node, recursively assign genotypes
-    child.children.foreach { newChild => recAssignGentoypes(child, newChild, parser) }
+    child.children.foreach { newChild => recAssignGentoypes(child, newChild, linker, eventContainer) }
   }
 
   /**
@@ -247,22 +265,24 @@ object RichNode {
     * leaf child->parent output
     *
     * @param node   the node to assign a name to
-    * @param parser the mix output parser with all of the parent and child relationships
+    * @param linker the parent and child relationships
     * @return the string of the top node (lazy, this is used to recursively fill in names on the way
     *         back up)
     */
-  def recAssignNames(node: RichNode, parser: MixParser): String = {
+  def recAssignNames(node: RichNode, linker: NodeLinker): String = {
     // if we have a leaf -- where there are no children -- assign the name
     if (node.children.size == 0) {
-      val edge = parser.lookupTos(node.name)
-      return edge.from
+      val edge = linker.lookupTos(node.name)
+      assert(edge.size > 0)
+      return edge(0).from
     } else {
-      val names = node.children.map { case (nd) => recAssignNames(nd, parser) }.toSet.toList
+      val names = node.children.map { case (nd) => recAssignNames(nd, linker) }.toSet.toList
       if (names.size != 1)
         throw new IllegalStateException("Unable to assign the name for node with children " + names.mkString(","))
       node.name = names(0)
-      val edge = parser.lookupTos(names(0))
-      return edge.from
+      val edge = linker.lookupTos(names(0))
+      assert(edge.size > 0)
+      return edge(0).from
     }
   }
 
@@ -296,9 +316,8 @@ object RichNode {
     * check that our nodes are assigned consistent node identities between the parsimony and known annotations
     *
     * @param node   the node
-    * @param parser the mix parser
     */
-  def recCheckNodeConsistency(node: RichNode, parser: MixParser): Unit = {
+  def recCheckNodeConsistency(node: RichNode): Unit = {
     // if we have a leaf -- where there are no children -- assign the name
     if (node.children.size == 0 && node.eventString.isDefined) {
       val differences = node.eventString.get.zip(node.parsimonyEvents).map { case (evt1, evt2) => if (evt1 == evt2) 0 else 1 }.sum
@@ -309,7 +328,7 @@ object RichNode {
 
       }
     } else {
-      node.children.map { case (nd) => recCheckNodeConsistency(nd, parser) }.toSet.toList
+      node.children.map { case (nd) => recCheckNodeConsistency(nd) }.toSet.toList
     }
   }
 
