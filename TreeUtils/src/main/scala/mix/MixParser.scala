@@ -57,7 +57,7 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
               treeToGenotypes(currentTreeNumber) += currentGenotype.get
             }
             val sp = line.trim.split(" +")
-            currentGenotype = Some(Edge(sp(0), sp(1), sp(2) == "yes", currentTreeNumber, rootName))
+            currentGenotype = Some(Edge(sp(0), sp(1), rootName))
             currentGenotype.get.addChars(sp.slice(3, sp.size).mkString(""))
           }
         }

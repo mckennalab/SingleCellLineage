@@ -27,7 +27,11 @@ class AnnotationsManager(evtContainer: EventContainer) {
     println("adding event with " + evt.events.size)
     annotationMapping(evt.name) = AnnotationEntry("UNKOWN",evt.name,evt.count,evt.proportion,evt.events)
     cladeMapping(evt.name) = CladeEntry(evtContainer.sample,"ALL","black")
+    sampleTotals(evt.sample) = sampleTotals.getOrElse(evt.sample,0) + evt.count
+    println("sample totals " + sampleTotals(evt.sample) + " event sample " + evt.sample)
   }}
+
+
 
 
   // *******************

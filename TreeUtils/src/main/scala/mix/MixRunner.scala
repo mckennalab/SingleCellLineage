@@ -105,7 +105,8 @@ object MixRunner {
   def mixOutputToTree(mixFilePackage: MixFilePackage,
                       readEventsObj: EventContainer,
                       annotationMapping: AnnotationsManager,
-                      rootName: String): Tuple2[RichNode, NodeLinker] = {
+                      rootName: String,
+                      defaultColor: String = "black"): Tuple2[RichNode, NodeLinker] = {
 
     // find the best tree from the mix output
     println("Loading best tree...")
@@ -127,7 +128,7 @@ object MixRunner {
     Files.delete(mixFilePackage.mixTree.toPath)
 
     // return the rich node representation of this tree
-    (RichNode(treeParser.getRoot, annotationMapping, None, readEventsObj.numberOfTargets), mixParser.activeTree)
+    (RichNode(treeParser.getRoot, annotationMapping, None, readEventsObj.numberOfTargets, defaultColor), mixParser.activeTree)
   }
 
   /**
@@ -165,7 +166,7 @@ object MixRunner {
     println("after collapsing nodes " + rootNode.countSubNodes())
 
     // assign the colors to the nodes
-    RichNode.applyFunction(rootNode, annotationMapping.setNodeColor)
+    //RichNode.applyFunction(rootNode, annotationMapping.setNodeColor)
 
     rootNode
   }

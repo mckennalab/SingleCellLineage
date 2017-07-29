@@ -2,6 +2,7 @@ package main.scala.mix
 
 import java.io.File
 
+import beast.evolution.tree.Node
 import main.scala.annotation.AnnotationsManager
 import main.scala.node.RichNode
 import main.scala.stats.Event
@@ -25,7 +26,8 @@ object EventSplitter {
                  eventContainer: EventContainer,
                  firstXSites: Int,
                  sample: String,
-                 annotationMapping: AnnotationsManager): RichNode = {
+                 annotationMapping: AnnotationsManager,
+                 graftedNodeColor: String = "red"): RichNode = {
 
     // split the events into the root for the first X sites,
     // and sub-tree for individual nodes
@@ -50,12 +52,23 @@ object EventSplitter {
           val subset = EventContainer.subsetByChildren(eventContainer, children, internalNodeName)
 
           println("Processing the " + internalNodeName + " tree...")
-          val (childNode, childLinker) = MixRunner.mixOutputToTree(MixRunner.runMix(mixDir, subset), subset, annotationMapping, internalNodeName)
+          val (childNode, childLinker) = MixRunner.mixOutputToTree(MixRunner.runMix(mixDir, subset), subset, annotationMapping, internalNodeName, graftedNodeColor)
 
           childToTree(internalNodeName) = childNode
           linker.addEdges(childLinker)
 
           rootNodeAndConnection.graftToName(internalNodeName, childToTree(internalNodeName))
+        } else if (children.size == 1) {
+
+          val childEvent = eventContainer.events.filter{evt => evt.name == children(0)}
+          assert(childEvent.size == 1)
+
+          val parentEvent = rootNodeAndConnection.findSubnode(internalNodeName)
+          assert(parentEvent.isDefined)
+
+          linker.addEdge(Edge(parentEvent.get.name,childEvent(0).name,parentEvent.get.name))
+
+          rootNodeAndConnection.graftToName(internalNodeName, RichNode(new Node(childEvent(0).name),annotationMapping,parentEvent,childEvent(0).events.size, graftedNodeColor))
         }
       }
     }

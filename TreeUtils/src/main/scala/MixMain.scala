@@ -55,7 +55,7 @@ object MixMain extends App {
     // *********************************** Inputs *******************************************************
     opt[File]("allEventsFile") required() valueName ("<file>") action { (x, c) => c.copy(allEventsFile = x) } text ("the input stats file")
     opt[File]("mixRunLocation") required() valueName ("<file>") action { (x, c) => c.copy(mixRunLocation = x) } text ("the tree to produce")
-    opt[Int]("subsetFirstX") required() valueName ("<int>") action { (x, c) => c.copy(firstX = x) } text ("the tree to produce")
+    opt[Int]("subsetFirstX") valueName ("<int>") action { (x, c) => c.copy(firstX = x) } text ("the tree to produce")
     opt[File]("outputTree") required() valueName ("<file>") action { (x, c) => c.copy(outputTree = x) } text ("the tree to produce")
     opt[String]("sample") required() valueName ("<file>") action { (x, c) => c.copy(sample = x) } text ("the tree to produce")
 
@@ -73,13 +73,20 @@ object MixMain extends App {
     // load up any annotations we have
     val annotationMapping = new AnnotationsManager(readEventsObj)
 
-    // val mixPackage: MixFilePackage = MixRunner.runMix(config.mixRunLocation, readEventsObj)
+    val rootNode = if (config.firstX > 0) {
+      println("Running split-tree...")
+      EventSplitter.splitInTwo(config.mixRunLocation,
+        readEventsObj,
+        4,
+        config.sample,
+        annotationMapping)
+    } else {
+      println("Running single tree...")
+      val (rootNode, linker) = MixRunner.mixOutputToTree(MixRunner.runMix(config.mixRunLocation,readEventsObj), readEventsObj, annotationMapping, "root")
+      // post-process the final tree
+      MixRunner.postProcessTree(rootNode, linker, readEventsObj, annotationMapping)
+    }
 
-    val rootNode = EventSplitter.splitInTwo(config.mixRunLocation,
-                                  readEventsObj,
-                                  4,
-                                  config.sample,
-                                  annotationMapping)
     // ------------------------------------------------------------
     // traverse the nodes and add names to any internal nodes without names
     // ------------------------------------------------------------

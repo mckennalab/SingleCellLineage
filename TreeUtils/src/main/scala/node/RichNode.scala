@@ -17,20 +17,23 @@ import scala.collection.mutable.ArrayBuffer
 case class RichNode(originalNd: Node,
                     annotations: AnnotationsManager,
                     parent: Option[RichNode],
-                    numberOfTargets: Int = 10) extends Ordered[RichNode] {
+                    numberOfTargets: Int = 10,
+                    defaultNodeColor : String = "black") extends Ordered[RichNode] {
 
   // store the orginal node for later if needed
   val originalNode = originalNd
 
   var name = originalNd.getID
 
-  // handle some basic annotations about the ndoe
+  // handle some basic annotations about the node
   val myAnnotations = annotations.annotationMapping.get(name)
 
   var distToParent = originalNd.getHeight - (if (parent.isDefined) parent.get.originalNd.getHeight else 0)
   var height = originalNd.getHeight
 
   var color = "black"
+  var nodeColor = defaultNodeColor
+
   var sampleName = "UNKNOWN"
   var count = 0
   val freeAnnotations = new mutable.HashMap[String, String]()
@@ -86,6 +89,28 @@ case class RichNode(originalNd: Node,
       cd.graftToName(name, nd)
     }.foldLeft(replacedHere)((a,b) => a | b)
 
+  }
+
+  /**
+    * find the specified node by name in our tree
+    * @param name the node to find
+    *             @return A RichNode if found, None if not
+    */
+  def findSubnode(name: String): Option[RichNode] = {
+    val replacedHere = if (this.name == name) Some(this) else None
+
+    val childs = children.map{cd =>
+      cd.findSubnode(name)
+    }.flatten
+
+    if ((replacedHere.isDefined && childs.size > 0) ||
+      (!replacedHere.isDefined && childs.size > 1))
+      throw new IllegalStateException("Found too many nodes with the name: " + name)
+
+    if (replacedHere.isDefined || childs.size == 0)
+      replacedHere
+    else
+      Some(childs(0))
   }
 
 
@@ -363,11 +388,15 @@ object RichNode {
     outputString += RichNode.toJSON("cladeTotal", node.countSubNodes())
     outputString += RichNode.toJSON("totatSubNodes", node.countSubProportions())
     outputString += RichNode.toJSON("color", node.color)
+    outputString += RichNode.toJSON("nodecolor", node.nodeColor)
+
     outputString += RichNode.toJSON("sample", node.sampleName)
     node.freeAnnotations.foreach { case (key, value) =>
       outputString += RichNode.toJSON(key, value)
     }
+    // TODO: fix this proportions stuff
     val sampleTot = if (node.annotations.sampleTotals contains node.sampleName) node.annotations.sampleTotals(node.sampleName) else 0
+    println("sample total " + node.sampleName + " " + sampleTot)
     outputString += RichNode.toJSON("organCountsMax", sampleTot)
     outputString += RichNode.toJSON("cladeTotal", node.count)
     outputString += RichNode.toJSON("max_organ_prop", if (sampleTot.toDouble > 0) node.count.toDouble / sampleTot.toDouble else 0.0)

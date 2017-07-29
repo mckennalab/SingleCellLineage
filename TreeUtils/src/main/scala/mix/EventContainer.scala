@@ -64,8 +64,7 @@ class EventContainerImpl(msample: String,
   */
 case class SubsettedEventContainer(mevents: Array[Event],
                                    eventContainer: EventContainer,
-                                   eventsToChildren: HashMap[String, Array[String]],
-                                   numOfTargets: Int) extends EventContainer {
+                                   eventsToChildren: HashMap[String, Array[String]]) extends EventContainer {
 
   def sample: String = eventContainer.sample
 
@@ -79,7 +78,7 @@ case class SubsettedEventContainer(mevents: Array[Event],
 
   def eventToNumber: HashMap[String, Int] = eventContainer.eventToNumber
 
-  def numberOfTargets: Int = numOfTargets
+  def numberOfTargets: Int = eventContainer.numberOfTargets
 }
 
 object EventContainer {
@@ -105,16 +104,20 @@ object EventContainer {
     var partialID = 0
     container.events.foreach { event => {
       var valid = true
-      var newEvents = Array[String]()
+      var newEvents = Array.fill[String](event.events.size)("NONE")
 
       // create the new list of events
       sites.foreach { case (site, str) => {
+        val siteList = if (str == wildcard) collection.immutable.Set[Int](site) else container.eventToSites(str)
+
         if (event.events(site) == str || str == wildcard)
-          newEvents :+= event.events(site)
+          siteList.foreach{coveredSite => newEvents(coveredSite) = event.events(coveredSite)}
         else
           valid = false
       }
       }
+
+      // fill in the rest of
 
       // if we're valid, add it to the pile with our id for later reconstruction
       if (valid) {
@@ -142,7 +145,7 @@ object EventContainer {
         sample,
         name)
     }
-    }.toArray, container, nameToChildren, sites.size), nameToChildren)
+    }.toArray, container, nameToChildren), nameToChildren)
   }
 
   def subsetByChildren(container: EventContainer, children: Array[String], rootID: String): EventContainer = {
