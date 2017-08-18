@@ -11,28 +11,39 @@ class ScoreMatrix(dimX: Int, dimY: Int) {
   def get(rowPos: Int, colPos: Int): Double = values(rowPos)(colPos)
 
   def printMatrix(pad: Int = 7): Unit = {
-    println(ScoreMatrix.padInt(-1, pad) + (0 until dimX).map { i => ScoreMatrix.padInt(i, pad) }.mkString(""))
+    println(MatrixUtils.padInt(-1, pad) + (0 until dimX).map { i => MatrixUtils.padInt(i, pad) }.mkString(""))
     (0 until dimY).foreach { indexB => {
-      print(ScoreMatrix.padInt(indexB, pad))
+      print(MatrixUtils.padInt(indexB, pad))
       (0 until dimX).foreach { indexA => {
-        print(ScoreMatrix.padDouble(values(indexA)(indexB), pad))
+        print(MatrixUtils.padDouble(values(indexA)(indexB), pad))
       }
       }
       println()
     }
     }
   }
+
+  def maxIndex(row: Int, col:Int, byRow: Boolean): Int = {
+    if (byRow)
+      maxRowIndex(row,col)
+    else
+      maxColIndex(col,row)
+  }
+
+  private def maxRowIndex(row: Int, endCol: Int): Int = {
+    var maxIndex = 0
+    (0 until endCol).foreach{col => if (values(row)(col) > values(row)(maxIndex)) maxIndex = col}
+    maxIndex
+  }
+
+  private def maxColIndex(col: Int, endRow: Int): Int = {
+    var maxIndex = 0
+    (0 until endRow).foreach{row => if (values(row)(col) > values(maxIndex)(col)) maxIndex = row}
+    maxIndex
+  }
 }
 
 object ScoreMatrix {
-
-  def padInt(i: Int, padv: Int): String = {
-    String.format("%1$" + padv + "s", i.toString)
-  }
-
-  def padDouble(i: Double, padv: Int): String = {
-    String.format("%1$" + padv + "s", i.toString)
-  }
 
   def matchInitialization(rows: Int, cols: Int): ScoreMatrix = {
     val ret = new ScoreMatrix(rows, cols)
