@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HMMAlign.iml" filepath="$PROJECT_DIR$/HMMAlign.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/hmmalign.iml" filepath="$PROJECT_DIR$/.idea/modules/hmmalign.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/hmmalign-build.iml" filepath="$PROJECT_DIR$/.idea/modules/hmmalign-build.iml" />
     </modules>
   </component>
 </project>

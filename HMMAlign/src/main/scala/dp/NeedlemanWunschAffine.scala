@@ -14,29 +14,31 @@ class NeedlemanWunschAffine(sequenceA: String,
                             gapOpen: Double,
                             gapExtend: Double) extends Aligner {
 
-  // a score that prevents use of the cell
+  // a score that prevents use of the cell -- should be smaller than anything we can produce through alignment
   val reallyLow = -10000000.0
 
   // our alignments
   val matchMatrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
-  val gapAMatrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
-  val gapBMatrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
+  val insertAMatrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
+  val insertBMatrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
 
+  // initialize the scoring matrices
   (0 until sequenceA.size + 1).foreach{ index1 => {
     matchMatrix.set(index1,0,gapOpen + (gapExtend * (index1 - 1)))
-    gapAMatrix.set(index1,0,gapOpen + (gapExtend * (index1 - 1)))
-    gapBMatrix.set(index1,0,reallyLow)
+    insertAMatrix.set(index1,0,gapOpen + (gapExtend * (index1 - 1)))
+    insertBMatrix.set(index1,0,reallyLow)
   }}
-  (1 until sequenceB.size + 1).foreach{ index2 => {
+  (0 until sequenceB.size + 1).foreach{ index2 => {
     matchMatrix.set(0,index2,gapOpen + (gapExtend * (index2 - 1)))
-    gapAMatrix.set(0,index2,reallyLow)
-    gapBMatrix.set(0,index2,gapOpen + (gapExtend * (index2 - 1)))
+    insertAMatrix.set(0,index2,reallyLow)
+    insertBMatrix.set(0,index2,gapOpen + (gapExtend * (index2 - 1)))
   }}
   matchMatrix.set(0,0,0.0)
+  insertAMatrix.set(0,0,reallyLow)
+  insertBMatrix.set(0,0,reallyLow)
 
-  val traceM = new TracebackMatrix(sequenceA.size + 1, sequenceB.size + 1)
-  val traceGA = new TracebackMatrix(sequenceA.size + 1, sequenceB.size + 1)
-  val traceGB = new TracebackMatrix(sequenceA.size + 1, sequenceB.size + 1)
+  // traceback the best path
+  val traceBest = new TracebackMatrix(sequenceA.size + 1, sequenceB.size + 1)
 
 
   // fill in the score matrix
@@ -48,51 +50,53 @@ class NeedlemanWunschAffine(sequenceA: String,
       { // match matrix setup
         val matchScores = Array[Double](
           matchMatrix.get(indexA - 1, indexB - 1) + (matchedScore),
-          gapAMatrix.get( indexA - 1, indexB - 1) + (matchedScore),
-          gapBMatrix.get( indexA - 1, indexB - 1) + (matchedScore))
+          insertAMatrix.get( indexA - 1, indexB - 1) + (matchedScore),
+          insertBMatrix.get( indexA - 1, indexB - 1) + (matchedScore))
 
         val max = matchScores.max
         val index = matchScores.indexOf(max)
         matchMatrix.set(indexA, indexB, max)
-        traceM.set(indexA,indexB,index match {case 0 => Matched; case 1 => GapA; case 2 => GapB})
       }
 
       { // gapB matrix -- we do the opposite of the Durbin book, as they keep track of insertions, we keep track of deletions
         val gapBScores = Array[Double](
           matchMatrix.get(indexA - 1, indexB) + (gapOpen),
-          gapBMatrix.get( indexA - 1, indexB) + (gapExtend))
+          insertBMatrix.get(indexA - 1, indexB) + (gapExtend))
 
         val max = gapBScores.max
         val index = gapBScores.indexOf(max)
-        gapBMatrix.set(indexA, indexB, max)
-        traceGB.set(indexA,indexB,index match {case 0 => Matched; case 1 => GapB})
+        insertBMatrix.set(indexA, indexB, max)
       }
 
       { // gapA matrix-- we do the opposite of the Durbin book, as they keep track of insertions, we keep track of deletions
         val gapAScores = Array[Double](
-          matchMatrix.get(indexA, indexB - 1) + (gapOpen),
-          gapAMatrix.get( indexA, indexB - 1) + (gapExtend))
+          matchMatrix.get(indexA, indexB - 1 ) + (gapOpen),
+          insertAMatrix.get( indexA, indexB - 1) + (gapExtend))
 
         val max = gapAScores.max
         val index = gapAScores.indexOf(max)
-        gapAMatrix.set(indexA, indexB, max)
-        traceGA.set(indexA,indexB,index match {case 0 => Matched; case 1 => GapA})
+        insertAMatrix.set(indexA, indexB, max)
       }
+
+      // now record the best traceback at this location
+      val traceDir = Array[Double](matchMatrix.get(indexA, indexB),insertAMatrix.get(indexA, indexB),insertBMatrix.get(indexA, indexB))
+      val index = traceDir.indexOf(traceDir.max) match {case 0 => Matched; case 1 => GapA; case 2 => GapB}
+      traceBest.set(indexA,indexB,index)
     }}
   }}
 
   val emissionMap: Map[EmissionState,ScoreMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA => (GapA,matchMatrix) // gapAMatrix)
-    case GapB => (GapB,matchMatrix) // gapBMatrix)
+    case GapA => (GapA,insertAMatrix) // insertAMatrix)
+    case GapB => (GapB,insertBMatrix) // insertBMatrix)
     case Matched => (Matched,matchMatrix)
-    case _ => throw new IllegalStateException("Uknown emmission state: " + state)
+    case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
   val traceMap: Map[EmissionState,TracebackMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA => (GapA,traceGA)
-    case GapB => (GapB,traceGB)
-    case Matched => (Matched,traceM)
-    case _ => throw new IllegalStateException("Uknown emmission state: " + state)
+    case GapA => (GapA,traceBest)
+    case GapB => (GapB,traceBest)
+    case Matched => (Matched,traceBest)
+    case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
   def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state)

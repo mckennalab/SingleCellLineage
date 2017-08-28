@@ -4,13 +4,13 @@ import main.scala.{Aligner, Alignment}
 import main.scala.matrix.{ScoreMatrix, TracebackMatrix}
 import main.scala.states.{EmissionState, GapA, GapB, Matched}
 
-class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatchScore: Double, logMultiplier: Double) extends Aligner {
+class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatchScore: Double, gapOpen: Double, gapExtend: Double) extends Aligner {
 
   val matrix = new ScoreMatrix(sequenceA.size + 1, sequenceB.size + 1)
   val trace = new TracebackMatrix(sequenceA.size + 1, sequenceB.size + 1)
 
-  (1 until sequenceA.size + 1).foreach { index1 => matrix.set(index1, 0, -1.0 * ConvexDP.scoreDistance(index1)) }
-  (1 until sequenceB.size + 1).foreach { index2 => matrix.set(0, index2, -1.0 * ConvexDP.scoreDistance(index2)) }
+  (1 until sequenceA.size + 1).foreach { index1 => matrix.set(index1, 0, -1.0 * ConvexDP.scoreDistance(index1, gapOpen, gapExtend)) }
+  (1 until sequenceB.size + 1).foreach { index2 => matrix.set(0, index2, -1.0 * ConvexDP.scoreDistance(index2, gapOpen, gapExtend)) }
 
   // fill in the score matrix
   (1 until sequenceA.size + 1).foreach { index1 => {
@@ -18,31 +18,28 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
 
       val matchedScore = if (sequenceA(index1 - 1) == sequenceB(index2 - 1)) matchScore else mismatchScore
 
-      val bestGapAIndex = matrix.maxIndex(index1, index2, true)
-      val bestGapBIndex = matrix.maxIndex(index1, index2, false)
+      val bestGapAIndex = matrix.maxIndex(index1, index2, false)
+      val bestGapBIndex = matrix.maxIndex(index1, index2, true)
 
-      print("(" + index1 + "," + index2 + ") -> " +
-        index1 + "++" + bestGapAIndex + "--" + (index1 - bestGapAIndex) + ",  " +
-        index2 + "++" + bestGapBIndex + "--" + (index2 - bestGapBIndex) + " ")
-
+      //println("(" + index1 + "," + index2 + ") ---> " + bestGapAIndex + " " + bestGapBIndex + " size = (" + matrix.mDimX + "," + + matrix.mDimY + ")")
+      //matrix.printMatrix()
+      //println()
+      //println()
       val scores = Array[Double](
         matrix.get(index1 - 1, index2 - 1) + (matchedScore),
-        matrix.get(index1, bestGapAIndex) - ConvexDP.scoreDistance(index1 - bestGapAIndex),
-        matrix.get(bestGapBIndex, index2) - ConvexDP.scoreDistance(index2 - bestGapBIndex))
+        matrix.get(bestGapAIndex, index2) - ConvexDP.scoreDistance(index1 - bestGapAIndex, gapOpen, gapExtend),
+        matrix.get(index1, bestGapBIndex) - ConvexDP.scoreDistance(index2 - bestGapBIndex, gapOpen, gapExtend))
 
       val max = scores.max
       val index = scores.indexOf(max)
 
-      println(" == " + max + " " + scores.mkString(","))
 
       matrix.set(index1, index2, max)
 
-      println(scores.mkString("=") + " ___ " + index)
-
       index match {
         case 0 => trace.set(index1, index2, Matched)
-        case 1 => trace.set(index1, index2, GapA)
-        case 2 => trace.set(index1, index2, GapB)
+        case 1 => trace.set(index1, index2, GapB)
+        case 2 => trace.set(index1, index2, GapA)
       }
     }
     }
@@ -61,11 +58,11 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
 
 object ConvexDP {
 
-  def scoreDistance(distance: Int, gapOpen: Double = 5, gapExt: Double = 1): Double = {
+  def scoreDistance(distance: Int, gapOpen: Double, gapExt: Double): Double = {
     distance match {
       case 0 => throw new IllegalStateException("Shouldn't see distance")
       case 1 => gapOpen
-      case x if x > 1 => gapOpen + Math.log(distance)
+      case x if x > 1 => gapOpen + (Math.log(distance) * gapExt.toDouble)
       case _ => throw new IllegalStateException("Unhandled distance: " + distance)
     }
   }

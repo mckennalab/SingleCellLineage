@@ -7,7 +7,7 @@ object MatrixUtils {
   }
 
   def padDouble(i: Double, padv: Int): String = {
-    String.format("%1$" + padv + "s", i.toString)
+    " " + String.format("%1$" + padv + "s", i.toString).slice(0,6)
   }
 
   def padString(st: String, padv: Int): String = {

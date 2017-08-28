@@ -23,6 +23,7 @@ class NeedlemanWunsch(sequenceA: String, sequenceB: String, matchScore: Double, 
 
       val matchedScore = if (sequenceA(index1 - 1) == sequenceB(index2 - 1)) matchScore else mismatchScore
 
+
       val scores = Array[Double](
         matrix.get(index1 - 1, index2 - 1) + (matchedScore),
         matrix.get(index1, index2 - 1) + delScore,
@@ -32,7 +33,7 @@ class NeedlemanWunsch(sequenceA: String, sequenceB: String, matchScore: Double, 
       val index = scores.indexOf(max)
 
       matrix.set(index1, index2, max)
-
+      //println("(" + index1 + "," + index2 + ") " + matchedScore + " max = " + max + " index = " + index + " scores " + scores.mkString(","))
       index match {
         case 0 => trace.set(index1, index2, Matched)
         case 1 => trace.set(index1, index2, GapA)

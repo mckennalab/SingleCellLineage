@@ -18,12 +18,15 @@ case class RichNode(originalNd: Node,
                     annotations: AnnotationsManager,
                     parent: Option[RichNode],
                     numberOfTargets: Int = 10,
-                    defaultNodeColor : String = "black") extends Ordered[RichNode] {
+                    defaultNodeColor: String = "black") extends Ordered[RichNode] {
 
   // store the orginal node for later if needed
   val originalNode = originalNd
 
   var name = originalNd.getID
+
+  // are we a grafted node
+  var graftedNode = false
 
   // handle some basic annotations about the node
   val myAnnotations = annotations.annotationMapping.get(name)
@@ -62,7 +65,8 @@ case class RichNode(originalNd: Node,
 
   originalNd.getChildren.asScala.foreach { nd => {
     children :+= RichNode(nd, annotations, Some(this), numberOfTargets)
-  }}
+  }
+  }
 
   // ******************************************************************************************************
   // our member methods
@@ -70,6 +74,7 @@ case class RichNode(originalNd: Node,
 
   /**
     * add a new child node; useful when we make trees piecewise
+    *
     * @param nd the child node to graft on
     */
   def graftOnChild(nd: RichNode): Unit = {
@@ -80,26 +85,31 @@ case class RichNode(originalNd: Node,
   /**
     * add a new child node to a specific sub-node. Do a tree-traversal to find the correct node
     * and attach the node as a child
+    *
     * @param nd the child node to graft on
     */
   def graftToName(name: String, nd: RichNode): Boolean = {
-    val replacedHere = if (this.name == name) {children :+= nd; true} else false
+    val replacedHere = if (this.name == name) {
+      children :+= nd
+      true
+    } else false
 
-    children.map{cd =>
+    children.map { cd =>
       cd.graftToName(name, nd)
-    }.foldLeft(replacedHere)((a,b) => a | b)
+    }.foldLeft(replacedHere)((a, b) => a | b)
 
   }
 
   /**
     * find the specified node by name in our tree
+    *
     * @param name the node to find
-    *             @return A RichNode if found, None if not
+    * @return A RichNode if found, None if not
     */
   def findSubnode(name: String): Option[RichNode] = {
     val replacedHere = if (this.name == name) Some(this) else None
 
-    val childs = children.map{cd =>
+    val childs = children.map { cd =>
       cd.findSubnode(name)
     }.flatten
 
@@ -208,7 +218,7 @@ object RichNode {
 
   /**
     *
-    * @param node           the RichNode to recurse on
+    * @param node               the RichNode to recurse on
     * @param ourBranchJustOrgan the color to set for the branches from this node to the parent
     */
   def assignBranchColors(node: RichNode, ourBranchJustOrgan: String = "false"): Unit = {
@@ -224,7 +234,8 @@ object RichNode {
           case _ => "false"
         }
         assignBranchColors(child, newColor)
-      }}
+      }
+      }
     }
   }
 
@@ -233,8 +244,10 @@ object RichNode {
     * this means accumulating events from the root outwards, as single nodes only have the changes
     * compared to the previous node
     *
-    * @param rootNode the root node, which we assume is all NONE in camin-sokal parsimony
-    * @param parser   the results from the parsimony run
+    * @param rootNode        the root node, which we assume is all NONE in camin-sokal parsimony
+    * @param linker          provides a lookup for links between nodes
+    * @param container       the event container
+    * @param numberOfTargets the number of targets
     */
   def applyParsimonyGenotypes(rootNode: RichNode, linker: NodeLinker, container: EventContainer, numberOfTargets: Int = 10): Unit = {
     println(numberOfTargets)
@@ -269,10 +282,14 @@ object RichNode {
         val event = eventContainer.numberToEvent(index + 1) // our first position is an edit, not NONE
         eventContainer.eventToSites(event).foreach { site => {
           // check to make sure we're not conflicting and overwriting an already edited site
+
+          // TODO: fix this part
           if (child.parsimonyEvents.size > site) {
-            if (child.parsimonyEvents(site) != "NONE")
+            if (child.parsimonyEvents(site) != "NONE") {
               println("WARNING: Conflict at site " + site + " for parent " + parent.name + " for child " + child.name + " event " + event)
-            child.parsimonyEvents(site) = event
+            } else {
+              child.parsimonyEvents(site) = event
+            }
           }
         }
         }
@@ -318,12 +335,12 @@ object RichNode {
     */
   def reorderChildrenByAlleleString(node: RichNode): Unit = {
 
-      if (node.children.size > 0)
-        print(node.children(0).count + " -> ")
-      scala.util.Sorting.quickSort(node.children)
-      if (node.children.size > 0)
-        println(node.children(0).count)
-      node.children.foreach { case (nd) => reorderChildrenByAlleleString(nd) }
+    if (node.children.size > 0)
+      print(node.children(0).count + " -> ")
+    scala.util.Sorting.quickSort(node.children)
+    if (node.children.size > 0)
+      println(node.children(0).count)
+    node.children.foreach { case (nd) => reorderChildrenByAlleleString(nd) }
   }
 
   /**
@@ -331,7 +348,7 @@ object RichNode {
     *
     * @param node the node to start sorting on
     */
-  def applyFunction(node: RichNode, func: (RichNode, Option[RichNode]) => Tuple2[String,String]): Unit = {
+  def applyFunction(node: RichNode, func: (RichNode, Option[RichNode]) => Tuple2[String, String]): Unit = {
     val res = func(node, node.parent)
     node.freeAnnotations(res._1) = res._2
     node.children.foreach { case (nd) => applyFunction(nd, func) }
@@ -340,7 +357,7 @@ object RichNode {
   /**
     * check that our nodes are assigned consistent node identities between the parsimony and known annotations
     *
-    * @param node   the node
+    * @param node the node
     */
   def recCheckNodeConsistency(node: RichNode): Unit = {
     // if we have a leaf -- where there are no children -- assign the name
@@ -349,7 +366,7 @@ object RichNode {
       if (differences > 0) {
         println("FAIL " + node.eventString.get.mkString(",") + " - " + node.parsimonyEvents.mkString(","))
         println("Defaulting to known event state... please check this in the tree")
-        node.eventString.get.zipWithIndex.foreach{case(event, index) => node.parsimonyEvents(index) = event}
+        node.eventString.get.zipWithIndex.foreach { case (event, index) => node.parsimonyEvents(index) = event }
 
       }
     } else {
@@ -389,6 +406,7 @@ object RichNode {
     outputString += RichNode.toJSON("totatSubNodes", node.countSubProportions())
     outputString += RichNode.toJSON("color", node.color)
     outputString += RichNode.toJSON("nodecolor", node.nodeColor)
+    outputString += RichNode.toJSON("grafted", node.graftedNode.toString)
 
     outputString += RichNode.toJSON("sample", node.sampleName)
     node.freeAnnotations.foreach { case (key, value) =>
@@ -396,7 +414,6 @@ object RichNode {
     }
     // TODO: fix this proportions stuff
     val sampleTot = if (node.annotations.sampleTotals contains node.sampleName) node.annotations.sampleTotals(node.sampleName) else 0
-    println("sample total " + node.sampleName + " " + sampleTot)
     outputString += RichNode.toJSON("organCountsMax", sampleTot)
     outputString += RichNode.toJSON("cladeTotal", node.count)
     outputString += RichNode.toJSON("max_organ_prop", if (sampleTot.toDouble > 0) node.count.toDouble / sampleTot.toDouble else 0.0)

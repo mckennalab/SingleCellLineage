@@ -49,7 +49,6 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
           if (currentTreeNumber == treeToUse) {
             treeToGenotypes(currentTreeNumber) = new ArrayBuffer[Edge]()
           }
-          println("New tree" + currentTreeNumber)
         }
         else if (inGenotypeSection && (line.contains("yes") || line.contains("no"))) {
           if (currentTreeNumber == treeToUse) {
@@ -92,7 +91,7 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
 
     // TODO: move this out into it's own type
     treeToGenotypes(treeToUse).toArray.foreach(edge => activeTree.addEdge(edge))
-    treeToGenotypes(treeToUse).toArray.foreach{case(edg) => println(edg.from + " -> " + edg.to)}
+    //treeToGenotypes(treeToUse).toArray.foreach{case(edg) => println(edg.from + " -> " + edg.to)}
   }
 
 

@@ -1,6 +1,8 @@
 package main.scala.matrix
 
 class ScoreMatrix(dimX: Int, dimY: Int) {
+  val mDimX = dimX
+  val mDimY = dimY
 
   val values = Array.ofDim[Double](dimX, dimY)
 

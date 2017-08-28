@@ -6,7 +6,7 @@ import main.scala.states._
 import scala.collection.mutable
 
 /**
-  * Created by aaronmck on 7/17/17.
+  * create a traceback matrix from our data
   */
 class TracebackMatrix (dimX: Int, dimY: Int) {
 
@@ -33,6 +33,14 @@ class TracebackMatrix (dimX: Int, dimY: Int) {
 
 object TracebackMatrix {
 
+  /**
+    * given a set of traceback matrices, find the highest scoring global alignment
+    * @param sequenceA the first sequence to align
+    * @param sequenceB the second sequence
+    * @param matFunction a mapping from emission type to the scoring matrix
+    * @param tracebackFunc the mapping from emission state to traceback matrix
+    * @return an alignment object
+    */
   def tracebackGlobalAlignment(sequenceA: String,
                                sequenceB: String,
                                matFunction: (EmissionState => ScoreMatrix),
@@ -53,30 +61,37 @@ object TracebackMatrix {
         currentBestMatrix = state
     }
 
-    //println(sequenceA + " " + sequenceB)
+    // while we're not back to square 0,0...
     while (!(indexA == 0 && indexB == 0)) {
-      tracebackFunc(currentBestMatrix).get(indexA, indexB) match {
-        case x if indexA == 0 | x == GapA => {
-          println("GapA - " + sequenceB(indexB - 1) + " seqA " + alignedStringA.result().mkString("") + " seqB " + alignedStringB.result().mkString(""))
+      //println(currentBestMatrix + "(" + indexA + "," + indexB + ") " + tracebackFunc(currentBestMatrix).get(indexA, indexB) + " " + currentBestMatrix + " " + alignedStringA.result.reverse.mkString("") + " " + alignedStringB.result.reverse.mkString(""))
+      val nextMatrix = tracebackFunc(currentBestMatrix).get(indexA,indexB)
+      (tracebackFunc(currentBestMatrix).get(indexA, indexB)) match {
+        case (x) if indexA == 0 => {
           alignedStringA += '-'
           alignedStringB += sequenceB(indexB - 1)
           indexB -= 1
-        }
-        case x if indexB == 0 | x == GapB => {
-          println("GapB " + sequenceA(indexA - 1) + " - " + " seqA " + alignedStringA.result().mkString("") + " seqB " + alignedStringB.result().mkString(""))
+        } case (x) if indexB == 0 => {
           alignedStringA += sequenceA(indexA - 1)
           alignedStringB += '-'
           indexA -= 1
-        }
-        case Matched => {
-          println("Matched " + sequenceB(indexB - 1) + " " + sequenceA(indexA - 1) + " seqA " + alignedStringA.result().mkString("") + " seqB " + alignedStringB.result().mkString(""))
+        } case (Matched) => {
           alignedStringA += sequenceA(indexA - 1)
           alignedStringB += sequenceB(indexB - 1)
           indexA -= 1
           indexB -= 1
+        } case (GapA) => {
+          alignedStringA += '-'
+          alignedStringB += sequenceB(indexB - 1)
+          indexB -= 1
+        } case (GapB) => {
+          alignedStringA += sequenceA(indexA - 1)
+          alignedStringB += '-'
+          indexA -= 1
+        } case (x) => {
+          throw new IllegalStateException("Unmatched " + x)
         }
       }
-      currentBestMatrix = tracebackFunc(currentBestMatrix).get(indexA,indexB)
+      currentBestMatrix = nextMatrix
     }
 
     new Alignment {

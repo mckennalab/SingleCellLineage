@@ -55,6 +55,7 @@ object EventSplitter {
           val (childNode, childLinker) = MixRunner.mixOutputToTree(MixRunner.runMix(mixDir, subset), subset, annotationMapping, internalNodeName, graftedNodeColor)
 
           childToTree(internalNodeName) = childNode
+          childToTree(internalNodeName).graftedNode = true
           linker.addEdges(childLinker)
 
           rootNodeAndConnection.graftToName(internalNodeName, childToTree(internalNodeName))
@@ -68,7 +69,9 @@ object EventSplitter {
 
           linker.addEdge(Edge(parentEvent.get.name,childEvent(0).name,parentEvent.get.name))
 
-          rootNodeAndConnection.graftToName(internalNodeName, RichNode(new Node(childEvent(0).name),annotationMapping,parentEvent,childEvent(0).events.size, graftedNodeColor))
+          val newNode = RichNode(new Node(childEvent(0).name),annotationMapping,parentEvent,childEvent(0).events.size, graftedNodeColor)
+          newNode.graftedNode = true
+          rootNodeAndConnection.graftToName(internalNodeName, newNode)
         }
       }
     }
