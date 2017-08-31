@@ -37,9 +37,9 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
       matrix.set(index1, index2, max)
 
       index match {
-        case 0 => trace.set(index1, index2, Matched)
-        case 1 => trace.set(index1, index2, GapB)
-        case 2 => trace.set(index1, index2, GapA)
+        case 0 => trace.set(index1, index2, Matched())
+        case 1 => trace.set(index1, index2, GapB())
+        case 2 => trace.set(index1, index2, GapA())
       }
     }
     }

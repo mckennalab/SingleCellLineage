@@ -10,7 +10,7 @@ class TransitionModel {
   // the transitions
   val values = Array.ofDim[Double](3, 3)
 
-  val emissionLookup = Map(Matched.str -> 0, GapA.str -> 1, GapB.str -> 2)
+  val emissionLookup = Map(Matched().str -> 0, GapA().str -> 1, GapB().str -> 2)
 
   initialize()
 

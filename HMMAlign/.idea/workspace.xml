@@ -1,33 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="66ab2961-ab7a-430b-b18f-8540c7e7e7f5" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/.idea/libraries/scala_sdk_2_12_2.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../TreeSimulator/.idea/libraries/scalatest_2_11_2_2_1.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../TreeSimulator/.idea/vcs.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../UMIMerge/src/main/scala/umi/BitENcoder.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../scripts/._stat_file_filter_and_align.scala" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/../scripts/join_sites.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HMMAlign.iml" afterPath="$PROJECT_DIR$/HMMAlign.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala" afterPath="$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala" afterPath="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala" afterPath="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala" afterPath="$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/matrix/MatrixUtils.scala" afterPath="$PROJECT_DIR$/src/main/scala/matrix/MatrixUtils.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala" afterPath="$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/states/AlignmentStates.scala" afterPath="$PROJECT_DIR$/src/main/scala/states/AlignmentStates.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/test/scala/dp/ConvexDPTest.scala" afterPath="$PROJECT_DIR$/src/test/scala/dp/ConvexDPTest.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschAffineTest.scala" afterPath="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschAffineTest.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschTest.scala" afterPath="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschTest.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/EventContainer.scala" afterPath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/EventContainer.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/EventSplitter.scala" afterPath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/EventSplitter.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/MixParser.scala" afterPath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/MixParser.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/ParsimonyCollapser.scala" afterPath="$PROJECT_DIR$/../TreeUtils/src/main/scala/mix/ParsimonyCollapser.scala" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/../TreeUtils/src/main/scala/node/RichNode.scala" afterPath="$PROJECT_DIR$/../TreeUtils/src/main/scala/node/RichNode.scala" />
-    </list>
+    <list default="true" id="66ab2961-ab7a-430b-b18f-8540c7e7e7f5" name="Default" comment="" />
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
     <ignored path="$PROJECT_DIR$/project/project/target/" />
@@ -52,96 +26,7 @@
     </system>
   </component>
   <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="ConvexDP.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="150">
-              <caret line="12" column="129" lean-forward="false" selection-start-line="12" selection-start-column="129" selection-end-line="12" selection-end-column="129" />
-              <folding>
-                <element signature="e#23#61#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Matrix.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="TracebackMatrix.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1140">
-              <caret line="79" column="21" lean-forward="false" selection-start-line="79" selection-start-column="21" selection-end-line="79" selection-end-column="21" />
-              <folding>
-                <element signature="e#27#54#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NeedlemanWunsch.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="705">
-              <caret line="51" column="0" lean-forward="false" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NeedlemanWunschAffineTest.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschAffineTest.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="870">
-              <caret line="60" column="44" lean-forward="false" selection-start-line="60" selection-start-column="44" selection-end-line="60" selection-end-column="44" />
-              <folding>
-                <element signature="e#23#84#0" expanded="true" />
-                <marker date="1503352467000" expanded="true" signature="324:597" ph="{...}" />
-                <marker date="1503352467000" expanded="true" signature="675:966" ph="{...}" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NeedlemanWunschAffine.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
-              <caret line="29" column="4" lean-forward="false" selection-start-line="29" selection-start-column="4" selection-end-line="29" selection-end-column="4" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="AlignmentStates.scala" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/main/scala/states/AlignmentStates.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="285">
-              <caret line="19" column="13" lean-forward="false" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NeedlemanWunschTest.scala" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschTest.scala">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="525">
-              <caret line="38" column="4" lean-forward="false" selection-start-line="38" selection-start-column="4" selection-end-line="38" selection-end-column="4" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300" />
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
@@ -162,7 +47,6 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/src/main/scala/emission/Emission.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/transistion/TransitionModel.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/matrix/ProfileManager.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/alignment.scala" />
         <option value="$PROJECT_DIR$/src/test/scala/AlignmentTest.scala" />
@@ -171,22 +55,23 @@
         <option value="$PROJECT_DIR$/src/main/scala/Aligner.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/Alignment.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/utils/AlignmentUtils.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala" />
         <option value="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschTest.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala" />
         <option value="$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschAffineTest.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/matrix/MatrixUtils.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala" />
         <option value="$PROJECT_DIR$/src/test/scala/dp/ConvexDPTest.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/transistion/TransitionModel.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/states/AlignmentStates.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala" />
+        <option value="$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="960" />
-    <option name="y" value="69" />
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="223" />
+    <option name="y" value="39" />
     <option name="width" value="1440" />
     <option name="height" value="838" />
   </component>
@@ -206,7 +91,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="PackagesPane" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -236,46 +120,6 @@
               <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
               <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="dp" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="emission" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="matrix" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="states" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="transistion" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -284,21 +128,14 @@
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="test" type="462c0819:PsiDirectoryNode" />
               <item name="scala" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="HMMAlign" type="b2602c69:ProjectViewProjectNode" />
-              <item name="HMMAlign" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="test" type="462c0819:PsiDirectoryNode" />
-              <item name="scala" type="462c0819:PsiDirectoryNode" />
-              <item name="dp" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="PackagesPane" />
       <pane id="AndroidView" />
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
@@ -623,7 +460,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="960" y="69" width="1440" height="838" extended-state="0" />
+    <frame x="0" y="23" width="1440" height="838" extended-state="6" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -638,7 +475,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15902779" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15902779" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="sbt-shell-toolwindow" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -863,13 +700,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/transistion/TransitionModel.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="225">
-          <caret line="15" column="0" lean-forward="false" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/ProfileManager.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="360">
@@ -921,22 +751,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="705">
-          <caret line="51" column="0" lean-forward="false" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="29" column="4" lean-forward="false" selection-start-line="29" selection-start-column="4" selection-end-line="29" selection-end-column="4" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/test/scala/dp/NeedlemanWunschTest.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="525">
@@ -949,11 +763,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="870">
           <caret line="60" column="44" lean-forward="false" selection-start-line="60" selection-start-column="44" selection-end-line="60" selection-end-column="44" />
-          <folding>
-            <element signature="e#23#84#0" expanded="true" />
-            <marker date="1503352467000" expanded="true" signature="324:597" ph="{...}" />
-            <marker date="1503352467000" expanded="true" signature="675:966" ph="{...}" />
-          </folding>
+          <folding />
         </state>
       </provider>
     </entry>
@@ -964,34 +774,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1140">
-          <caret line="79" column="21" lean-forward="false" selection-start-line="79" selection-start-column="21" selection-end-line="79" selection-end-column="21" />
-          <folding>
-            <element signature="e#27#54#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="12" column="129" lean-forward="false" selection-start-line="12" selection-start-column="129" selection-end-line="12" selection-end-column="129" />
-          <folding>
-            <element signature="e#23#61#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/test/scala/dp/ConvexDPTest.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="465">
@@ -999,10 +781,58 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/Matrix.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-145">
+          <caret line="9" column="22" lean-forward="true" selection-start-line="9" selection-start-column="22" selection-end-line="9" selection-end-column="22" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/transistion/TransitionModel.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="12" column="70" lean-forward="false" selection-start-line="12" selection-start-column="70" selection-end-line="12" selection-end-column="70" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunsch.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="435">
+          <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/scala/states/AlignmentStates.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="285">
-          <caret line="19" column="13" lean-forward="false" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
+        <state relative-caret-position="405">
+          <caret line="27" column="1" lean-forward="false" selection-start-line="27" selection-start-column="1" selection-end-line="27" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/NeedlemanWunschAffine.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="10" column="46" lean-forward="false" selection-start-line="10" selection-start-column="46" selection-end-line="10" selection-end-column="46" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/dp/ConvexDP.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="705">
+          <caret line="47" column="0" lean-forward="false" selection-start-line="47" selection-start-column="0" selection-end-line="47" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/scala/matrix/TracebackMatrix.scala">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="197">
+          <caret line="75" column="21" lean-forward="false" selection-start-line="75" selection-start-column="21" selection-end-line="75" selection-end-column="21" />
           <folding />
         </state>
       </provider>

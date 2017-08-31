@@ -35,9 +35,9 @@ class NeedlemanWunsch(sequenceA: String, sequenceB: String, matchScore: Double, 
       matrix.set(index1, index2, max)
       //println("(" + index1 + "," + index2 + ") " + matchedScore + " max = " + max + " index = " + index + " scores " + scores.mkString(","))
       index match {
-        case 0 => trace.set(index1, index2, Matched)
-        case 1 => trace.set(index1, index2, GapA)
-        case 2 => trace.set(index1, index2, GapB)
+        case 0 => trace.set(index1, index2, Matched())
+        case 1 => trace.set(index1, index2, GapA())
+        case 2 => trace.set(index1, index2, GapB())
       }
     }}
   }}

@@ -11,7 +11,7 @@ import scala.collection.mutable
 class TracebackMatrix (dimX: Int, dimY: Int) {
 
   val values = Array.ofDim[EmissionState](dimX, dimY)
-  (0 until dimX).foreach{x => (0 until dimY).foreach{y => values(x)(y) = Matched}}
+  (0 until dimX).foreach{x => (0 until dimY).foreach{y => values(x)(y) = Matched()}}
 
   def set(rowPos: Int, colPos: Int, value: EmissionState) {values(rowPos)(colPos) = value}
   def get(rowPos: Int, colPos: Int) : EmissionState = values(rowPos)(colPos)
@@ -55,7 +55,7 @@ object TracebackMatrix {
     var alignedStringB = mutable.ArrayBuilder.make[Char]()
 
     // find the best final score
-    var currentBestMatrix: EmissionState = Matched
+    var currentBestMatrix: EmissionState = Matched()
     EmissionState.knownStates.foreach{state =>
       if (matFunction(state).get(indexA,indexB) < matFunction(state).get(indexA,indexB))
         currentBestMatrix = state
@@ -66,27 +66,27 @@ object TracebackMatrix {
       //println(currentBestMatrix + "(" + indexA + "," + indexB + ") " + tracebackFunc(currentBestMatrix).get(indexA, indexB) + " " + currentBestMatrix + " " + alignedStringA.result.reverse.mkString("") + " " + alignedStringB.result.reverse.mkString(""))
       val nextMatrix = tracebackFunc(currentBestMatrix).get(indexA,indexB)
       (tracebackFunc(currentBestMatrix).get(indexA, indexB)) match {
-        case (x) if indexA == 0 => {
-          alignedStringA += '-'
-          alignedStringB += sequenceB(indexB - 1)
-          indexB -= 1
-        } case (x) if indexB == 0 => {
-          alignedStringA += sequenceA(indexA - 1)
-          alignedStringB += '-'
-          indexA -= 1
-        } case (Matched) => {
-          alignedStringA += sequenceA(indexA - 1)
-          alignedStringB += sequenceB(indexB - 1)
-          indexA -= 1
-          indexB -= 1
-        } case (GapA) => {
-          alignedStringA += '-'
-          alignedStringB += sequenceB(indexB - 1)
-          indexB -= 1
-        } case (GapB) => {
-          alignedStringA += sequenceA(indexA - 1)
-          alignedStringB += '-'
-          indexA -= 1
+        case GapA(x) if indexA == 0 => {
+          alignedStringA ++= "-" * x
+          alignedStringB ++= sequenceB.slice(indexB,indexB - 1).reverse
+          indexB -= x
+        } case GapB(x) if indexB == 0 => {
+          alignedStringA ++= sequenceA.slice(indexA,indexA - 1).reverse
+          alignedStringB ++=  "-" * x
+          indexA -= x
+        } case Matched(x) => {
+          alignedStringA ++= sequenceA.slice(indexA, indexA - x).reverse
+          alignedStringB ++= sequenceB.slice(indexB, indexB - x).reverse
+          indexA -= x
+          indexB -= x
+        } case GapA(x) => {
+          alignedStringA ++=  "-" * x
+          alignedStringB ++= sequenceB.slice(indexB, indexB - x).reverse
+          indexB -= x
+        } case GapB(x) => {
+          alignedStringA ++= sequenceA.slice(indexA ,indexA - x).reverse
+          alignedStringB ++= "-" * x
+          indexA -= x
         } case (x) => {
           throw new IllegalStateException("Unmatched " + x)
         }

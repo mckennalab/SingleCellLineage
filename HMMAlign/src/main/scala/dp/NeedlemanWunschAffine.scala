@@ -80,22 +80,22 @@ class NeedlemanWunschAffine(sequenceA: String,
 
       // now record the best traceback at this location
       val traceDir = Array[Double](matchMatrix.get(indexA, indexB),insertAMatrix.get(indexA, indexB),insertBMatrix.get(indexA, indexB))
-      val index = traceDir.indexOf(traceDir.max) match {case 0 => Matched; case 1 => GapA; case 2 => GapB}
+      val index = traceDir.indexOf(traceDir.max) match {case 0 => Matched(); case 1 => GapA(); case 2 => GapB()}
       traceBest.set(indexA,indexB,index)
     }}
   }}
 
   val emissionMap: Map[EmissionState,ScoreMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA => (GapA,insertAMatrix) // insertAMatrix)
-    case GapB => (GapB,insertBMatrix) // insertBMatrix)
-    case Matched => (Matched,matchMatrix)
+    case GapA(_) => (GapA(),insertAMatrix) // insertAMatrix)
+    case GapB(_) => (GapB(),insertBMatrix) // insertBMatrix)
+    case Matched(_) => (Matched(),matchMatrix)
     case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
   val traceMap: Map[EmissionState,TracebackMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA => (GapA,traceBest)
-    case GapB => (GapB,traceBest)
-    case Matched => (Matched,traceBest)
+    case GapA(_) => (GapA(),traceBest)
+    case GapB(_) => (GapB(),traceBest)
+    case Matched(_) => (Matched(),traceBest)
     case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
