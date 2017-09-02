@@ -85,22 +85,22 @@ class NeedlemanWunschAffine(sequenceA: String,
     }}
   }}
 
-  val emissionMap: Map[EmissionState,ScoreMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA(_) => (GapA(),insertAMatrix) // insertAMatrix)
-    case GapB(_) => (GapB(),insertBMatrix) // insertBMatrix)
-    case Matched(_) => (Matched(),matchMatrix)
+  val emissionMap: Map[String,ScoreMatrix] = EmissionState.knownStates.map{state => state match {
+    case x if x == GapA().str => (GapA().str,insertAMatrix) // insertAMatrix)
+    case x if x == GapB().str => (GapB().str,insertBMatrix) // insertBMatrix)
+    case x if x == Matched().str => (Matched().str,matchMatrix)
     case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
-  val traceMap: Map[EmissionState,TracebackMatrix] = EmissionState.knownStates.map{state => state match {
-    case GapA(_) => (GapA(),traceBest)
-    case GapB(_) => (GapB(),traceBest)
-    case Matched(_) => (Matched(),traceBest)
+  val traceMap: Map[String,TracebackMatrix] = EmissionState.knownStates.map{state => state match {
+    case x if x == GapA().str => (GapA().str,traceBest)
+    case x if x == GapB().str => (GapB().str,traceBest)
+    case x if x == Matched().str => (Matched().str,traceBest)
     case _ => throw new IllegalStateException("Unknown emission state: " + state)
   }}.toMap
 
-  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state)
-  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state)
+  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state.str)
+  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state.str)
 
   override def alignment: Alignment = TracebackMatrix.tracebackGlobalAlignment(sequenceA,sequenceB,emissionMapping,traceMapping)
 }

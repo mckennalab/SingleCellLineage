@@ -1,7 +1,7 @@
 package main.scala.matrix
 
 import main.scala.Alignment
-import main.scala.states._
+import main.scala.states.{EmissionState, _}
 
 import scala.collection.mutable
 
@@ -55,43 +55,47 @@ object TracebackMatrix {
     var alignedStringB = mutable.ArrayBuilder.make[Char]()
 
     // find the best final score
-    var currentBestMatrix: EmissionState = Matched()
+    var currentBestMatrix = Matched().str
     EmissionState.knownStates.foreach{state =>
-      if (matFunction(state).get(indexA,indexB) < matFunction(state).get(indexA,indexB))
+      if (matFunction(EmissionState.stringToState(state)).get(indexA,indexB) < matFunction(EmissionState.stringToState(state)).get(indexA,indexB))
         currentBestMatrix = state
     }
 
     // while we're not back to square 0,0...
     while (!(indexA == 0 && indexB == 0)) {
-      //println(currentBestMatrix + "(" + indexA + "," + indexB + ") " + tracebackFunc(currentBestMatrix).get(indexA, indexB) + " " + currentBestMatrix + " " + alignedStringA.result.reverse.mkString("") + " " + alignedStringB.result.reverse.mkString(""))
-      val nextMatrix = tracebackFunc(currentBestMatrix).get(indexA,indexB)
-      (tracebackFunc(currentBestMatrix).get(indexA, indexB)) match {
-        case GapA(x) if indexA == 0 => {
-          alignedStringA ++= "-" * x
-          alignedStringB ++= sequenceB.slice(indexB,indexB - 1).reverse
-          indexB -= x
-        } case GapB(x) if indexB == 0 => {
-          alignedStringA ++= sequenceA.slice(indexA,indexA - 1).reverse
-          alignedStringB ++=  "-" * x
-          indexA -= x
+      /*println(currentBestMatrix + "(" + indexA + "," + indexB + ") " +
+        tracebackFunc(EmissionState.stringToState(currentBestMatrix)).get(indexA, indexB) + " " +
+        currentBestMatrix + " " + alignedStringA.result.reverse.mkString("") + " " +
+        alignedStringB.result.reverse.mkString("") + " size " + tracebackFunc(EmissionState.stringToState(currentBestMatrix)).get(indexA, indexB))
+*/
+      val nextMatrix = tracebackFunc(EmissionState.stringToState(currentBestMatrix)).get(indexA,indexB)
+      (tracebackFunc(EmissionState.stringToState(currentBestMatrix)).get(indexA, indexB)) match {
+        case xCont:EmissionState if indexA == 0 => {
+          alignedStringA ++= "-" * xCont.distance
+          alignedStringB ++= sequenceB.slice(indexB - xCont.distance,indexB).reverse
+          indexB -= xCont.distance
+        } case xCont:EmissionState if indexB == 0 => {
+          alignedStringA ++= sequenceA.slice(indexA - xCont.distance,indexA).reverse
+          alignedStringB ++=  "-" * xCont.distance
+          indexA -= xCont.distance
         } case Matched(x) => {
-          alignedStringA ++= sequenceA.slice(indexA, indexA - x).reverse
-          alignedStringB ++= sequenceB.slice(indexB, indexB - x).reverse
+          alignedStringA ++= sequenceA.slice(indexA - x,indexA).reverse
+          alignedStringB ++= sequenceB.slice(indexB - x,indexB).reverse
           indexA -= x
           indexB -= x
         } case GapA(x) => {
           alignedStringA ++=  "-" * x
-          alignedStringB ++= sequenceB.slice(indexB, indexB - x).reverse
+          alignedStringB ++= sequenceB.slice(indexB - x,indexB).reverse
           indexB -= x
         } case GapB(x) => {
-          alignedStringA ++= sequenceA.slice(indexA ,indexA - x).reverse
+          alignedStringA ++= sequenceA.slice(indexA - x,indexA).reverse
           alignedStringB ++= "-" * x
           indexA -= x
         } case (x) => {
           throw new IllegalStateException("Unmatched " + x)
         }
       }
-      currentBestMatrix = nextMatrix
+      currentBestMatrix = nextMatrix.str
     }
 
     new Alignment {
@@ -104,7 +108,7 @@ object TracebackMatrix {
       def getAlignmentString = (alignedStringA.result().mkString("").reverse, alignedStringB.result().mkString("").reverse)
 
       def getScore = {
-        EmissionState.knownStates.map{state => matFunction(state).get(sequenceA.size, sequenceB.size)}.max
+        EmissionState.knownStates.map{state => matFunction(EmissionState.stringToState(state)).get(sequenceA.size, sequenceB.size)}.max
       }
 
       def getSeqA = sequenceA

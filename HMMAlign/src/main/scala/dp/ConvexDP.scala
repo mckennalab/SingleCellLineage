@@ -12,7 +12,6 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
   (1 until sequenceA.size + 1).foreach { index1 => matrix.set(index1, 0, -1.0 * ConvexDP.scoreDistance(index1, gapOpen, gapExtend)) }
   (1 until sequenceB.size + 1).foreach { index2 => matrix.set(0, index2, -1.0 * ConvexDP.scoreDistance(index2, gapOpen, gapExtend)) }
 
-  // fill in the score matrix
   (1 until sequenceA.size + 1).foreach { index1 => {
     (1 until sequenceB.size + 1).foreach { index2 => {
 
@@ -21,25 +20,24 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
       val bestGapAIndex = matrix.maxIndex(index1, index2, false)
       val bestGapBIndex = matrix.maxIndex(index1, index2, true)
 
-      //println("(" + index1 + "," + index2 + ") ---> " + bestGapAIndex + " " + bestGapBIndex + " size = (" + matrix.mDimX + "," + + matrix.mDimY + ")")
-      //matrix.printMatrix()
-      //println()
-      //println()
+      assert(index1 - bestGapAIndex > 0)
+      assert(index2 - bestGapBIndex > 0)
+
       val scores = Array[Double](
         matrix.get(index1 - 1, index2 - 1) + (matchedScore),
         matrix.get(bestGapAIndex, index2) - ConvexDP.scoreDistance(index1 - bestGapAIndex, gapOpen, gapExtend),
         matrix.get(index1, bestGapBIndex) - ConvexDP.scoreDistance(index2 - bestGapBIndex, gapOpen, gapExtend))
 
       val max = scores.max
-      val index = scores.indexOf(max)
-
+      val index = scores.lastIndexOf(max)
 
       matrix.set(index1, index2, max)
 
       index match {
-        case 0 => trace.set(index1, index2, Matched())
-        case 1 => trace.set(index1, index2, GapB())
-        case 2 => trace.set(index1, index2, GapA())
+        case 0 => trace.set(index1, index2, Matched(1))
+        case 1 => trace.set(index1, index2, GapB(index1 - bestGapAIndex))
+        case 2 => trace.set(index1, index2, GapA(index2 - bestGapBIndex))
+
       }
     }
     }
@@ -49,9 +47,9 @@ class ConvexDP(sequenceA: String, sequenceB: String, matchScore: Double, mismatc
   val emissionMap = EmissionState.knownStates.map { state => (state, matrix) }.toMap
   val traceMap = EmissionState.knownStates.map { state => (state, trace) }.toMap
 
-  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state)
+  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state.str)
 
-  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state)
+  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state.str)
 
   override def alignment: Alignment = TracebackMatrix.tracebackGlobalAlignment(sequenceA, sequenceB, emissionMapping, traceMapping)
 }

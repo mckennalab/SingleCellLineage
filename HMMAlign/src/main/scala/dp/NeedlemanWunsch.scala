@@ -44,8 +44,8 @@ class NeedlemanWunsch(sequenceA: String, sequenceB: String, matchScore: Double, 
 
   val emissionMap = EmissionState.knownStates.map{state => (state,matrix)}.toMap
   val traceMap = EmissionState.knownStates.map{state => (state,trace)}.toMap
-  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state)
-  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state)
+  def emissionMapping(state: EmissionState): ScoreMatrix = emissionMap(state.str)
+  def traceMapping(state: EmissionState): TracebackMatrix = traceMap(state.str)
 
   override def alignment: Alignment = TracebackMatrix.tracebackGlobalAlignment(sequenceA,sequenceB,emissionMapping,traceMapping)
 }

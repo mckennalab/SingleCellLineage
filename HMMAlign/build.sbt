@@ -15,6 +15,7 @@ libraryDependencies ++= {
   }
   Seq(
     "org.scalatest"     %% "scalatest"                          % v.scalatest % "test",
+    "com.github.scopt" %% "scopt" % "3.2.0",
     "org.apache.commons" % "commons-math3" % "3.5"
   )
 }
@@ -22,5 +23,5 @@ libraryDependencies ++= {
 
 // this is clearly not the way to do this:
 
-mainClass in (Compile, packageBin) := Some("eventcalling.DeepSeq")
-mainClass in (Compile, run) := Some("eventcalling.DeepSeq")
+mainClass in (Compile, packageBin) := Some("main.scala.Main")
+mainClass in (Compile, run) := Some("main.scala.Main")

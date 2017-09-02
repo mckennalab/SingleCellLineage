@@ -6,6 +6,7 @@ trait EmissionState {
   val distance: Int = 1
 }
 
+
 // it's Matched instead of Match to avoid name conflicts with scala match
 case class Matched(override val distance: Int = 1) extends EmissionState { override def str = "M" }
 
@@ -24,5 +25,10 @@ object GapB {
 }
 
 object EmissionState {
-  val knownStates = Array[EmissionState](Matched(),GapA(),GapB())
+  val knownStates = Array[String](Matched().str,GapA().str,GapB().str)
+  def stringToState(str: String): EmissionState = str match {
+    case x if x == Matched().str => Matched()
+    case x if x == GapA().str => GapA()
+    case x if x == GapB().str => GapB()
+  }
 }
