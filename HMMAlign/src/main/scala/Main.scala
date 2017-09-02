@@ -85,8 +85,8 @@ object Main extends App {
       val nmw = new ConvexDP(read.sequence, ref.sequence, matchScore, misMatch, gapOpen, extension)
       val align = nmw.alignment
 
-      output.write(ref.name + "\n" + align.getAlignmentString._2 + "\n")
-      output.write(read.name + "\n" + align.getAlignmentString._1 + "\n")
+      output.write(">" + ref.name + "\n" + align.getAlignmentString._2 + "\n")
+      output.write(">" + read.name + "\n" + align.getAlignmentString._1 + "\n")
 
       if ((index + 1) % 20 == 0) println("count " + (index + 1))
     }
