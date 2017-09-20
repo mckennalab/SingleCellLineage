@@ -29,17 +29,17 @@ object EventSplitter {
                  annotationMapping: AnnotationsManager,
                  graftedNodeColor: String = "red"): RichNode = {
 
-    // split the events into the root for the first X sites,
-    // and sub-tree for individual nodes
+    // setup an array of wildcards over the sites we want to split on
     val sites = (0 until firstXSites).map {
       id => (id, EventContainer.wildcard)
     }.toArray
 
+    // split the events into the root for the first X sites,
+    // and sub-tree for individual nodes
     val rootTreeContainer = EventContainer.subset(eventContainer, sites, eventContainer.eventToNumber, sample)
 
-
     // run the root tree, and fetch the results
-    println("Processing the root tree...")
+    println("Processing the root tree with nodes " + rootTreeContainer._1.events.map{evt => evt.events.mkString("_")}.mkString(", "))
     val (rootNodeAndConnection,linker) = MixRunner.mixOutputToTree(MixRunner.runMix(mixDir, rootTreeContainer._1), rootTreeContainer._1, annotationMapping, "root")
 
     // now for each subtree, make a tree using just those events to be grafted onto the root tree
@@ -48,30 +48,36 @@ object EventSplitter {
 
     rootTreeContainer._2.foreach {
       case (internalNodeName, children) => {
-        if (children.size > 1) {
+
+        // MIX can't make a meaningful tree out of less than three nodes
+        if (children.size > 2) {
           val subset = EventContainer.subsetByChildren(eventContainer, children, internalNodeName)
 
-          println("Processing the " + internalNodeName + " tree...")
+          println("Processing the " + internalNodeName + " tree... " + rootTreeContainer._2(internalNodeName).mkString("^") + " with kids " + subset.events.map{evt => evt.prettyString()}.mkString("),("))
           val (childNode, childLinker) = MixRunner.mixOutputToTree(MixRunner.runMix(mixDir, subset), subset, annotationMapping, internalNodeName, graftedNodeColor)
 
           childToTree(internalNodeName) = childNode
           childToTree(internalNodeName).graftedNode = true
+          childLinker.shiftEdges(linker.getMaximumInternalNode,internalNodeName)
           linker.addEdges(childLinker)
 
           rootNodeAndConnection.graftToName(internalNodeName, childToTree(internalNodeName))
-        } else if (children.size == 1) {
-
-          val childEvent = eventContainer.events.filter{evt => evt.name == children(0)}
-          assert(childEvent.size == 1)
+        } else {
+          println("Less than three nodes " + children.mkString(","))
+          // pull out the highlighted children
+          val childenEvents = eventContainer.events.filter{evt => children.foldLeft[Boolean](false)((a,b) => (evt.name == b) | a)}
+          assert(childenEvents.size < 3 && childenEvents.size > 0)
 
           val parentEvent = rootNodeAndConnection.findSubnode(internalNodeName)
           assert(parentEvent.isDefined)
 
-          linker.addEdge(Edge(parentEvent.get.name,childEvent(0).name,parentEvent.get.name))
+          childenEvents.foreach{child => {
+            linker.addEdge(Edge(parentEvent.get.name, child.name, parentEvent.get.name))
 
-          val newNode = RichNode(new Node(childEvent(0).name),annotationMapping,parentEvent,childEvent(0).events.size, graftedNodeColor)
-          newNode.graftedNode = true
-          rootNodeAndConnection.graftToName(internalNodeName, newNode)
+            val newNode = RichNode(new Node(child.name), annotationMapping, parentEvent, child.events.size, graftedNodeColor)
+            newNode.graftedNode = true
+            rootNodeAndConnection.graftToName(internalNodeName, newNode)
+          }}
         }
       }
     }

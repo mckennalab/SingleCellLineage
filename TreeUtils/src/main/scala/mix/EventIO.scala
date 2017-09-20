@@ -2,8 +2,9 @@ package main.scala.mix
 
 import java.io.{File, PrintWriter}
 
-import main.scala.stats.{Event}
+import main.scala.stats.Event
 
+import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, HashMap, Set}
 import scala.io.Source
 
@@ -24,6 +25,7 @@ object EventIO {
     val eventToCount = new HashMap[String, Int]()
     val numberToEvent = new HashMap[Int, String]()
     val eventToPositions = new HashMap[String, Set[Int]]()
+    val cellAnnotations = new HashMap[String, HashMap[String,String]]()
 
     eventToNumber("NONE") = 0
     eventToNumber("UNKNOWN") = 0
@@ -34,9 +36,15 @@ object EventIO {
 
     val builder = ArrayBuffer[Event]()
 
-    Source.fromFile(allEventsFile).getLines().drop(1).zipWithIndex.foreach { case (line, index) => {
+    val inputFile = Source.fromFile(allEventsFile).getLines()
+    val header = inputFile.next().split("\t")
+
+
+    // process the input file
+    inputFile.zipWithIndex.foreach { case (line, index) => {
       val lineTks = line.split("\t")
 
+      // process the events portion of the file
       val eventTokens = lineTks(0).split("_")
 
       // count the events
@@ -57,6 +65,10 @@ object EventIO {
         }
       }}
 
+      val annotations = new mutable.HashMap[String,String]()
+      header.slice(4,header.size).zipWithIndex.foreach{case(hdTk,index) => annotations(hdTk) = lineTks(index+4)}
+      cellAnnotations("N" + linesProcessed) = annotations
+
       val evt = Event(lineTks(0).split("_"), eventNumbers, lineTks(2).toInt, lineTks(3).toDouble, sample, "N" + linesProcessed)
       linesProcessed += 1
       builder += evt
@@ -67,7 +79,7 @@ object EventIO {
     val eventsToPosImmut = eventToPositions.map{case(key,values) => (key,values.toSet)}
 
     val evtArray = builder.toArray
-    new EventContainerImpl(sample,evtArray,eventToCount,eventsToPosImmut,numberToEvent,eventToNumber,evtArray(0).events.size)
+    new EventContainerImpl(sample,evtArray,eventToCount,eventsToPosImmut,numberToEvent,eventToNumber,cellAnnotations,evtArray(0).events.size)
   }
 
   /**
@@ -96,6 +108,7 @@ object EventIO {
   def writeMixPackage(mixPackage: MixFilePackage, eventsContainer: EventContainer) = {
     val weightFile = new PrintWriter(mixPackage.weightsFile)
     val mixInputFile = new PrintWriter(mixPackage.mixIntputFile)
+    println("writing " + mixPackage.weightsFile + " and " + mixPackage.mixIntputFile)
 
     // normalize the weights to the range of values we have
     val maxCount = eventsContainer.eventToCount.values.max
@@ -113,9 +126,14 @@ object EventIO {
     weightFile.close()
 
     var outputBuffer = Array[String]()
+
+    var writtenAWT = false
     eventsContainer.events.foreach { evt => {
       val outputStr = evt.toMixString(eventsContainer.eventToCount.size)
       if (!outputStr._2) {
+        outputBuffer :+= outputStr._1
+      } else if (!writtenAWT && outputStr._2) {
+        writtenAWT = true
         outputBuffer :+= outputStr._1
       }
     }

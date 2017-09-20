@@ -84,7 +84,7 @@ object MixRunner {
 
     val mixPackage = MixFilePackage(mixInput, mixWeights, runDir)
 
-    println("Writing the mix data to disk...")
+    println("Writing the mix data to disk, containing " + readEventsObj.events.size + " events")
     EventIO.writeMixPackage(mixPackage, readEventsObj)
 
     // now run mix for the tree as a whole
@@ -118,6 +118,7 @@ object MixRunner {
     val mixParser = new MixParser(mixFilePackage.mixFile.getAbsolutePath, readEventsObj, bestTreeContainer.maxIndex, rootName)
 
     // load our tree
+    //println("Best Tree " + bestTreeContainer.bestTreeString)
     val treeParser = new TreeParser(bestTreeContainer.bestTreeString, false, true, true, bestTreeContainer.maxIndex)
 
     // cleanup the mix output file
@@ -145,10 +146,13 @@ object MixRunner {
     val rootName = RichNode.recAssignNames(rootNode, linker)
 
     // now apply the parsimony results to the root of the tree (recursively walking down the nodes)
-    RichNode.applyParsimonyGenotypes(rootNode, linker, readEventsObj)
+    //RichNode.applyParsimonyGenotypes(rootNode, linker, readEventsObj)
+    RichNode.backAssignGenotypes(rootNode)
 
     // check that the nodes we assigned are consistent
-    RichNode.recCheckNodeConsistency(rootNode)
+    //RichNode.recCheckNodeConsistency(rootNode)
+
+    RichNode.fixGraftedColors(rootNode, "red")
 
     // count nodes before
     println("before collapsing nodes " + rootNode.countSubNodes())

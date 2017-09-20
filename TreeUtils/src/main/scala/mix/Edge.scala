@@ -12,5 +12,5 @@ case class Edge(from: String, to: String, treeRoot: String) {
     inputString.foreach{char => if (char != ' ') chars += char}
   }
 
-  def toFancyString = from + "," + to + "," + chars.mkString("")
+  def toFancyString = "(*(From: " + from + ", to: " + to + "," + chars.mkString("") + " root node: " + treeRoot + ")*)"
 }

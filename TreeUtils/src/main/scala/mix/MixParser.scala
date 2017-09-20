@@ -28,8 +28,8 @@ class MixParser(mixOutput: String, eventsToNumbers: EventContainer, treeToUse: I
   // the header line we're looking for in the file is:
   val headerLine = "From    To     Any Steps?    State at upper node"
 
-  val inputFile = Source.fromFile(mixOutput).getLines()
-
+  val inputFile = Source.fromFile(mixOutput).getLines().toArray
+  println(inputFile.mkString("\n"))
   var inGenotypeSection = false
   var currentGenotype: Option[Edge] = None
   var currentTreeNumber = 0

@@ -3,6 +3,7 @@ package main.scala
 import java.io.{File, PrintWriter}
 
 import main.scala.annotation.AnnotationsManager
+import main.scala.cells.CellAnnotations
 import main.scala.mix._
 import main.scala.node.{BestTree, RichNode}
 
@@ -37,6 +38,7 @@ import main.scala.node.{BestTree, RichNode}
 case class MixConfig(allEventsFile: File = new File(MixMain.NOTAREALFILENAME),
                      outputTree: File = new File(MixMain.NOTAREALFILENAME),
                      mixRunLocation: File = new File(MixMain.NOTAREALFILENAME),
+                     allCellAnnotations: Option[File] = None,
                      sample: String = "UNKNOWN",
                      firstX: Int = -1)
 
@@ -57,6 +59,7 @@ object MixMain extends App {
     opt[File]("mixRunLocation") required() valueName ("<file>") action { (x, c) => c.copy(mixRunLocation = x) } text ("the tree to produce")
     opt[Int]("subsetFirstX") valueName ("<int>") action { (x, c) => c.copy(firstX = x) } text ("the tree to produce")
     opt[File]("outputTree") required() valueName ("<file>") action { (x, c) => c.copy(outputTree = x) } text ("the tree to produce")
+    opt[File]("allCells") valueName ("<file>") action { (x, c) => c.copy(allCellAnnotations = Some(x)) } text ("the tree to produce")
     opt[String]("sample") required() valueName ("<file>") action { (x, c) => c.copy(sample = x) } text ("the tree to produce")
 
     // some general command-line setup stuff
@@ -86,6 +89,16 @@ object MixMain extends App {
       // post-process the final tree
       MixRunner.postProcessTree(rootNode, linker, readEventsObj, annotationMapping)
     }
+    // ------------------------------------------------------------
+    // add cells to the leaf nodes if asked
+    // ------------------------------------------------------------
+    if (config.allCellAnnotations.isDefined) {
+      val childAnnot = new CellAnnotations(config.allCellAnnotations.get)
+      RichNode.addCells(rootNode, childAnnot, "white")
+      childAnnot.printUnmatchedCells()
+
+      rootNode.resetChildrenAnnotations()
+    }
 
     // ------------------------------------------------------------
     // traverse the nodes and add names to any internal nodes without names
@@ -100,6 +113,10 @@ object MixMain extends App {
     output.write(RichNode.toJSONOutput(rootNode, None,1.0))
     output.write("}]\n")
     output.close()
+
+    val output2 = new PrintWriter(config.outputTree.getAbsolutePath + ".newick")
+    output2.write(RichNode.toNewickString(rootNode) + ";\n")
+    output2.close()
 
 
   }} getOrElse {

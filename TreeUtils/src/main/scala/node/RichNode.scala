@@ -3,6 +3,7 @@ package main.scala.node
 import beast.evolution.tree.Node
 import beast.util.TreeParser
 import main.scala.annotation.AnnotationsManager
+import main.scala.cells.CellAnnotations
 import main.scala.mix.{EventContainer, MixParser}
 
 import scala.collection.JavaConverters._
@@ -46,18 +47,21 @@ case class RichNode(originalNd: Node,
   var sampleProportions = new mutable.HashMap[String, Double]()
 
   // do we have taxa counts to fill in? internal nodes won't have these values but leaves will
-  if (myAnnotations.isDefined) {
-    sampleName = annotations.cladeMapping(myAnnotations.get.sample).clade // myAnnotations.get.sample
-    color = annotations.cladeMapping(myAnnotations.get.sample).color
-    count = myAnnotations.get.count
-    sampleProportions(sampleName) = myAnnotations.get.proportion
-  }
+  myAnnotations.map{annotation => {
+    sampleName = annotations.cladeMapping(annotation.sample).clade // myAnnotations.get.sample
+    color = annotations.cladeMapping(annotation.sample).color
+    count = annotation.count
+    sampleProportions(sampleName) = annotation.proportion
+    annotation.additionalEntries.map{case(k,v) => {
+      freeAnnotations(k) = v
+    }}
+  }}
 
   // explicitly pull out our event string
   val eventString: Option[Array[String]] = if (myAnnotations.isDefined) Some(myAnnotations.get.event) else None
 
   // our parsimony events
-  val parsimonyEvents = Array.fill(numberOfTargets)("NONE")
+  var parsimonyEvents = Array.fill(numberOfTargets)("NONE")
 
   // now store each of our children and store the events on each child branch we see
   var children = Array[RichNode]()
@@ -217,6 +221,32 @@ object RichNode {
   }
 
   /**
+    * we want to carry the grafted color downwards into the tree
+    * @param node               the RichNode to recurse on
+    */
+  def fixGraftedColors(node: RichNode, graftedColor: String, passedGrafted: Boolean = false): Unit = {
+    if (passedGrafted | node.graftedNode)
+      node.nodeColor = graftedColor
+    node.children.foreach{child =>
+      fixGraftedColors(child,graftedColor,passedGrafted | node.graftedNode)
+    }
+  }
+
+  /**
+    * we want to carry the grafted color downwards into the tree
+    * @param node               the RichNode to recurse on
+    */
+  def toNewickString(node: RichNode): String = {
+    if (node.children.size == 0)
+      return node.name
+    else
+      "(" + node.children.map{child =>
+        RichNode.toNewickString(child)
+      }.mkString(",") +
+    ")"
+  }
+
+  /**
     *
     * @param node               the RichNode to recurse on
     * @param ourBranchJustOrgan the color to set for the branches from this node to the parent
@@ -236,6 +266,31 @@ object RichNode {
         assignBranchColors(child, newColor)
       }
       }
+    }
+  }
+
+  /**
+    * add children cell sto the terminal leaf nodes
+    *
+    * @param node               the RichNode to recurse on
+    * @param childAnnot         the cell annotation object
+    */
+  def addCells(node: RichNode, childAnnot: CellAnnotations, addedColor: String = "white"): Unit = {
+
+    if (node.children.size > 0) {
+      node.children.foreach { child => {
+        addCells(child, childAnnot, addedColor)
+      }}
+    } else {
+      val cellsToAdd = childAnnot.findMatchingCells(node.eventString.get.mkString("-"))
+      cellsToAdd.foreach{cell => {
+        val newONode = new Node(cell.name)
+        newONode.setHeight(node.height + 1.0)
+        val richN = RichNode(newONode,node.annotations,Some(node),node.numberOfTargets,addedColor)
+        richN.parsimonyEvents = cell.eventString.split("-")
+        if (cell.clade >= 0) richN.freeAnnotations("clade") = cell.clade.toString
+        node.children :+= richN
+      }}
     }
   }
 
@@ -299,6 +354,47 @@ object RichNode {
 
     // now for each of the children of this node, recursively assign genotypes
     child.children.foreach { newChild => recAssignGentoypes(child, newChild, linker, eventContainer) }
+  }
+
+  /**
+    * recursively walk down the tree assigning genotypes to each of the progeny nodes as we go.  We have to do
+    * this as the parsimony output is recursive; they define each nodes identity in terms of it's parents
+    * genotype with edit's overlaid
+    *
+    * @param node node
+    */
+  def backAssignGenotypes(node: RichNode): Array[String] = {
+
+    node.children.size match {
+      case 0 => {
+        node.parsimonyEvents = node.eventString.get
+        println("NODE GENOTYPE " + node.name + " node.parsimony " + node.parsimonyEvents.mkString("-"))
+        node.eventString.get
+      }
+      case 1 => {
+        node.parsimonyEvents = backAssignGenotypes(node.children(0))
+        println("NODE GENOTYPE " + node.name + " node.parsimony " + node.parsimonyEvents.mkString("-"))
+        node.parsimonyEvents
+      }
+      case 2 => {
+        node.parsimonyEvents = RichNode.commonEvents(backAssignGenotypes(node.children(0)),backAssignGenotypes(node.children(1)))
+        println("NODE GENOTYPE " + node.name + " node.parsimony " + node.parsimonyEvents.mkString("-"))
+        node.parsimonyEvents
+      }
+      case _ => {
+        throw new IllegalStateException("Unable to process nodes with too many nodes: size = " + node.children.size)
+      }
+    }
+  }
+
+  /**
+    * find the common events in two arrays
+    * @param left
+    * @param right
+    * @return the common events
+    */
+  def commonEvents(left: Array[String], right: Array[String]): Array[String] = {
+    left.zip(right).map{case(l,r) => if (l == r) l else "NONE"}.toArray
   }
 
   /**

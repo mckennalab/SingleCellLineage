@@ -21,22 +21,19 @@ class AnnotationsManager(evtContainer: EventContainer) {
   val cladeMapping = new HashMap[String,CladeEntry]()
   val sampleTotals = new HashMap[String,Int]()
 
-  var eventDefinitionsToColors : Option[HashMap[String,Array[String]]] = None
+  var eventDefinitionsToAnnotations = evtContainer.cellToAnnotations
 
   evtContainer.events.foreach{evt => {
     println("adding event with " + evt.events.size)
-    annotationMapping(evt.name) = AnnotationEntry("UNKOWN",evt.name,evt.count,evt.proportion,evt.events)
+    val annotations = evtContainer.cellToAnnotations.getOrElse(evt.name,new HashMap[String,String]())
+    if (annotations.size == 0)
+      println("No annotations for cell " + evt.name)
+    annotationMapping(evt.name) = AnnotationEntry("UNKOWN",evt.name,evt.count,evt.proportion,evt.events,annotations)
     cladeMapping(evt.name) = CladeEntry(evtContainer.sample,"ALL","black")
     sampleTotals(evt.sample) = sampleTotals.getOrElse(evt.sample,0) + evt.count
     println("sample totals " + sampleTotals(evt.sample) + " event sample " + evt.sample)
   }}
 
-
-
-
-  // *******************
-  // deal with the optional clade assignment color matching
-  // TODO: put optional clade identities back in
 
   /**
     * lookup the clade color for this event; if there isn't one return black, our default
@@ -44,27 +41,7 @@ class AnnotationsManager(evtContainer: EventContainer) {
     * @param node the event node
     * @return a color string
     */
-  def setNodeColor(node: RichNode, parentNode: Option[RichNode]): Tuple2[String,String] = {
-    if (!eventDefinitionsToColors.isDefined)
-      return ("nodecolor","black")
-
-    var assigned_colors = Array[String]()
-    eventDefinitionsToColors.get.foreach{case(color,arrayOfEvents) => {
-      val containCount = arrayOfEvents.map{case(chkEvt) => if (node.parsimonyEvents contains chkEvt) 1 else 0}.sum
-
-      var parentContains = 0
-      if (parentNode.isDefined)
-        parentContains = arrayOfEvents.map{case(chkEvt) => if (parentNode.get.parsimonyEvents contains chkEvt) 1 else 0}.sum
-
-      // the second part of this expression is to deal with Jamie's clade choices
-      if (containCount == arrayOfEvents.size && (node.children.size > 0 || parentContains == arrayOfEvents.size)) {
-        assigned_colors :+= color
-      }
-    }}
-
-    // check for conflict, only assign if it's one color
-    if (assigned_colors.size == 1)
-      return ("nodecolor",assigned_colors(0))
+  def setColor(node: RichNode, parentNode: Option[RichNode]): Tuple2[String,String] = {
     return ("nodecolor","black")
   }
 

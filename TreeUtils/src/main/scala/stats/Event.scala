@@ -23,5 +23,7 @@ case class Event(events: Array[String], eventNumbers: Array[Int], count: Int, pr
     return (ret,isWT)
   }
 
-
+  def prettyString(): String = {
+    events.mkString("-") + " " + eventNumbers.mkString("-") + " " + count + " " + proportion + sample + " " + name
+  }
 }

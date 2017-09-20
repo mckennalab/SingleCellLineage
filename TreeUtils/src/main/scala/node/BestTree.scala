@@ -16,14 +16,20 @@ case class BestTree(treeFile: File) {
   var maxIndex = 0
   var bestScore = 0.0
   val trees = one_line.split(";").zipWithIndex.map{case(tree,index) => {
-    val treeString = tree.split("\\[")
-    val score = treeString(1).stripSuffix("]").toDouble
-    if (score > bestScore) {
-      bestScore = score
-      maxIndex = index
+
+
+    if (tree contains "]") {
+      val treeString = tree.split("\\[")
+      val score = treeString(1).stripSuffix("]").toDouble
+      if (score > bestScore) {
+        bestScore = score
+        maxIndex = index
+      }
+      (treeString(1).stripSuffix("]").toDouble,treeString(0))
+    } else {
+      (1.0, tree)
     }
-    (treeString(1).stripSuffix("]").toDouble,treeString(0))
-  }}.toArray
+  }}
 
   val bestTreeString = trees(maxIndex)._2
 }
