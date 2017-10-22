@@ -23,5 +23,5 @@ libraryDependencies ++= {
 
 // this is clearly not the way to do this:
 
-mainClass in (Compile, packageBin) := Some("main.scala.Main")
-mainClass in (Compile, run) := Some("main.scala.Main")
+mainClass in (Compile, packageBin) := Some("main.scala.Controller")
+mainClass in (Compile, run) := Some("main.scala.Controller")

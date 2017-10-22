@@ -70,7 +70,7 @@ object Main extends App {
   parser.parse(args, AlignmentConfig()) map { config => {
 
     val matchScore = 3
-    val misMatch = -2
+    val misMatch = -4
     val gapOpen = 10.0
     val extension = 1.0
 
