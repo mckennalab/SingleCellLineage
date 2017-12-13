@@ -147,6 +147,7 @@ object UMIProcessing extends App {
       var umi: Option[String] = None
 
       if (config.umiStartPos >= 0) {
+
         umi = Some(fGroup(1).slice(config.umiStartPos, config.umiStartPos + config.umiLength))
 
         val readNoUMI = fGroup(1).slice(0, config.umiStartPos) + fGroup(1).slice(config.umiStartPos + config.umiLength, fGroup(1).length)
@@ -173,6 +174,8 @@ object UMIProcessing extends App {
         else
           umiReads(umi.get).addBundle(SortedRead(fwd, containsForward))
       }
+
+
       else {
         require(rGroup.isDefined, "We can't parse UMIs off of the reverse read if the reverse read isnt' defined")
 
@@ -229,8 +232,8 @@ object UMIProcessing extends App {
     if (outputUMIData.isDefined)
       outputUMIData.get.write("umi\toneOrTwoReads\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\tsurviving1\tsurviving2\tsequence\n")
 
-
     println("\n\nTotal UMIs to process: " + umiReads.size)
+
     umiReads.foreach { case (umi, reads) => {
       val greaterThanMinimumReads = reads.size >= config.minimumUMIReads
 

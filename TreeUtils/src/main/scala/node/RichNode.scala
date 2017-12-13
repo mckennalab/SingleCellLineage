@@ -238,12 +238,12 @@ object RichNode {
     */
   def toNewickString(node: RichNode): String = {
     if (node.children.size == 0)
-      return node.name
+      return node.name + ":1.0"
     else
       "(" + node.children.map{child =>
         RichNode.toNewickString(child)
       }.mkString(",") +
-    ")"
+    "):1.0"
   }
 
   /**

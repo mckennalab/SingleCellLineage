@@ -23,7 +23,7 @@ stats_line = ""
 for line in stats_file:
     if line.startswith(args.umi):
         stats_line = line.strip("\n").split("\t")
-        
+
 if stats_line == "":
     raise Exception('Unable to find UMI')
 
@@ -32,14 +32,14 @@ cut_file = open(args.cutsites)
 header = cut_file.readline()
 for line in cut_file:
     cut_sites.append(int(line.strip("\n").split("\t")[2]))
-    
+
 
 token = "fwdRead"
 refseq = "fwdReadRef"
 if stats_line[stats_header.index(token)] == "NA":
     token = "mergedRead"
     refseq = "mergedReadRef"
-    
+
 refLength = len(stats_line[stats_header.index(refseq)])
 
 cutString = ""
@@ -71,7 +71,7 @@ if stats_line[stats_header.index("revRead")] != "NA":
             cutString += "^"
         else:
             cutString += "_"
-        
+
 print "\nreference, read2, and cutsites:"
 print stats_line[stats_header.index("revReadRef")]
 print toLowercaseMismatch(stats_line[stats_header.index("revReadRef")],stats_line[stats_header.index("revRead")])

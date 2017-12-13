@@ -195,7 +195,7 @@ class DNAQC extends QScript {
   var primersToCheck: String = "BOTH"
 
   @Argument(doc = "Do we want to check primers on both ends, one end, or neither", fullName = "minRead", shortName = "minRead", required = false)
-  var minLength: Int = 50
+  var minLength: Int = 20
 
   @Argument(doc = "Use one of index runs as a UMI, and add it to read 1", fullName = "umiIndex", shortName = "umiIndex", required = false)
   var umiIndex: String = "NONE" // "index1" or "index2" are options
@@ -316,11 +316,7 @@ class DNAQC extends QScript {
       }
       inputFiles = processedFastqs
 
-
       // ************************************** split the input files **************************************
-      
-
-
       val cleanedFastqs = List[File](
         new File(sampleOutput + File.separator + "out.notCombined_1.fastq"),
         new File(sampleOutput + File.separator + "out.notCombined_2.fastq"))

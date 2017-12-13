@@ -3,7 +3,7 @@ import java.io._
 import scala.sys.process._
 
 
-// inputs 
+// inputs
 val edaFile = args(0)
 val alignerOpt = args(1)
 val mergedReads = args(2)
@@ -35,6 +35,8 @@ def concatTwoTemp(in1: String, readName: String, readString: String): String = {
 def doAlignment(fq: String, outFasta: String): Boolean = {
   // check what aligner they'd like to use
   val aligner = alignerOpt.toLowerCase match {
+
+    // NEEDLEALL
     case "needle" => {
       val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/needleall -datafile " + edaFile + " -snucleotide1 -snucleotide2 -aformat3 fasta -gapextend " + gapExt + " -gapopen " + gapOpen + " -asequence " + ref + " -bsequence " + fq + " -outfile " + outFasta
       println(aligner)
@@ -43,6 +45,18 @@ def doAlignment(fq: String, outFasta: String): Boolean = {
         return true
       return false
     }
+
+      // Align with our homebrew convex / general gap penality code
+    case "convex" => {
+      val aligner = "java -jar /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/HMMAlign-assembly-1.0.jar " +
+      "--inputReads " + fq + " --reference " + ref + " --outputReads " + outFasta
+      println(aligner)
+      val result = (aligner).!
+      if (result == 0)
+        return true
+      return false
+    }
+      // MAFFT
     case "mafft" => {
       // this is a little more involved -- we have to split out each read from the input, align it, and add it to the output file
 
@@ -129,5 +143,3 @@ if (pairedLength > 0) {
     throw new IllegalStateException("Unable to touch " + alignedPairs + " to " + outputAlignedPairs)
   }
 }
-
-
