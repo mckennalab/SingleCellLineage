@@ -21,15 +21,13 @@ object UmiClustering extends LazyLogging {
 
     require(umiSize <= 24, "The umi size must be less than 25")
 
-    val toleratedCollisionRate = 0.05 // 5%
+    val toleratedCollisionRate = 0.50 // 5%
 
     // how many errors will we tolerate? this should be a function of the number of bases
-    // and the total UMI space -- basicly the birthday problem
-    val toleratedErrors = UmiClustering.maxMismatchAtCollisionProbablility(toleratedCollisionRate, umis.size.toDouble, umiSize)
-
+    // and the total UMI space -- basically the birthday problem
+    val toleratedErrors = 3 // UmiClustering.maxMismatchAtCollisionProbablility(toleratedCollisionRate, umis.size.toDouble, umiSize)
 
     logger.info("We're going to allow " + toleratedErrors + " errors with a collision rate of " + toleratedCollisionRate + " and a UMI size of " + umiSize)
-
 
     val bitEncoder = new BitEncoding(umiSize)
 
@@ -37,9 +35,13 @@ object UmiClustering extends LazyLogging {
     var umiStringsToEncodings = new mutable.HashMap[Long, String]()
 
     umis.foreach { case (umiString, reads) => {
-      val encoding = bitEncoder.bitEncodeStringWithNs(umiString, reads.size())
-      umiEncodings += encoding
-      umiStringsToEncodings(encoding) = umiString
+      if (reads.size < 1)
+        println("umiString " + umiString + " has only " + reads.size)
+      else {
+        val encoding = bitEncoder.bitEncodeStringWithNs(umiString, reads.size())
+        umiEncodings += encoding
+        umiStringsToEncodings(encoding) = umiString
+      }
     }
     }
 
@@ -82,20 +84,25 @@ object UmiClustering extends LazyLogging {
       if (index % 10000 == 0) logger.info("Merged " + index + " UMIs so far into " + mergedUmis.size + " consensus UMIS")
     }
 
-    logger.info("Found " + mergedUmis.size + " merged UMIs from an original " + allUmis.size + " umis... ")
 
     // ok now transform the input set into the output set,
     val ret = new mutable.HashMap[String, RankedReadContainer]()
 
     // for each merged set, get the backing reads and put into a common read container
+    logger.info("Doing a final pass of merging...")
+    var postCollisions = 0
     mergedUmis.foreach{case(consensus,fromBins) => {
       val newBin = bitEncoder.bitDecodeString(consensus).str
       val readContainer = new RankedReadContainer(newBin,maxReadContainerSize,pairedReads)
 
       fromBins.foreach{bin => umis(umiStringsToEncodings(bin)).pQ.foreach{rd => readContainer.addBundle(rd)}}
 
+      if (ret contains newBin)
+        postCollisions += 1
       ret(newBin) = readContainer
     }}
+
+    logger.info("Found " + ret.size + " merged UMIs from an original " + allUmis.size + " umis... (post-collisions = " + postCollisions + ")")
 
     ret
   }
