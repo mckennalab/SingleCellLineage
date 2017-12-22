@@ -28,7 +28,7 @@ val mainCl = buildTool match {
 
 
 val mainJar = mainCl match {
-  case "endogenous.UMICounter" => "UMIMerge.jar"
+  case "collapse.UMIProcessing" => "UMIMerge.jar"
   case "eventcalling.DeepSeq" => "DeepSeq.jar"
   case _ => throw new IllegalStateException("Unable to match build.tool to jar for  " + mainCl)
 }
