@@ -65,6 +65,15 @@ class DNAQC extends QScript {
   qscript =>
 
   /** **************************************************************************
+    * the base locations for the jar files and the scripts directory
+    * ************************************************************************** */
+  @Input(doc = "Where to find binary files we need", fullName = "binaryLoc", shortName = "b", required = true)
+  var binaryLoc: File = new File("/usr/local/bin/")
+
+  @Input(doc = "Where to find script files we need", fullName = "scriptLoc", shortName = "s", required = true)
+  var scriptLoc: File = new File("/app/sc_GESTALT/scripts/")
+
+  /** **************************************************************************
     * Data Parameters
     * ************************************************************************** */
   @Input(doc = "Tab-delimited tear sheet containing sample information", fullName = "input", shortName = "i", required = true)
@@ -117,55 +126,52 @@ class DNAQC extends QScript {
     * Path parameters -- where to find tools
     * ************************************************************************** */
   @Input(doc = "The path to a functional installation of the scala tool", fullName = "scala", shortName = "scala", required = false)
-  var scalaPath: File = new File("/net/gs/vol1/home/aaronmck/tools/bin/scala")
+  var scalaPath: File = new File("/usr/bin/scala")
 
   @Input(doc = "The path to the Trimmomatic adapters file", fullName = "trimadapters", shortName = "tad", required = false)
-  var adaptersFile: File = new File("/net/gs/vol1/home/aaronmck/tools/trimming/Trimmomatic-0.32/adapters/PU1L.fa")
-
-  @Input(doc = "The path to the binary of fastqc", fullName = "fastqc", shortName = "fqc", required = false)
-  var fastqcPath: File = "/net/gs/vol1/home/aaronmck/tools/fastqc/FastQC/fastqc"
+  var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
 
   @Input(doc = "The path to the jar file for trimmomatic", fullName = "trim", shortName = "tm", required = false)
-  var trimmomaticPath: File = "/net/gs/vol1/home/aaronmck/tools/trimming/Trimmomatic-0.32/trimmomatic-0.32.jar"
+  var trimmomaticPath: File = "/app/Trimmomatic-0.36/trimmomatic-0.36.jar"
 
   @Input(doc = "The path to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
-  var maulPath: File = "/net/gs/vol1/home/aaronmck/source/Maul/target/scala-2.10/Maul-assembly-1.0.jar"
+  var maulPath: File = "/app/sc_GESTALT/Maul.jar"
 
   @Input(doc = "The path to the seqprep tool", fullName = "seqprep", shortName = "sprep", required = false)
   var seqPrepPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/SeqPrep"
 
   @Input(doc = "The path to the flash tool", fullName = "flash", shortName = "flash", required = false)
-  var flashPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/flash"
+  var flashPath: File = "/usr/local/bin/flask"
 
   @Input(doc = "the script to analyze the edits made to a crispr target", fullName = "edits", shortName = "edits", required = false)
-  var crisprPath: File = "/net/gs/vol1/home/aaronmck/source/sandbox/aaron/projects/CRISPR/analyze_diversity_of_edits.scala"
+  var crisprPath: File = "/app/sc_GESTALT/scripts/analyze_diversity_of_edits.scala"
 
   @Input(doc = "the script to analyze the per site edits", fullName = "writeweb", shortName = "wwwrite", required = false)
-  var writeWebFiles: File = "/net/gs/vol1/home/aaronmck/source/sandbox/aaron/projects/CRISPR/scripts/write_web_files.scala"
+  var writeWebFiles: File = "/app/sc_GESTALT/scripts/write_web_files.scala"
 
   @Input(doc = "the location of the needleall program", fullName = "needle", shortName = "needle", required = false)
-  var needlePath: File = "/net/gs/vol1/home/aaronmck/tools/bin/needleall"
+  var needlePath: File = "/usr/bin/needleall"
 
   @Input(doc = "the location of the alignment script", fullName = "alignScript", shortName = "alignScript", required = false)
-  var alignmentScripts: File = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/align_merged_unmerged_reads.scala"
+  var alignmentScripts: File = "/app/sc_GESTALT/scripts/align_merged_unmerged_reads.scala"
 
   @Input(doc = "the path the javascript conversion script", fullName = "JSTable", shortName = "JSTable", required = false)
-  var toJSTableScript: File = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/stats_to_javascript_tables2.scala"
+  var toJSTableScript: File = "/app/sc_GESTALT/scripts/stats_to_javascript_tables2.scala"
 
   @Argument(doc = "zip two reads together", fullName = "ZipReads", shortName = "ZipReads", required = false)
-  var zipReadsPath = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/zip_two_read_files.scala"
+  var zipReadsPath = "/app/sc_GESTALT/scripts/zip_two_read_files.scala"
 
   @Argument(doc = "move the data over to the web location", fullName = "webpub", shortName = "webpub", required = false)
-  var toWebPublishScript = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/push_to_web_location.scala"
+  var toWebPublishScript = "/app/sc_GESTALT/scripts/push_to_web_location.scala"
 
   @Argument(doc = "aggregate stats files (UMIed reads) together", fullName = "stats", shortName = "stats", required = false)
-  var aggregateScripts = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/aggregate_stats.scala"
+  var aggregateScripts = "/app/sc_GESTALT/scripts/aggregate_stats.scala"
 
   @Argument(doc = "script that takes an independent UMI file and puts it on the front of read 1", fullName = "umiToFront", shortName = "umiToFront", required = false)
-  var convertUMIFile = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/beths_UMI_to_standard_UMI.scala"
+  var convertUMIFile = "/app/sc_GESTALT/scripts/beths_UMI_to_standard_UMI.scala"
 
   @Argument(doc = "analyize stats file and generate a bunch of plots", fullName = "plotsScript", shortName = "plotsScript", required = false)
-  var statsFileAnalysis = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/stats_file_analysis.py"
+  var statsFileAnalysis = "/app/sc_GESTALT/scripts/stats_file_analysis.py"
 
   @Argument(doc = "the first adapter sequence", fullName = "adaptOne", shortName = "adaptOne", required = false)
   var adapterOne = "GACCTCGAGACAAATGGCAG"
@@ -186,10 +192,10 @@ class DNAQC extends QScript {
   var gapextend: Double = 0.5
 
   @Argument(doc = "where to find the EDA file for alignment with NW", fullName = "eda", shortName = "eda", required = false)
-  var edaMatrix = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL"
+  var edaMatrix = "/app/sc_GESTALT/tear_sheet_examples/EDNAFULL.Ns_are_zero"
 
   @Argument(doc = "which aligner to use", fullName = "aligner", shortName = "aligner", required = false)
-  var aligner = "needle"
+  var aligner = "needle" // this is the only aligner installed on the Docker instance
 
   @Argument(doc = "Do we want to check primers on both ends, one end, or neither", fullName = "primersToUse", shortName = "primersToUse", required = false)
   var primersToCheck: String = "BOTH"
@@ -249,9 +255,6 @@ class DNAQC extends QScript {
       // duplicated, as don't try to make it if it exists
       val webLoc =             webSite + File.separator + sampleObj.sample + File.separator
       val sampleOutput =       dirOrCreateOrFail(new File(sampleObj.outputDir + File.separator + sampleObj.sample), "sample output directory")
-      val initialFastQCDir =   dirOrCreateOrFail(new File(sampleOutput + File.separator + "initial_fastQC"), "initial fastqc directory")
-      val initialFastQMerged = dirOrCreateOrFail(new File(sampleOutput + File.separator + "initial_fastQC_Merged"), "initial fastqc directory")
-      val postCleanFastQCDir = dirOrCreateOrFail(new File(sampleOutput + File.separator + "post_clean_fastQC"), "final fastqc directory")
       val sampleWebLocation =  dirOrCreateOrFail(new File(webSite +  File.separator + experimentalName + File.separator + sampleTag), "our output web publishing directory")
 
       // our barcode split files
@@ -320,10 +323,6 @@ class DNAQC extends QScript {
       val cleanedFastqs = List[File](
         new File(sampleOutput + File.separator + "out.notCombined_1.fastq"),
         new File(sampleOutput + File.separator + "out.notCombined_2.fastq"))
-
-      // run an Fastqc so we know what we started with
-      // ************************************************************************************
-      add(Fastqc(inputFiles, initialFastQCDir))
 
       val toAlignFastq1 = new File(sampleOutput + File.separator + sampleTag + ".fwd.fastq")
       val toAlignFastq2 = new File(sampleOutput + File.separator + sampleTag + ".rev.fastq")
@@ -652,22 +651,6 @@ class DNAQC extends QScript {
     def commandLine = baseCmd + " --barcodeStatsFile " + outStats + " --barcodeStatsFileUnknown " + barcodeConfusion
     this.isIntermediate = false
     this.memoryLimit = 8
-  }
-
-  // evaluate the quality of the reads from a fastq file
-  // ********************************************************************************************************
-  case class Fastqc(inputFQs: List[File], outputDir: File, isBam: Boolean = false) extends ExternalCommonArgs {
-    @Input(doc = "the input files") var ins = inputFQs
-    @Input(doc = "output directory") var outdir = outputDir
-
-    def commandLine = fastqcPath + " -o " + outdir + " -f fastq " + (if (isBam) " -f bam " else "") + ins.mkString(" ")
-
-    this.memoryLimit = 8
-    this.analysisName = queueLogDir + ins(0).getName() + ".fastqc" + (if (isBam) "BAM" else "")
-    this.jobName = queueLogDir + ins(0).getName() + ".fastqc" + (if (isBam) "BAM " else "")
-
-    // DO NOT REMOVE -- Queue will delete all the output, including the output directory unless you set this.  This means there's some cleanup at the end though
-    this.isIntermediate = false
   }
 
   // call out the alignment task to
