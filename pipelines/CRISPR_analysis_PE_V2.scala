@@ -120,7 +120,7 @@ class DNAQC extends QScript {
   var matchCount = 15
 
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
-  var webSite: File = "/net/shendure/vol10/www/content/members/aaron/staging/"
+  var webSite: File = "/var/www/html"
 
   /** **************************************************************************
     * Path parameters -- where to find tools
