@@ -140,8 +140,11 @@ class DNAQC extends QScript {
   @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
   var umiName: File = "UMIMerge.jar"
 
-  @Input(doc = "The filename of the calling har", fullName = "Caller", shortName = "Caller", required = false)
+  @Input(doc = "The filename of the calling jar", fullName = "Caller", shortName = "Caller", required = false)
   var callerName: File = "DeepSeq.jar"
+
+  @Input(doc = "The location of MIX", fullName = "mix", shortName = "mix", required = false)
+  var mixLoc: File = "/usr/local/bin/mix"
 
   @Input(doc = "The path to the seqprep tool", fullName = "seqprep", shortName = "sprep", required = false)
   var seqPrepPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/SeqPrep"
@@ -340,6 +343,8 @@ class DNAQC extends QScript {
       val topReadFileNew = new File(sampleOutput + File.separator + sampleTag + ".topReadEventsNew")
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
+      val outputTree = new File(treeOutput + File.separator + sampleTag + ".json")
+
       val cutSites = new File(sampleObj.reference + ".cutSites")
       val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"), new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
 
@@ -457,6 +462,9 @@ class DNAQC extends QScript {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
         add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
       }
+
+      // run the tree creation code
+      add(TreeUtils(allReadCount, mixLoc, outputTree, sampleObj.sample))
     })
 
     // agg. all of the stats together into a single file
@@ -864,6 +872,34 @@ class DNAQC extends QScript {
     this.isIntermediate = false
     this.analysisName = queueLogDir + outStat + ".calls"
     this.jobName = queueLogDir + outStat + ".calls"
+  }
+
+
+  //--inputUnmerged --inputMerged --outputStats --cutSites --primersEachEnd --sample test
+  case class TreeUtils(allEventsFile: File,
+    mixRunLocation: File,
+    outputTree: File,
+    sampleName: String) extends CommandLineFunction with ExternalCommonArgs {
+
+    @Input(doc = "all events files") var allEventsFl = allEventsFile
+    @Input(doc = "the mix run location") var mixRun = mixRunLocation
+    @Output(doc = "output tree") var outTree = outputTree
+    @Argument(doc = "the sample name") var sample = sampleName
+
+    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + outTree
+    cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
+    cmdString += outTree + " --sample " + sample
+
+    var cmd = cmdString
+
+    this.memoryLimit = 3
+    this.residentRequest = 3
+    this.residentLimit = 3
+
+    def commandLine = cmd
+    this.isIntermediate = false
+    this.analysisName = queueLogDir + outTree + ".tree"
+    this.jobName = queueLogDir + outTree + ".tree"
   }
 
   /**
