@@ -576,7 +576,7 @@ class DNAQC extends QScript {
     @Output(doc = "the the counts for all the reads") var allReadC = allEventCounts
     @Output(doc = "new per base event style") var perBaseES = perBaseEventsNew
 
-    var command = scalaPath + " -J-Xmx6g " + toJSTableScript + " " + stats + " " + perBase + " " + topR + " " + topReadC + " " + allReadC + " " + cuts + " " + perBaseES + " " + convertUnknownsToNone + " " + ref
+    var command = scalaPath + " -J-Xmx6g " + scriptLoc + "/" + toJSTableScript + " " + stats + " " + perBase + " " + topR + " " + topReadC + " " + allReadC + " " + cuts + " " + perBaseES + " " + convertUnknownsToNone + " " + ref
 
     def commandLine = command
 
@@ -596,7 +596,7 @@ class DNAQC extends QScript {
     @Input(doc = "the cutsites") var cuts = cutSites
     @Input(doc = "all HMIDs") var allReads = allReadCount
 
-    def commandLine = scalaPath + " -J-Xmx1g " + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads
+    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
@@ -675,7 +675,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged fasta file") var outMergedFasta = outputMergedFasta
     @Output(doc = "the output paired fasta file") var outPairedFasta = outputPairedFasta
 
-    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta + " " + gapopen + " " + gapextend
+    def commandLine = scalaPath + " " + scriptLoc + "/" + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta + " " + gapopen + " " + gapextend
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"
@@ -700,7 +700,7 @@ class DNAQC extends QScript {
     @Input(doc = "the read 2") var inF2 = inRead2File
     @Output(doc = "the output sam file") var outF = outFile
 
-    def commandLine = scalaPath + " " + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF
+    def commandLine = scalaPath + " " + scriptLoc + "/" + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF
 
     this.analysisName = queueLogDir + outF + ".gunzip"
     this.jobName = queueLogDir + outF + ".gunzip"
@@ -714,7 +714,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged stats file") var outStats = outputStatsFile
     @Output(doc = "the output umi information") var outUMIStats = outputUmiStatsFile
 
-    def commandLine = scalaPath + " -J-Xmx8g " + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
 
     this.analysisName = queueLogDir + outStats + ".outStats"
     this.jobName = queueLogDir + outStats + ".outStats"
@@ -730,7 +730,7 @@ class DNAQC extends QScript {
     @Input(doc = "barcodes") var barcodes = barcodeFile
     @Output(doc = "the output umi + reads file") var output = outputReadsAndBarcodes
 
-    def commandLine = scalaPath + " -J-Xmx8g " + convertUMIFile + " " + reads + " " + barcodes + " " + output
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes + " " + output
 
     this.analysisName = queueLogDir + output + ".umiOnReads"
     this.jobName = queueLogDir + output + ".umiOnReads"
