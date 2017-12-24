@@ -68,7 +68,7 @@ class DNAQC extends QScript {
     * the base locations for the jar files and the scripts directory
     * ************************************************************************** */
   @Input(doc = "Where to find binary files we need", fullName = "binaryLoc", shortName = "b", required = true)
-  var binaryLoc: File = new File("/usr/local/bin/")
+  var binaryLoc: File = new File("/app/bin/")
 
   @Input(doc = "Where to find script files we need", fullName = "scriptLoc", shortName = "s", required = true)
   var scriptLoc: File = new File("/app/sc_GESTALT/scripts/")
@@ -132,7 +132,7 @@ class DNAQC extends QScript {
   var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
 
   @Input(doc = "The path to the jar file for trimmomatic", fullName = "trim", shortName = "tm", required = false)
-  var trimmomaticName: File = "trimmomatic-0.36.jar"
+  var trimmomaticName: File = "trimmomatic.jar"
 
   @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
   var maulName: File = "Maul.jar"
