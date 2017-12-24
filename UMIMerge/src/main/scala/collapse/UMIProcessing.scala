@@ -219,7 +219,7 @@ object UMIProcessing extends App {
     // take the collection of UMIs and cluster them down to a core set of UMIs, and
     // output an error rate based on that clustering
     // --------------------------------------------------------------------------------
-    umiReads = UmiClustering.mergeAndConvertUMIS(config.umiLength, umiReads, hasReverseReads, config.downsampleSize)
+    //umiReads = UmiClustering.mergeAndConvertUMIS(config.umiLength, umiReads, hasReverseReads, config.downsampleSize)
 
 
     // --------------------------------------------------------------------------------
