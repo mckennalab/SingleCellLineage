@@ -471,7 +471,7 @@ class DNAQC extends QScript {
       }
 
       // run the tree creation code
-      add(TreeUtils(allReadCount, mixLoc, outputTree, sampleObj.sample))
+      add(TreeUtils(allReadCount, "/tmp/", outputTree, sampleObj.sample))
     })
 
     // agg. all of the stats together into a single file
