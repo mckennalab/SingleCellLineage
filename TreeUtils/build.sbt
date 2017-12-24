@@ -6,8 +6,6 @@ scalaVersion := "2.11.7"
 
 resolvers += Resolver.sonatypeRepo("public")
 
-unmanagedBase <<= baseDirectory { base => base / "project" }
-
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4" % "test"
 
 libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4"
