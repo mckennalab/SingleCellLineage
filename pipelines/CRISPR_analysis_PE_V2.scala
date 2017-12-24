@@ -75,7 +75,7 @@ class DNAQC extends QScript {
 
   // our tree output directory -- outputTree
   @Input(doc = "the tree output location", fullName = "treeLoc", shortName = "t", required = false)
-  var treeOutput: File = new File("/var/www/html/trees/")
+  var treeOutput: File = new File("/var/www/html/trees/tree_data/")
 
   /** **************************************************************************
     * Data Parameters
