@@ -631,7 +631,7 @@ class DNAQC extends QScript {
       throw new IllegalStateException("index input and output files have to be the same size")
 
     // the base command to run
-    var baseCmd = "java -Xmx4g -jar " + maulPath + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
+    var baseCmd = "java -Xmx4g -jar " + binaryLoc + "/" + maulName + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
 
     // figure out if we're running with one or two barcodes
     if (inputFastqs.length == 2) baseCmd += " --inFQ2 " + inputFQs(1) + " --outFQ2 " + outputFQs(1)
@@ -782,7 +782,7 @@ class DNAQC extends QScript {
     this.residentLimit = 4
 
     // CMD command issued, and the hidden queue output file names
-    var cmd = "java -Xmx3g -jar " + trimmomaticPath + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
+    var cmd = "java -Xmx3g -jar " + binaryLoc + "/" + trimmomaticName + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
     if (fqs.length == 2) cmd += " " + fqOuts(0) + " " + fqOutsUnpaired(0) + " " + fqOuts(1) + " " + fqOutsUnpaired(1) + " " + appended
     else cmd += " " + fqOuts(0) + " " + " " + appended
 
@@ -807,7 +807,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = scalaPath + " -J-Xmx23g " + + "/UMIMerge.jar "
+    var cmdString = scalaPath + " -J-Xmx7g " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -845,7 +845,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersEachEnd
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g " + + "DeepSeq.jar"
+    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + callerName
     cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
     cmdString += cutSiteFile + " --outputStats "
     cmdString += outStat + " --primersEachEnd " + primers + " --sample "
