@@ -38,7 +38,7 @@ import main.scala.node.{BestTree, RichNode}
 case class MixConfig(allEventsFile: File = new File(MixMain.NOTAREALFILENAME),
                      outputTree: File = new File(MixMain.NOTAREALFILENAME),
                      mixRunLocation: File = new File(MixMain.NOTAREALFILENAME),
-                     mixLocation: File = new File(Main.NOTAREALFILENAME),
+                     mixLocation: File = new File(MixMain.NOTAREALFILENAME),
                      allCellAnnotations: Option[File] = None,
                      sample: String = "UNKNOWN",
                      firstX: Int = -1)
