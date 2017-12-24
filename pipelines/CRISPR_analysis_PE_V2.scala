@@ -73,6 +73,10 @@ class DNAQC extends QScript {
   @Input(doc = "Where to find script files we need", fullName = "scriptLoc", shortName = "s", required = true)
   var scriptLoc: File = new File("/app/sc_GESTALT/scripts/")
 
+  // our tree output directory -- outputTree
+  @Input(doc = "the tree output location", fullName = "treeLoc", shortName = "t", required = true)
+  var treeOutput: File = new File("/var/www/html/trees/")
+
   /** **************************************************************************
     * Data Parameters
     * ************************************************************************** */
@@ -343,7 +347,7 @@ class DNAQC extends QScript {
       val topReadFileNew = new File(sampleOutput + File.separator + sampleTag + ".topReadEventsNew")
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
-      val outputTree = new File(treeOutput + File.separator + sampleTag + ".json")
+      val outputTree = new File(treeOutput.getAbsolutePath + File.separator + sampleTag + ".json")
 
       val cutSites = new File(sampleObj.reference + ".cutSites")
       val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"), new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
