@@ -141,6 +141,9 @@ class DNAQC extends QScript {
   @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
   var maulName: File = "Maul.jar"
 
+  @Input(doc = "The TreeUtils file", fullName = "treeUtils", shortName = "treeUtils", required = false)
+  var treeJar: File = "TreeUtils.jar"
+
   @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
   var umiName: File = "UMIMerge.jar"
 
@@ -890,7 +893,7 @@ class DNAQC extends QScript {
     @Output(doc = "output tree") var outTree = outputTree
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + outTree
+    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
     cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
     cmdString += outTree + " --sample " + sample
 
