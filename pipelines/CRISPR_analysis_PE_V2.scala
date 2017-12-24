@@ -147,7 +147,7 @@ class DNAQC extends QScript {
   var seqPrepPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/SeqPrep"
 
   @Input(doc = "The path to the flash tool", fullName = "flash", shortName = "flash", required = false)
-  var flashPath: File = "/usr/local/bin/flask"
+  var flashPath: File = "/usr/local/bin/flash"
 
   @Input(doc = "the script to analyze the edits made to a crispr target", fullName = "edits", shortName = "edits", required = false)
   var crisprPath: File = "/app/sc_GESTALT/scripts/analyze_diversity_of_edits.scala"
