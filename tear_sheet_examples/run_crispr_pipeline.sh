@@ -6,4 +6,8 @@ java -Xmx4g -jar /app/queue.jar \
  --aggLocation /var/www/html/testdata/ \
  --expName testdata \
  --eda /app/EDNAFULL.Ns_are_zero \
- -run -qsub -resMemReqParam mfree
+ -run \
+ -resMemReqParam mfree \
+ -s /app/sc_GESTALT/scripts/ \
+ -b /app/bin/
+ 

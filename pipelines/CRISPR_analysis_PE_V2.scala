@@ -132,10 +132,16 @@ class DNAQC extends QScript {
   var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
 
   @Input(doc = "The path to the jar file for trimmomatic", fullName = "trim", shortName = "tm", required = false)
-  var trimmomaticPath: File = "/app/Trimmomatic-0.36/trimmomatic-0.36.jar"
+  var trimmomaticName: File = "trimmomatic-0.36.jar"
 
-  @Input(doc = "The path to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
-  var maulPath: File = "/app/sc_GESTALT/Maul.jar"
+  @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
+  var maulName: File = "Maul.jar"
+
+  @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
+  var umiName: File = "UMIMerge.jar"
+
+  @Input(doc = "The filename of the calling har", fullName = "Caller", shortName = "Caller", required = false)
+  var callerName: File = "DeepSeq.jar"
 
   @Input(doc = "The path to the seqprep tool", fullName = "seqprep", shortName = "sprep", required = false)
   var seqPrepPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/SeqPrep"
@@ -700,26 +706,6 @@ class DNAQC extends QScript {
     this.jobName = queueLogDir + outF + ".gunzip"
   }
 
-  // analyze the edits from the final alignments
-  // ********************************************************************************************************
-  case class AnalyzeEdits(outputAllele: File, outputCase: File, outputControl: File, reference: File, bamCut: File, bamControl: File, matchedPrimerReads: File, cutDataFile: File)
-    extends CommandLineFunction with ExternalCommonArgs {
-    @Output(doc = "the output alleles") var outa = outputAllele
-    @Output(doc = "the output control data") var outcont = outputControl
-    @Output(doc = "the output case data") var outcase = outputCase
-    @Input(doc = "the reference") var ref = reference
-    @Input(doc = "the cut bam file") var bCut = bamCut
-    @Input(doc = "the control bam file") var bControl = bamControl
-    @Output(doc = "the reads where both ends match the primers") var matchedReads = matchedPrimerReads
-    @Output(doc = "the output cut data") var cutData = cutDataFile
-
-    def commandLine = scalaPath + " -J-Xmx4g -cp /net/gs/vol1/home/aaronmck/source/sandbox/aaron/lib/target/scala-2.11/sequencing-lib-assembly-1.0.jar " + crisprPath + " " + outa + " " + outcase + " " + outcont + " " + ref + ".primers " + ref + ".cutSites " + bCut + " " + bControl + " " + matchedReads + " " + cutData
-
-    this.analysisName = queueLogDir + outputAllele + ".crisprEdits"
-    this.jobName = queueLogDir + outputAllele + ".crisprEdits"
-    this.isIntermediate = false
-  }
-
   // aggregate stats flies down to a single file
   // ********************************************************************************************************
   case class AggregateStatsFiles(inputFiles: List[File], outputStatsFile: File, outputUmiStatsFile: File)
@@ -761,42 +747,6 @@ class DNAQC extends QScript {
 
     this.analysisName = queueLogDir + outFastq + ".concatFastqs"
     this.jobName = queueLogDir + outFastq + ".concatFastqs"
-  }
-
-
-  //
-  // ********************************************************************************************************
-  case class SetupWebAnalysis(reference: File,
-    refCuts: File,
-    caseBAM: File,
-    controlBAM: File,
-    caseFile: File,
-    controlFile: File,
-    webLocation: File,
-    htmlFile: File,
-    figDir: File,
-    webConfigFile: File,
-    diagLoc: File
-  ) extends ExternalCommonArgs {
-
-    @Input(doc = "the reference file") var ref = reference
-    @Input(doc = "the reference cut locations") var refcut = refCuts
-    @Input(doc = "the case bam file") var casebam = caseBAM
-    @Input(doc = "the control bam file") var controlbam = controlBAM
-    @Input(doc = "the case cut file") var casecut = caseFile
-    @Input(doc = "the control cut file") var controlcut = controlFile
-    @Input(doc = "the html analysis file") var html = htmlFile
-    @Input(doc = "the diagram html and js location") var diag = diagLoc
-    @Argument(doc = "the figure directory") var figures = figDir
-    @Argument(doc = "output location") var outDir = webLocation
-    @Output(doc = "output web configuration file") var webConfig = webConfigFile
-
-
-    def commandLine = scalaPath + " -J-Xmx4g -cp /net/gs/vol1/home/aaronmck/source/sandbox/aaron/lib/target/scala-2.11/sequencing-lib-assembly-1.0.jar " + writeWebFiles + " " + ref + " " + refcut + " " + casebam + " " + controlbam + " " + " " + caseFile + " " + controlFile + " " + ref + ".primers " + outDir + " " + htmlFile + " " + figDir + " " + webConfig + " " + diag
-
-    this.analysisName = queueLogDir + caseFile + ".cpFile"
-    this.jobName = queueLogDir + caseFile + ".cpFile"
-    this.isIntermediate = false
   }
 
 
@@ -857,7 +807,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = scalaPath + " -J-Xmx23g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/UMIMerge.jar "
+    var cmdString = scalaPath + " -J-Xmx23g " + + "/UMIMerge.jar "
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -895,7 +845,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersEachEnd
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/ReadToStats.jar "
+    var cmdString = "java -jar -Xmx2g " + + "DeepSeq.jar"
     cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
     cmdString += cutSiteFile + " --outputStats "
     cmdString += outStat + " --primersEachEnd " + primers + " --sample "
