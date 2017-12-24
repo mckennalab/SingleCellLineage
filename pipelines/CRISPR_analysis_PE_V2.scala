@@ -895,7 +895,7 @@ class DNAQC extends QScript {
 
     var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
     cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
-    cmdString += outTree + " --sample " + sample
+    cmdString += outTree + " --sample " + sample + " --mixLocation " + mixLoc
 
     var cmd = cmdString
 
