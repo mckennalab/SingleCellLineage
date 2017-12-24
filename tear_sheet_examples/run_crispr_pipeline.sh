@@ -1,7 +1,9 @@
-java -Xmx4g -jar /net/gs/vol1/home/aaronmck/tools/queue-protected/protected/gatk-queue-package-distribution/target/gatk-queue-package-distribution-3.5.jar \
- -S /net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/pipelines/CRISPR_analysis_PE_V2.scala  \
- -i /net/shendure/vol10/projects/CRISPR.lineage/nobackup/2016_06_21_Adult_Fish_7_9_12/data/crispr_tearsheet.txt  \
- --aggLocation /net/shendure/vol10/projects/CRISPR.lineage/nobackup/2016_06_21_Adult_Fish_7_9_12/data/pipeline_output/aggregate/ \
- --expName 2016_06_21_Adult_Fish_7_9_12 \
- --eda /net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL.for_molly \
+/etc/init.d/lighttpd start
+
+java -Xmx4g -jar /app/queue.jar \
+ -S /app/sc_GESTALT/pipelines/CRISPR_analysis_PE_V2.scala  \
+ -i /app/tear_sheet_examples/no_barcode_splitting_example_tearsheet.txt \
+ --aggLocation /var/www/html/testdata/ \
+ --expName testdata \
+ --eda /app/EDNAFULL.Ns_are_zero \
  -run -qsub -resMemReqParam mfree
