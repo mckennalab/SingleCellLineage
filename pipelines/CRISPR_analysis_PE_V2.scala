@@ -150,34 +150,34 @@ class DNAQC extends QScript {
   var flashPath: File = "/usr/local/bin/flash"
 
   @Input(doc = "the script to analyze the edits made to a crispr target", fullName = "edits", shortName = "edits", required = false)
-  var crisprPath: File = "/app/sc_GESTALT/scripts/analyze_diversity_of_edits.scala"
+  var crisprPath: File = "analyze_diversity_of_edits.scala"
 
   @Input(doc = "the script to analyze the per site edits", fullName = "writeweb", shortName = "wwwrite", required = false)
-  var writeWebFiles: File = "/app/sc_GESTALT/scripts/write_web_files.scala"
+  var writeWebFiles: File = "write_web_files.scala"
 
   @Input(doc = "the location of the needleall program", fullName = "needle", shortName = "needle", required = false)
   var needlePath: File = "/usr/bin/needleall"
 
   @Input(doc = "the location of the alignment script", fullName = "alignScript", shortName = "alignScript", required = false)
-  var alignmentScripts: File = "/app/sc_GESTALT/scripts/align_merged_unmerged_reads.scala"
+  var alignmentScripts: File = "align_merged_unmerged_reads.scala"
 
   @Input(doc = "the path the javascript conversion script", fullName = "JSTable", shortName = "JSTable", required = false)
-  var toJSTableScript: File = "/app/sc_GESTALT/scripts/stats_to_javascript_tables2.scala"
+  var toJSTableScript: File = "stats_to_javascript_tables2.scala"
 
   @Argument(doc = "zip two reads together", fullName = "ZipReads", shortName = "ZipReads", required = false)
-  var zipReadsPath = "/app/sc_GESTALT/scripts/zip_two_read_files.scala"
+  var zipReadsPath = "zip_two_read_files.scala"
 
   @Argument(doc = "move the data over to the web location", fullName = "webpub", shortName = "webpub", required = false)
-  var toWebPublishScript = "/app/sc_GESTALT/scripts/push_to_web_location.scala"
+  var toWebPublishScript = "push_to_web_location.scala"
 
   @Argument(doc = "aggregate stats files (UMIed reads) together", fullName = "stats", shortName = "stats", required = false)
-  var aggregateScripts = "/app/sc_GESTALT/scripts/aggregate_stats.scala"
+  var aggregateScripts = "aggregate_stats.scala"
 
   @Argument(doc = "script that takes an independent UMI file and puts it on the front of read 1", fullName = "umiToFront", shortName = "umiToFront", required = false)
-  var convertUMIFile = "/app/sc_GESTALT/scripts/beths_UMI_to_standard_UMI.scala"
+  var convertUMIFile = "beths_UMI_to_standard_UMI.scala"
 
   @Argument(doc = "analyize stats file and generate a bunch of plots", fullName = "plotsScript", shortName = "plotsScript", required = false)
-  var statsFileAnalysis = "/app/sc_GESTALT/scripts/stats_file_analysis.py"
+  var statsFileAnalysis = "stats_file_analysis.py"
 
   @Argument(doc = "the first adapter sequence", fullName = "adaptOne", shortName = "adaptOne", required = false)
   var adapterOne = "GACCTCGAGACAAATGGCAG"
