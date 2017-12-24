@@ -14,6 +14,8 @@ libraryDependencies += "org.scalatest" % "scalatest_2.11" % "2.2.4"
 
 libraryDependencies += "com.google.code.gson" % "gson" % "2.6.2"
 
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
+
 scalacOptions += "-target:jvm-1.7"
 
 // set the main class for packaging the main jar
