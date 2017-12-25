@@ -20,7 +20,7 @@ import main.scala.node.{BestTree, NodeLinker, RichNode}
   */
 object MixRunner {
 
-  val mixLocation = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/phylip-fast/phylip-3.696/exe/mix")
+  var mixLocation = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/phylip-fast/phylip-3.696/exe/mix")
 
   /**
     * run the mix program

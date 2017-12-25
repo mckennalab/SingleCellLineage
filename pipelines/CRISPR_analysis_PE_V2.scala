@@ -65,6 +65,19 @@ class DNAQC extends QScript {
   qscript =>
 
   /** **************************************************************************
+    * the base locations for the jar files and the scripts directory
+    * ************************************************************************** */
+  @Input(doc = "Where to find binary files we need", fullName = "binaryLoc", shortName = "b", required = true)
+  var binaryLoc: File = new File("/app/bin/")
+
+  @Input(doc = "Where to find script files we need", fullName = "scriptLoc", shortName = "s", required = true)
+  var scriptLoc: File = new File("/app/sc_GESTALT/scripts/")
+
+  // our tree output directory -- outputTree
+  @Input(doc = "the tree output location", fullName = "treeLoc", shortName = "t", required = false)
+  var treeOutput: File = new File("/var/www/html/trees/tree_data/")
+
+  /** **************************************************************************
     * Data Parameters
     * ************************************************************************** */
   @Input(doc = "Tab-delimited tear sheet containing sample information", fullName = "input", shortName = "i", required = true)
@@ -111,61 +124,70 @@ class DNAQC extends QScript {
   var matchCount = 15
 
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
-  var webSite: File = "/net/shendure/vol10/www/content/members/aaron/staging/"
+  var webSite: File = "/var/www/html"
 
   /** **************************************************************************
     * Path parameters -- where to find tools
     * ************************************************************************** */
   @Input(doc = "The path to a functional installation of the scala tool", fullName = "scala", shortName = "scala", required = false)
-  var scalaPath: File = new File("/net/gs/vol1/home/aaronmck/tools/bin/scala")
+  var scalaPath: File = new File("/usr/bin/scala")
 
   @Input(doc = "The path to the Trimmomatic adapters file", fullName = "trimadapters", shortName = "tad", required = false)
-  var adaptersFile: File = new File("/net/gs/vol1/home/aaronmck/tools/trimming/Trimmomatic-0.32/adapters/PU1L.fa")
-
-  @Input(doc = "The path to the binary of fastqc", fullName = "fastqc", shortName = "fqc", required = false)
-  var fastqcPath: File = "/net/gs/vol1/home/aaronmck/tools/fastqc/FastQC/fastqc"
+  var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
 
   @Input(doc = "The path to the jar file for trimmomatic", fullName = "trim", shortName = "tm", required = false)
-  var trimmomaticPath: File = "/net/gs/vol1/home/aaronmck/tools/trimming/Trimmomatic-0.32/trimmomatic-0.32.jar"
+  var trimmomaticName: File = "trimmomatic.jar"
 
-  @Input(doc = "The path to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
-  var maulPath: File = "/net/gs/vol1/home/aaronmck/source/Maul/target/scala-2.10/Maul-assembly-1.0.jar"
+  @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
+  var maulName: File = "Maul.jar"
+
+  @Input(doc = "The TreeUtils file", fullName = "treeUtils", shortName = "treeUtils", required = false)
+  var treeJar: File = "TreeUtils.jar"
+
+  @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
+  var umiName: File = "UMIMerge.jar"
+
+  @Input(doc = "The filename of the calling jar", fullName = "Caller", shortName = "Caller", required = false)
+  var callerName: File = "DeepSeq.jar"
+
+  @Input(doc = "The location of MIX", fullName = "mix", shortName = "mix", required = false)
+  var mixLoc: File = "/usr/local/bin/mix"
 
   @Input(doc = "The path to the seqprep tool", fullName = "seqprep", shortName = "sprep", required = false)
   var seqPrepPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/SeqPrep"
 
   @Input(doc = "The path to the flash tool", fullName = "flash", shortName = "flash", required = false)
-  var flashPath: File = "/net/gs/vol1/home/aaronmck/tools/bin/flash"
+  var flashPath: File = "/usr/local/bin/flash"
 
   @Input(doc = "the script to analyze the edits made to a crispr target", fullName = "edits", shortName = "edits", required = false)
-  var crisprPath: File = "/net/gs/vol1/home/aaronmck/source/sandbox/aaron/projects/CRISPR/analyze_diversity_of_edits.scala"
+  var crisprPath: File = "analyze_diversity_of_edits.scala"
 
   @Input(doc = "the script to analyze the per site edits", fullName = "writeweb", shortName = "wwwrite", required = false)
-  var writeWebFiles: File = "/net/gs/vol1/home/aaronmck/source/sandbox/aaron/projects/CRISPR/scripts/write_web_files.scala"
+  var writeWebFiles: File = "write_web_files.scala"
 
   @Input(doc = "the location of the needleall program", fullName = "needle", shortName = "needle", required = false)
-  var needlePath: File = "/net/gs/vol1/home/aaronmck/tools/bin/needleall"
+  var needlePath: File = "/usr/bin/needleall"
 
   @Input(doc = "the location of the alignment script", fullName = "alignScript", shortName = "alignScript", required = false)
-  var alignmentScripts: File = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/align_merged_unmerged_reads.scala"
+  var alignmentScripts: File = "align_merged_unmerged_reads.scala"
 
   @Input(doc = "the path the javascript conversion script", fullName = "JSTable", shortName = "JSTable", required = false)
-  var toJSTableScript: File = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/stats_to_javascript_tables2.scala"
+  var toJSTableScript: File = "stats_to_javascript_tables2.scala"
 
   @Argument(doc = "zip two reads together", fullName = "ZipReads", shortName = "ZipReads", required = false)
-  var zipReadsPath = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/zip_two_read_files.scala"
+  var zipReadsPath = "zip_two_read_files.scala"
 
   @Argument(doc = "move the data over to the web location", fullName = "webpub", shortName = "webpub", required = false)
-  var toWebPublishScript = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/push_to_web_location.scala"
+  var toWebPublishScript = "push_to_web_location.scala"
 
   @Argument(doc = "aggregate stats files (UMIed reads) together", fullName = "stats", shortName = "stats", required = false)
-  var aggregateScripts = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/aggregate_stats.scala"
+  var aggregateScripts = "aggregate_stats.scala"
 
   @Argument(doc = "script that takes an independent UMI file and puts it on the front of read 1", fullName = "umiToFront", shortName = "umiToFront", required = false)
-  var convertUMIFile = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/beths_UMI_to_standard_UMI.scala"
+  var convertUMIFile = "beths_UMI_to_standard_UMI.scala"
 
   @Argument(doc = "analyize stats file and generate a bunch of plots", fullName = "plotsScript", shortName = "plotsScript", required = false)
-  var statsFileAnalysis = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/scripts/stats_file_analysis.py"
+  var statsFileAnalysis = "stats_file_analysis.py"
 
   @Argument(doc = "the first adapter sequence", fullName = "adaptOne", shortName = "adaptOne", required = false)
   var adapterOne = "GACCTCGAGACAAATGGCAG"
@@ -186,10 +208,10 @@ class DNAQC extends QScript {
   var gapextend: Double = 0.5
 
   @Argument(doc = "where to find the EDA file for alignment with NW", fullName = "eda", shortName = "eda", required = false)
-  var edaMatrix = "/net/shendure/vol10/projects/CRISPR.lineage/nobackup/reference_data/EDNAFULL"
+  var edaMatrix = "/app/sc_GESTALT/tear_sheet_examples/EDNAFULL.Ns_are_zero"
 
   @Argument(doc = "which aligner to use", fullName = "aligner", shortName = "aligner", required = false)
-  var aligner = "needle"
+  var aligner = "needle" // this is the only aligner installed on the Docker instance
 
   @Argument(doc = "Do we want to check primers on both ends, one end, or neither", fullName = "primersToUse", shortName = "primersToUse", required = false)
   var primersToCheck: String = "BOTH"
@@ -249,9 +271,6 @@ class DNAQC extends QScript {
       // duplicated, as don't try to make it if it exists
       val webLoc =             webSite + File.separator + sampleObj.sample + File.separator
       val sampleOutput =       dirOrCreateOrFail(new File(sampleObj.outputDir + File.separator + sampleObj.sample), "sample output directory")
-      val initialFastQCDir =   dirOrCreateOrFail(new File(sampleOutput + File.separator + "initial_fastQC"), "initial fastqc directory")
-      val initialFastQMerged = dirOrCreateOrFail(new File(sampleOutput + File.separator + "initial_fastQC_Merged"), "initial fastqc directory")
-      val postCleanFastQCDir = dirOrCreateOrFail(new File(sampleOutput + File.separator + "post_clean_fastQC"), "final fastqc directory")
       val sampleWebLocation =  dirOrCreateOrFail(new File(webSite +  File.separator + experimentalName + File.separator + sampleTag), "our output web publishing directory")
 
       // our barcode split files
@@ -321,10 +340,6 @@ class DNAQC extends QScript {
         new File(sampleOutput + File.separator + "out.notCombined_1.fastq"),
         new File(sampleOutput + File.separator + "out.notCombined_2.fastq"))
 
-      // run an Fastqc so we know what we started with
-      // ************************************************************************************
-      add(Fastqc(inputFiles, initialFastQCDir))
-
       val toAlignFastq1 = new File(sampleOutput + File.separator + sampleTag + ".fwd.fastq")
       val toAlignFastq2 = new File(sampleOutput + File.separator + sampleTag + ".rev.fastq")
       val toAlignStats = new File(sampleOutput + File.separator + sampleTag + ".stats")
@@ -335,6 +350,8 @@ class DNAQC extends QScript {
       val topReadFileNew = new File(sampleOutput + File.separator + sampleTag + ".topReadEventsNew")
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
+      val outputTree = new File(treeOutput.getAbsolutePath + File.separator + sampleTag + ".json")
+
       val cutSites = new File(sampleObj.reference + ".cutSites")
       val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"), new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
 
@@ -452,6 +469,9 @@ class DNAQC extends QScript {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
         add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
       }
+
+      // run the tree creation code
+      add(TreeUtils(allReadCount, "/tmp/", outputTree, sampleObj.sample))
     })
 
     // agg. all of the stats together into a single file
@@ -571,7 +591,7 @@ class DNAQC extends QScript {
     @Output(doc = "the the counts for all the reads") var allReadC = allEventCounts
     @Output(doc = "new per base event style") var perBaseES = perBaseEventsNew
 
-    var command = scalaPath + " -J-Xmx6g " + toJSTableScript + " " + stats + " " + perBase + " " + topR + " " + topReadC + " " + allReadC + " " + cuts + " " + perBaseES + " " + convertUnknownsToNone + " " + ref
+    var command = scalaPath + " -J-Xmx6g " + scriptLoc + "/" + toJSTableScript + " " + stats + " " + perBase + " " + topR + " " + topReadC + " " + allReadC + " " + cuts + " " + perBaseES + " " + convertUnknownsToNone + " " + ref
 
     def commandLine = command
 
@@ -591,7 +611,7 @@ class DNAQC extends QScript {
     @Input(doc = "the cutsites") var cuts = cutSites
     @Input(doc = "all HMIDs") var allReads = allReadCount
 
-    def commandLine = scalaPath + " -J-Xmx1g " + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads
+    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
@@ -626,7 +646,7 @@ class DNAQC extends QScript {
       throw new IllegalStateException("index input and output files have to be the same size")
 
     // the base command to run
-    var baseCmd = "java -Xmx4g -jar " + maulPath + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
+    var baseCmd = "java -Xmx4g -jar " + binaryLoc + "/" + maulName + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
 
     // figure out if we're running with one or two barcodes
     if (inputFastqs.length == 2) baseCmd += " --inFQ2 " + inputFQs(1) + " --outFQ2 " + outputFQs(1)
@@ -654,22 +674,6 @@ class DNAQC extends QScript {
     this.memoryLimit = 8
   }
 
-  // evaluate the quality of the reads from a fastq file
-  // ********************************************************************************************************
-  case class Fastqc(inputFQs: List[File], outputDir: File, isBam: Boolean = false) extends ExternalCommonArgs {
-    @Input(doc = "the input files") var ins = inputFQs
-    @Input(doc = "output directory") var outdir = outputDir
-
-    def commandLine = fastqcPath + " -o " + outdir + " -f fastq " + (if (isBam) " -f bam " else "") + ins.mkString(" ")
-
-    this.memoryLimit = 8
-    this.analysisName = queueLogDir + ins(0).getName() + ".fastqc" + (if (isBam) "BAM" else "")
-    this.jobName = queueLogDir + ins(0).getName() + ".fastqc" + (if (isBam) "BAM " else "")
-
-    // DO NOT REMOVE -- Queue will delete all the output, including the output directory unless you set this.  This means there's some cleanup at the end though
-    this.isIntermediate = false
-  }
-
   // call out the alignment task to
   // ********************************************************************************************************
   case class PerformAlignment(reference: File,
@@ -686,7 +690,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged fasta file") var outMergedFasta = outputMergedFasta
     @Output(doc = "the output paired fasta file") var outPairedFasta = outputPairedFasta
 
-    def commandLine = scalaPath + " " + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta + " " + gapopen + " " + gapextend
+    def commandLine = scalaPath + " " + scriptLoc + "/" + alignmentScripts + " " + edaMatrix + " " + aligner + " " + mergedFQ + " " + pairedFQ + " " + ref + " " + outMergedFasta + " " + outPairedFasta + " " + gapopen + " " + gapextend
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"
@@ -711,30 +715,10 @@ class DNAQC extends QScript {
     @Input(doc = "the read 2") var inF2 = inRead2File
     @Output(doc = "the output sam file") var outF = outFile
 
-    def commandLine = scalaPath + " " + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF
+    def commandLine = scalaPath + " " + scriptLoc + "/" + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF
 
     this.analysisName = queueLogDir + outF + ".gunzip"
     this.jobName = queueLogDir + outF + ".gunzip"
-  }
-
-  // analyze the edits from the final alignments
-  // ********************************************************************************************************
-  case class AnalyzeEdits(outputAllele: File, outputCase: File, outputControl: File, reference: File, bamCut: File, bamControl: File, matchedPrimerReads: File, cutDataFile: File)
-    extends CommandLineFunction with ExternalCommonArgs {
-    @Output(doc = "the output alleles") var outa = outputAllele
-    @Output(doc = "the output control data") var outcont = outputControl
-    @Output(doc = "the output case data") var outcase = outputCase
-    @Input(doc = "the reference") var ref = reference
-    @Input(doc = "the cut bam file") var bCut = bamCut
-    @Input(doc = "the control bam file") var bControl = bamControl
-    @Output(doc = "the reads where both ends match the primers") var matchedReads = matchedPrimerReads
-    @Output(doc = "the output cut data") var cutData = cutDataFile
-
-    def commandLine = scalaPath + " -J-Xmx4g -cp /net/gs/vol1/home/aaronmck/source/sandbox/aaron/lib/target/scala-2.11/sequencing-lib-assembly-1.0.jar " + crisprPath + " " + outa + " " + outcase + " " + outcont + " " + ref + ".primers " + ref + ".cutSites " + bCut + " " + bControl + " " + matchedReads + " " + cutData
-
-    this.analysisName = queueLogDir + outputAllele + ".crisprEdits"
-    this.jobName = queueLogDir + outputAllele + ".crisprEdits"
-    this.isIntermediate = false
   }
 
   // aggregate stats flies down to a single file
@@ -745,7 +729,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged stats file") var outStats = outputStatsFile
     @Output(doc = "the output umi information") var outUMIStats = outputUmiStatsFile
 
-    def commandLine = scalaPath + " -J-Xmx8g " + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
 
     this.analysisName = queueLogDir + outStats + ".outStats"
     this.jobName = queueLogDir + outStats + ".outStats"
@@ -761,7 +745,7 @@ class DNAQC extends QScript {
     @Input(doc = "barcodes") var barcodes = barcodeFile
     @Output(doc = "the output umi + reads file") var output = outputReadsAndBarcodes
 
-    def commandLine = scalaPath + " -J-Xmx8g " + convertUMIFile + " " + reads + " " + barcodes + " " + output
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes + " " + output
 
     this.analysisName = queueLogDir + output + ".umiOnReads"
     this.jobName = queueLogDir + output + ".umiOnReads"
@@ -778,42 +762,6 @@ class DNAQC extends QScript {
 
     this.analysisName = queueLogDir + outFastq + ".concatFastqs"
     this.jobName = queueLogDir + outFastq + ".concatFastqs"
-  }
-
-
-  //
-  // ********************************************************************************************************
-  case class SetupWebAnalysis(reference: File,
-    refCuts: File,
-    caseBAM: File,
-    controlBAM: File,
-    caseFile: File,
-    controlFile: File,
-    webLocation: File,
-    htmlFile: File,
-    figDir: File,
-    webConfigFile: File,
-    diagLoc: File
-  ) extends ExternalCommonArgs {
-
-    @Input(doc = "the reference file") var ref = reference
-    @Input(doc = "the reference cut locations") var refcut = refCuts
-    @Input(doc = "the case bam file") var casebam = caseBAM
-    @Input(doc = "the control bam file") var controlbam = controlBAM
-    @Input(doc = "the case cut file") var casecut = caseFile
-    @Input(doc = "the control cut file") var controlcut = controlFile
-    @Input(doc = "the html analysis file") var html = htmlFile
-    @Input(doc = "the diagram html and js location") var diag = diagLoc
-    @Argument(doc = "the figure directory") var figures = figDir
-    @Argument(doc = "output location") var outDir = webLocation
-    @Output(doc = "output web configuration file") var webConfig = webConfigFile
-
-
-    def commandLine = scalaPath + " -J-Xmx4g -cp /net/gs/vol1/home/aaronmck/source/sandbox/aaron/lib/target/scala-2.11/sequencing-lib-assembly-1.0.jar " + writeWebFiles + " " + ref + " " + refcut + " " + casebam + " " + controlbam + " " + " " + caseFile + " " + controlFile + " " + ref + ".primers " + outDir + " " + htmlFile + " " + figDir + " " + webConfig + " " + diag
-
-    this.analysisName = queueLogDir + caseFile + ".cpFile"
-    this.jobName = queueLogDir + caseFile + ".cpFile"
-    this.isIntermediate = false
   }
 
 
@@ -849,7 +797,7 @@ class DNAQC extends QScript {
     this.residentLimit = 4
 
     // CMD command issued, and the hidden queue output file names
-    var cmd = "java -Xmx3g -jar " + trimmomaticPath + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
+    var cmd = "java -Xmx3g -jar " + binaryLoc + "/" + trimmomaticName + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
     if (fqs.length == 2) cmd += " " + fqOuts(0) + " " + fqOutsUnpaired(0) + " " + fqOuts(1) + " " + fqOutsUnpaired(1) + " " + appended
     else cmd += " " + fqOuts(0) + " " + " " + appended
 
@@ -874,7 +822,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = scalaPath + " -J-Xmx23g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/UMIMerge.jar "
+    var cmdString = "java -Xmx4g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -887,9 +835,9 @@ class DNAQC extends QScript {
 
     var cmd = cmdString
 
-    this.memoryLimit = 32
-    this.residentRequest = 32
-    this.residentLimit = 32
+    this.memoryLimit = 5
+    this.residentRequest = 5
+    this.residentLimit = 5
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -912,7 +860,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersEachEnd
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/ReadToStats.jar "
+    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + callerName
     cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
     cmdString += cutSiteFile + " --outputStats "
     cmdString += outStat + " --primersEachEnd " + primers + " --sample "
@@ -931,6 +879,34 @@ class DNAQC extends QScript {
     this.isIntermediate = false
     this.analysisName = queueLogDir + outStat + ".calls"
     this.jobName = queueLogDir + outStat + ".calls"
+  }
+
+
+  //--inputUnmerged --inputMerged --outputStats --cutSites --primersEachEnd --sample test
+  case class TreeUtils(allEventsFile: File,
+    mixRunLocation: File,
+    outputTree: File,
+    sampleName: String) extends CommandLineFunction with ExternalCommonArgs {
+
+    @Input(doc = "all events files") var allEventsFl = allEventsFile
+    @Input(doc = "the mix run location") var mixRun = mixRunLocation
+    @Output(doc = "output tree") var outTree = outputTree
+    @Argument(doc = "the sample name") var sample = sampleName
+
+    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
+    cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
+    cmdString += outTree + " --sample " + sample + " --mixLocation " + mixLoc
+
+    var cmd = cmdString
+
+    this.memoryLimit = 3
+    this.residentRequest = 3
+    this.residentLimit = 3
+
+    def commandLine = cmd
+    this.isIntermediate = false
+    this.analysisName = queueLogDir + outTree + ".tree"
+    this.jobName = queueLogDir + outTree + ".tree"
   }
 
   /**

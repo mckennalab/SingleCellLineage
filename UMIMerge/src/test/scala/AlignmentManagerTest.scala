@@ -201,7 +201,7 @@ class AlignmentManagerTest extends FlatSpec with Matchers {
     val readFwd1 = "-----------------------------------------------------------------------------------------------------TAGTGTATGTGCAGTGAGCCCCTTTTCCTCTAACTGAAAGAAGGAAAAAAAAATGGAACCCAAAATATTCTACATAGTTTCC-TGTCACAGCagacGCTGGGCAGTCTCCTGTTATTTCTTTTAAAATAAATATATCATTTAAATGCATAAATAAGCAAACCCTGCTCGGGAATGGGAGGGAGAGTCTCTGGAGTCCACCCCTTCTCGGCCCTGGCTCTGCAGATAGTGCTATCAAAGCCCTGACAGAGCCCTGCCCATTGCTGGGCCTTGGAGTGAGTCA----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
     //println("BIG TEST TIME!!")
-    val cutSites = CutSites.fromFile(new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/2016_03_07_Mollys_stuff/data/MGreference.fa.cutSites"),3)
+    val cutSites = CutSites.fromFile(new File("./test_files/MGR.fa.cutSites"),3)
     val testCalls = AlignmentManager.callEdits(ref1,readFwd1,1,cutSites)
 
     //println(testCalls._3(0))

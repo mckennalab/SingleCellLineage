@@ -38,7 +38,7 @@ def doAlignment(fq: String, outFasta: String): Boolean = {
 
     // NEEDLEALL
     case "needle" => {
-      val aligner = "/net/gs/vol1/home/aaronmck/tools/bin/needleall -datafile " + edaFile + " -snucleotide1 -snucleotide2 -aformat3 fasta -gapextend " + gapExt + " -gapopen " + gapOpen + " -asequence " + ref + " -bsequence " + fq + " -outfile " + outFasta
+      val aligner = "needleall -datafile " + edaFile + " -snucleotide1 -snucleotide2 -aformat3 fasta -gapextend " + gapExt + " -gapopen " + gapOpen + " -asequence " + ref + " -bsequence " + fq + " -outfile " + outFasta
       println(aligner)
       val result = (aligner).!
       if (result == 0)

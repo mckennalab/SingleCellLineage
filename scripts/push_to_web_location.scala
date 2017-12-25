@@ -11,11 +11,11 @@ val topReadsFile = new File(args(2))
 val topReadCountsFile = new File(args(3))
 val cutSiteFile = new File(args(4))
 val allReadFile = new File(args(5))
+val baseSourceDir = args(6)
+val interval_file = if (args.size == 8) Some(new File(args(7))) else None
 
-val interval_file = if (args.size == 7) Some(new File(args(6))) else None
-
-val javaScriptFile = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/plots/read_plot/read_editing_mutlihistogram.js")
-val htmlFile = new File("/net/shendure/vol10/projects/CRISPR.lineage/nobackup/codebase/plots/read_plot/read_editing_mutlihistogram.html")
+val javaScriptFile = new File(baseSourceDir + "plots/read_plot/read_editing_mutlihistogram.js")
+val htmlFile = new File(baseSourceDir + "plots/read_plot/read_editing_mutlihistogram.html")
 
 // check that everything exists
 if (!webLocation.exists)

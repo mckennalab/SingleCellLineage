@@ -38,6 +38,7 @@ import main.scala.node.{BestTree, RichNode}
 case class MixConfig(allEventsFile: File = new File(MixMain.NOTAREALFILENAME),
                      outputTree: File = new File(MixMain.NOTAREALFILENAME),
                      mixRunLocation: File = new File(MixMain.NOTAREALFILENAME),
+                     mixLocation: File = new File(MixMain.NOTAREALFILENAME),
                      allCellAnnotations: Option[File] = None,
                      sample: String = "UNKNOWN",
                      firstX: Int = -1)
@@ -61,6 +62,7 @@ object MixMain extends App {
     opt[File]("outputTree") required() valueName ("<file>") action { (x, c) => c.copy(outputTree = x) } text ("the tree to produce")
     opt[File]("allCells") valueName ("<file>") action { (x, c) => c.copy(allCellAnnotations = Some(x)) } text ("the tree to produce")
     opt[String]("sample") required() valueName ("<file>") action { (x, c) => c.copy(sample = x) } text ("the tree to produce")
+    opt[File]("mixLocation") required() valueName ("<file>") action { (x, c) => c.copy(mixLocation = x) } text ("where to find mix")
 
     // some general command-line setup stuff
     note("process a stats file into a JSON tree file\n")
@@ -69,6 +71,8 @@ object MixMain extends App {
 
   // *********************************** Run *******************************************************
   parser.parse(args, MixConfig()) map { config => {
+
+    MixRunner.mixLocation = config.mixLocation
 
     // parse the all events file into an object
     val readEventsObj = EventIO.readEventsObject(config.allEventsFile, config.sample)

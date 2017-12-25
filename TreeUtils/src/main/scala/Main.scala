@@ -12,7 +12,7 @@ import scala.collection.mutable._
 import scala.sys.process._
 import java.util.zip._
 
-import main.scala.mix.ParsimonyProcessor
+import main.scala.mix.{MixRunner, ParsimonyProcessor}
 
 import scala.util.Random
 
@@ -51,6 +51,7 @@ case class TreeConfig(inputTree: File = new File(Main.NOTAREALFILENAME),
                       eventsToColors: File = new File(Main.NOTAREALFILENAME),
                       optionalAnnotations: String = "",
                       outputTree: File = new File(Main.NOTAREALFILENAME),
+                      mixLocation: File = new File(Main.NOTAREALFILENAME),
                       numberOfTargets: Int = 10)
 
 
@@ -73,7 +74,7 @@ object Main extends App {
     opt[Int]("numberOfTargets") valueName ("<file>") action { (x, c) => c.copy(numberOfTargets = x) } text ("the number of targets")
     opt[String]("optionalAnnotations") valueName ("<file>") action { (x, c) => c.copy(optionalAnnotations = x) } text ("any optional annotations")
     opt[File]("outputTree") required() valueName ("<file>") action { (x, c) => c.copy(outputTree = x) } text ("the tree to produce")
-
+    opt[File]("mixLocation") required() valueName ("<file>") action { (x, c) => c.copy(mixLocation = x) } text ("where to find mix")
     // some general command-line setup stuff
     note("processes reads with UMIs into merged reads\n")
     help("help") text ("prints the usage information you see here")
@@ -81,6 +82,9 @@ object Main extends App {
 
   // *********************************** Run *******************************************************
   parser.parse(args, TreeConfig()) map { config => {
+    // set the location of the MIX program
+    MixRunner.mixLocation = config.mixLocation
+
     // mixTrees: File, mixOutput: File, annotations: File, sampleToClade: File, eventsToNumbers: String
     val parser = new ParsimonyProcessor(config.inputTree,
       config.inputGenotypes,

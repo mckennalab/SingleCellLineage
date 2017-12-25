@@ -1,0 +1,1 @@
+sample	umi	reference	output.dir	fastq1	fastq2	barcode.fastq1	barcode.fastq2	barcode1	barcode2dome_4_1X	TRUE	/app/references/target1.fa	/app/data/	/app/data/Dome_stage_N4_1X.fastq1.fq.gz	/app/data/Dome_stage_N4_1X.fastq2.fq.gz	NA	NA	ALL	ALL

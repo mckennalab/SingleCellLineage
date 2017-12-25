@@ -1,7 +1,7 @@
 package collapse
 
 
-import com.monsanto.stats.tables.clustering.{CRP, ModelParams, RealRandomNumGen, TopicVectorInput}
+//import com.monsanto.stats.tables.clustering.{CRP, ModelParams, RealRandomNumGen, TopicVectorInput}
 import reads.RankedReadContainer
 import umi.{BitEncoding, StringCount}
 import com.typesafe.scalalogging._
