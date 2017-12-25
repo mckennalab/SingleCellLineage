@@ -14,7 +14,7 @@ Things you need to have:
   - **A cutsite file**. This should have the name <reference.fa>.cutSites, where the <reference.fa> is the name of your reference. This describes where the cutsites occur within the amplicon. See the example_data directory for an example version. Positions are relative to the start of the reference.
   - **A primers file**, named <reference.fa>.primers. A file containing the invariant sequences that are expected to be present at both ends of the amplicon. This file is two lines, a primer on each line oriented with the reference. This is used to filter out non-specific PCR products that may be present in your sequencing run. This filtering is optional, and if you don't use this you can just put any sequences in this file.
 
-* **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the example_data file.
+* **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the /app/sc_GESTALT/tear_sheet_examples directory.
 
 ## Install the Docker container
 
