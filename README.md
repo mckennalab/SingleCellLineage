@@ -39,5 +39,7 @@ You can adjust the input files by changing filenames in the tearsheet: app/sc_GE
 ```
 docker run -it -p 8080:80 -v /Users/aaronmck/Desktop/gel_images/:/my_data aaronmck/genomics:sc_GESTALT /bin/bash
 ```
-
-
+You can then rerun the example script or create your own:
+```
+sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
+```
