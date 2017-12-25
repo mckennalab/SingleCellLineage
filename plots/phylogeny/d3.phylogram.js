@@ -9,16 +9,21 @@
 // ************************************************************************************************************************
 
 // the next two function allow for either square or zig-zag lines to be drawn
-var diagonal = d3.svg.diagonal()
-    .source(function(d) { return {"x":d.source.x, "y":d.source.y}; })
-    .target(function(d) { return {"x":d.target.x, "y":d.target.y}; })
-    .projection(function(d) { return [d.y, d.x]; });
-
+function diagonal(final_end) { return d3.svg.diagonal()
+			       .source(function(d) { return {"x":d.source.x, "y":d.source.y}; })
+			       .target(function(d) {
+				   if (d.target.nodecolor == "white") {
+				       return {"x":d.target.x, "y":final_end}; // return {"x":final_end, "y":d.target.y}; 
+				   } else {
+				       return {"x":d.target.x, "y":d.target.y};
+				   }})
+			       .projection(function(d) { return [d.y, d.x]; });
+			     }
 function elbow(d, i) {
     midpointX = (d.source.x + d.target.x) / 2.0
     midpointY = (d.source.y + d.target.y) / 2.0
-  return "M" + d.source.y + "," + d.source.x
-      + "H" + midpointY + "V" + d.target.x + "H" + d.target.y;
+    return "M" + d.source.y + "," + d.source.x
+	+ "H" + midpointY + "V" + d.target.x + "H" + d.target.y;
 }
 
 
@@ -72,7 +77,7 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
         .children(function (node) {
             return node.children
         })
-	.separation(function (a, b) {return 2})
+	.separation(function (a, b) {return a.parent == b.parent ? 8 : 8;})
 
     // get the legend colors
     var colorMap = legendColor(root)
@@ -88,7 +93,7 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
     var barSpacer = 10
     var barHeight = options.barheight
 
-    var circleSize = 3 // radius
+    var circleSize = 5 // radius
     var circleFill = "gray"
     var circleOutline = "black"
     var circleHighlight = "red"
@@ -100,8 +105,8 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
     var edit_stroke_width = '.25px'
 
     // the offsets in the aligned reads to consider for event plotting -- would be better to pass in at some point
-    var startRegion = 15
-    var endRegion = 320
+    var startRegion = 100
+    var endRegion = 450
 
     // when we want to plot the proportion in blood, find the max proportion
     // blood proportion is turned off right now
@@ -174,7 +179,7 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 	vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     }
 
-    // put the axis on the plot at the top and the bottom
+    /* put the axis on the plot at the top and the bottom
     vis.append("g")
 	.attr("transform", "translate(" + (barplot_location) + "," + ( h + 2) + ")")
 	.call(xAxis)
@@ -196,7 +201,7 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 	.style("fill","black")
     	.style("stroke-width",0)
     	.style("shape-rendering","crispEdges")
-
+    */
     if (options.skipBranchLengthScaling) {
         var yscale = d3.scale.linear()
             .domain([0, w])
@@ -208,16 +213,17 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
     // add the links between nodes on the tree -- we use solid lines for normal nodes,
     // dashed lines for lines that lead to nodes that are duplicates when two organs have
     // the same allele
+
     var link = vis.selectAll("path.link")
         .data(tree.links(nodes))
         .enter().append("svg:path")
         .attr("class", "link")
-        .attr("d", diagonal) // elbow
+        .attr("d", diagonal(event_location - 30 )) // elbow
         .attr("fill", "none")
         .style("stroke", "black")
         .attr("stroke-width", "1.4px")
 	.style("stroke-dasharray", function(d) {
-	    if (!d.target.justOrganSplit || d.target.justOrganSplit == "false") {
+	    if (!d.target.nodecolor || d.target.nodecolor != "white") {
 		return ("0, 0");
 	    } else {
 		return ("2, 2");
@@ -232,11 +238,11 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 	    if (!nd.name.startsWith("internal")) {
 		var event = nd.event// taxaToObj(d.name).event
 		var eventArray = hmidToEvents(nd.event) // padWithMatches(hmidToEvents(nd.event),startRegion,endRegion)
-		drawDottedConnector(nd)
+		//drawDottedConnector(nd)
 		drawEditStrings(eventArray,nd,editBarWidth,barHeight,startRegion,endRegion)
-		drawMembership(nd,barHeight,barWidth)
+		//drawMembership(nd,barHeight,barWidth)
 		// drawBloodProp(nd,barHeight,barWidth,maxBlood)
-		drawCounts(nd,scaleCounts, barHeight)
+		//drawCounts(nd,scaleCounts, barHeight)
 	    }
 	});
 
@@ -282,11 +288,11 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
     // drawEditStrings      (eventArray,nd, barHeight,barWidth,startRegion,endRegion)
     function drawEditStrings(eventArray, d, barLength, barHeight, start, end) {
 	var size = end - start
-	
+
 	// scale from the event window to the barlength on the screen
 	var scaleX = d3.scale.linear().range([0,barLength]).domain([start,end])
-	var heatmap_colors = ['#FFFFFF','#CE343F','#2E4D8E','#444444'];  // '#D49E35'];
-	
+	var heatmap_colors = ['#FFFFFF','#CE343F','#2E4D8E','#444444','#CE343F']; // #3C8D2F'];  // '#D49E35'];
+
 	var rectangle = vis.append("rect")
             .attr('fill', heatmap_colors[0] )
 	    .attr('id', d.event )
@@ -299,7 +305,7 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 	    .on('mouseover', function(d) {
 		//console.log(d3.select(this)[0][0].id)
 	    })
-	
+
 	for (i = 0; i < eventArray.length; i++) {
 	    var rectangle = vis.append("rect")
                 .attr('fill', heatmap_colors[eventArray[i].typ] )
@@ -319,12 +325,23 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 
     // draw a box for membership -- which type of organ is this (by color)
     function drawMembership(d,barHeight,barWidth) {
+    var color = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
 	var rectangle = vis.append("rect")
-	    .attr('fill', d.color) // taxaToObj(d.name).color
-	    .attr('stroke', '#111')
+	    .attr('fill', function() {
+            if (parseInt(d.clade) < 20) {
+                return color[parseInt(d.clade)];
+            } else {
+                return "white";
+            }}) // d.color) // taxaToObj(d.name).color
+	    .attr('stroke', function() {
+            if (parseInt(d.clade) < 20) {
+                return "#111";
+            } else {
+                return "white";
+            }}) // d.color) // taxaToObj(d.name).color
 	    .attr('stroke-width', bar_stroke_width)
 	    .attr("width", barHeight)
-	    .attr("height", barWidth)
+	    .attr("height", barWidth * 3)
 	    .attr("transform","translate(" + membership_location + "," + (d.x + barHeight/2.0) + ") rotate(-90) ");
     }
 
@@ -446,27 +463,60 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 
     var cirColor = d3.scale.category20();
 
+    
     drawNodeCircles.each(function (d, i) {
         selection = d3.select(this);
-        var circle = selection.append("circle")
-	    // .filter(function(d) {return d.children })
-	    .attr("r", circleSize)
-	    .attr('fill', function(d) {
-		if (d.nodecolor) {
-		    return d.nodecolor
-		} else {
-		    return "black"
-		}
-	    })
-	    .attr('stroke', circleOutline)
-	    .attr('stroke-width', 0.5)
-	    .attr("cy", function(d) {
-                return d.x
-	    })
-	    .attr("cx", function(d) {
-                return d.y
-	    });
+
+        if (d.nodecolor == "white") {
+            var circle = selection.append("rect")
+	        // .filter(function(d) {return d.children })
+	            .attr("width", circleSize * 5)
+	            .attr("height", circleSize * 1.8)
+	            .attr('fill', function(d) {
+			return d.cladeColor;
+	            })
+	            .attr('stroke', circleOutline)
+	            .attr('stroke-width', 0.0)
+	            .attr("y", function(d) {
+			return d.x - circleSize
+	            })
+	            .attr("x", function(d) {
+			return event_location - (6 * circleSize)
+	            });
+        } else {
+            var circle = selection.append("circle")
+	        // .filter(function(d) {return d.children })
+	            .attr("r", circleSize)
+	            .attr('fill', function(d) {
+		            if (d.nodecolor == "red" || d.nodecolor == "green") {
+		                return "red"
+		            } else {
+		                return "black"
+		            }
+			
+	            })
+	            .attr('stroke', circleOutline)
+	            .attr('stroke-width', 0.5)
+	            .attr("cy", function(d) {
+                    return d.x
+	            })
+	            .attr("cx", function(d) {
+                    return d.y
+	            });
+        }
     });
+    /*
+    vis.selectAll("path")
+        .data(tree.links(nodes))
+        .enter().append("g")
+	    .attr("class", "node")
+        .attr("d", d3.svg.symbol()
+              .type(function(d) { if
+                  (d.target.nodecolor == "white") 
+                  { return "square"; } 
+                  else 
+                  {return d3.svg.symbol()
+                                }));*/
 
     // ------------------------------------------------------------------------
     // handle the mouse over bits for node highlighting
@@ -493,7 +543,8 @@ function build_tree(selector, root, options) {  // , taxaToObj, maxCount) {
 	// add a box of text about this node
 	var htmlOutput = "<b>Node name: </b> " + d.name + "<br><br><b>depth: </b>" + d.depth
 	htmlOutput += "<br><br><b>Edits shared by child nodes (* for not shared):</b><br>" + d.commonEvent.split("_").join(", ")
-	htmlOutput += "<br><br><b>Allele (inferred for internal nodes):</b><br>" + d.event.split("_").join(", ") + "<br><br><b>Proportion of sampled organs / organism:</b><br>"
+	htmlOutput += "<br><br><b>Allele (inferred for internal nodes):</b><br>" + d.event.split("_").join(", ")
+	htmlOutput += "<br><br><b>grafted:</b><br>" + d.grafted + "<br><br><b>Proportion of sampled organs / organism:</b><br>"
 	$( '#fixeddivinfo' ).html( htmlOutput );
 
 	var margin = {top: 10, right: 10, bottom: 100, left: 60}
@@ -579,7 +630,7 @@ var match = 0
 var insertion = 2
 var deletion = 1
 var scar = 3
-
+var outside = 4
 
 // ********************************************************************************************************
 // process the encoded HMID strings into a series of object for D3 to draw on the screen
@@ -644,6 +695,8 @@ function eventToObject(event) {
 	typeOf = deletion
     } else if (typeOf == "S") {
 	typeOf = scar
+    } else if (typeOf == "O") {
+	typeOf = outside
     } else {
 	typeOf = match
     }
@@ -720,16 +773,16 @@ function load() {
         build_tree(selector, newick[0], {width: current_data.width, height: current_data.height, barheight: current_data.barheight});
     });
 }
-var dims = {width: 800,height: 100}
+var dims = {width: 1400,height: 100}
 var selector = '#phylogram'
 var vis = d3.select(selector).append("svg:svg")
             .attr("width", dims.width + 600)
-            .attr("height", dims.height + 200)
+            .attr("height", dims.height + 1200)
             .append("svg:g")
             .attr("transform", "translate(20, 20)")
 
-boxWidth = 800
-boxHeight = 800
+boxWidth = 1200
+boxHeight = 1600
 sidebarWidth = 200
 sidebarHeight = 800
 
