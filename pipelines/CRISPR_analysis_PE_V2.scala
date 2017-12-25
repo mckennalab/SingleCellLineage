@@ -822,7 +822,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -Xmx7g -jar " + binaryLoc + "/" + umiName
+    var cmdString = "java -Xmx4g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -835,9 +835,9 @@ class DNAQC extends QScript {
 
     var cmd = cmdString
 
-    this.memoryLimit = 32
-    this.residentRequest = 32
-    this.residentLimit = 32
+    this.memoryLimit = 5
+    this.residentRequest = 5
+    this.residentLimit = 5
 
     def commandLine = cmd
     this.isIntermediate = false
