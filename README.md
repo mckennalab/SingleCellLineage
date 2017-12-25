@@ -18,7 +18,21 @@ Things you need to have:
 
 ## Install the Docker container
 
+Download the docker container:
+```
+docker pull aaronmck/genomics:sc_GESTALT
+```
+
+Run and connect to the container, remapping port 80 of the container to port 8080 on your local machine:
+```
+ docker run -it -p 8080:80 aaronmck/genomics:sc_GESTALT /bin/bash
+```
+
+Now within the container, run the example script:
+```
+sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
+```
 
 
-Downloading and starting the Docker container
+
 
