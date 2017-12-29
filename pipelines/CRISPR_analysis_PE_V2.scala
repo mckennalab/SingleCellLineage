@@ -65,7 +65,7 @@ class DNAQC extends QScript {
   qscript =>
 
   /** **************************************************************************
-    * the base locations for the jar files and the scripts directory
+    * the most common settings
     * ************************************************************************** */
   @Input(doc = "Where to find binary files we need", fullName = "binaryLoc", shortName = "b", required = true)
   var binaryLoc: File = new File("/app/bin/")
@@ -76,6 +76,10 @@ class DNAQC extends QScript {
   // our tree output directory -- outputTree
   @Input(doc = "the tree output location", fullName = "treeLoc", shortName = "t", required = false)
   var treeOutput: File = new File("/var/www/html/trees/tree_data/")
+
+  // our tree output directory -- outputTree
+  @Input(doc = "the maximum amount of memory on your machine", fullName = "memory", shortName = "m", required = false)
+  var baseMemory: Int = 8
 
   /** **************************************************************************
     * Data Parameters
@@ -597,9 +601,9 @@ class DNAQC extends QScript {
 
     this.analysisName = queueLogDir + stats + ".toJS"
     this.jobName = queueLogDir + stats + ".toJS"
-    this.memoryLimit = 8
-    this.residentRequest = 8
-    this.residentLimit = 8
+    this.memoryLimit = baseMemory - 1
+    this.residentRequest = baseMemory - 1
+    this.residentLimit = baseMemory - 1
   }
 
   // ********************************************************************************************************
@@ -615,7 +619,7 @@ class DNAQC extends QScript {
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
-    this.memoryLimit = 2
+    this.memoryLimit = baseMemory - 1
     this.isIntermediate = false
   }
 
@@ -646,7 +650,7 @@ class DNAQC extends QScript {
       throw new IllegalStateException("index input and output files have to be the same size")
 
     // the base command to run
-    var baseCmd = "java -Xmx4g -jar " + binaryLoc + "/" + maulName + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
+    var baseCmd = "java -Xmx" + (baseMemory - 2) + "g -jar " + binaryLoc + "/" + maulName + " --inFQ1 " + inputFQs(0) + " --outFQ1 " + outputFQs(0)
 
     // figure out if we're running with one or two barcodes
     if (inputFastqs.length == 2) baseCmd += " --inFQ2 " + inputFQs(1) + " --outFQ2 " + outputFQs(1)
@@ -671,7 +675,7 @@ class DNAQC extends QScript {
    
     def commandLine = baseCmd + " --barcodeStatsFile " + outStats + " --barcodeStatsFileUnknown " + barcodeConfusion
     this.isIntermediate = false
-    this.memoryLimit = 8
+    this.memoryLimit = baseMemory - 1
   }
 
   // call out the alignment task to
@@ -729,7 +733,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged stats file") var outStats = outputStatsFile
     @Output(doc = "the output umi information") var outUMIStats = outputUmiStatsFile
 
-    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
+    def commandLine = scalaPath + " -J-Xmx" + (baseMemory - 1) + g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
 
     this.analysisName = queueLogDir + outStats + ".outStats"
     this.jobName = queueLogDir + outStats + ".outStats"
@@ -745,7 +749,7 @@ class DNAQC extends QScript {
     @Input(doc = "barcodes") var barcodes = barcodeFile
     @Output(doc = "the output umi + reads file") var output = outputReadsAndBarcodes
 
-    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes + " " + output
+    def commandLine = scalaPath + " -J-Xmx" + (baseMemory - 1) + "g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes + " " + output
 
     this.analysisName = queueLogDir + output + ".umiOnReads"
     this.jobName = queueLogDir + output + ".umiOnReads"
@@ -792,12 +796,12 @@ class DNAQC extends QScript {
     appended += " MINLEN:" + minLength // the resulting reads must have a length of at least X
 
     // setup the memory limits, high for trimmomatic (java + SGE = weird memory issues...)
-    this.memoryLimit = 4
-    this.residentRequest = 4
-    this.residentLimit = 4
+    this.memoryLimit = baseMemory - 1
+    this.residentRequest = baseMemory - 1
+    this.residentLimit = baseMemory - 1
 
     // CMD command issued, and the hidden queue output file names
-    var cmd = "java -Xmx3g -jar " + binaryLoc + "/" + trimmomaticName + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
+    var cmd = "java -Xmx" + (baseMemory - 1) + "g -jar " + binaryLoc + "/" + trimmomaticName + (if (fqs.length == 2) " PE" else " SE") + " -phred33 -threads 1 " + fqs.mkString(" ")
     if (fqs.length == 2) cmd += " " + fqOuts(0) + " " + fqOutsUnpaired(0) + " " + fqOuts(1) + " " + fqOutsUnpaired(1) + " " + appended
     else cmd += " " + fqOuts(0) + " " + " " + appended
 
@@ -822,7 +826,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -Xmx4g -jar " + binaryLoc + "/" + umiName
+    var cmdString = "java -Xmx" + (baseMemory - 1) + "g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -835,9 +839,9 @@ class DNAQC extends QScript {
 
     var cmd = cmdString
 
-    this.memoryLimit = 5
-    this.residentRequest = 5
-    this.residentLimit = 5
+    this.memoryLimit = baseMemory 
+    this.residentRequest = baseMemory
+    this.residentLimit = baseMemory
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -860,7 +864,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersEachEnd
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + callerName
+    var cmdString = "java -jar -Xmx" + (baseMemory - 1) + "g " + binaryLoc + "/" + callerName
     cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
     cmdString += cutSiteFile + " --outputStats "
     cmdString += outStat + " --primersEachEnd " + primers + " --sample "
@@ -871,9 +875,9 @@ class DNAQC extends QScript {
 
     var cmd = cmdString
 
-    this.memoryLimit = 6
-    this.residentRequest = 6
-    this.residentLimit = 6
+    this.memoryLimit = baseMemory
+    this.residentRequest = baseMemory
+    this.residentLimit = baseMemory
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -893,15 +897,15 @@ class DNAQC extends QScript {
     @Output(doc = "output tree") var outTree = outputTree
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
+    var cmdString = "java -jar -Xmx" + (baseMemory - 1) + "g " + binaryLoc + "/" + treeJar
     cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
     cmdString += outTree + " --sample " + sample + " --mixLocation " + mixLoc
 
     var cmd = cmdString
 
-    this.memoryLimit = 3
-    this.residentRequest = 3
-    this.residentLimit = 3
+    this.memoryLimit = baseMemory
+    this.residentRequest = baseMemory
+    this.residentLimit = baseMemory
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -924,9 +928,9 @@ class DNAQC extends QScript {
     if (inFastqs.length != 2 || outs.length != 2)
       throw new IllegalArgumentException("Seqprep can only be run on paired end sequencing! for input files " + inFastqs.mkString(", "))
 
-    this.memoryLimit = 4
-    this.residentRequest = 4
-    this.residentLimit = 4
+    this.memoryLimit = baseMemory
+    this.residentRequest = baseMemory
+    this.residentLimit = baseMemory
 
     // o -> minimum overlap, n -> faction of bases that must match in overlap
     var cmd = seqPrepPath + " -f " + fqs(0) + " -r " + fqs(1) + " -1 " + fqOuts(0) + " -2 " + fqOuts(1) + " -s " + merged + " -A " + adapterOne + " -B " + adapterTwo
@@ -953,9 +957,9 @@ class DNAQC extends QScript {
     if (inFastqs.length != 2 || outs.length != 2)
       throw new IllegalArgumentException("Seqprep can only be run on paired end sequencing! for input files " + inFastqs.mkString(", "))
 
-    this.memoryLimit = 4
-    this.residentRequest = 4
-    this.residentLimit = 4
+    this.memoryLimit = baseMemory
+    this.residentRequest = baseMemory
+    this.residentLimit = baseMemory 
 
     var cmd = flashPath + " --min-overlap 30 --max-mismatch-density 0.02 --output-directory=" + outputDr + " " + fqs(0) + " " + fqs(1)
 
