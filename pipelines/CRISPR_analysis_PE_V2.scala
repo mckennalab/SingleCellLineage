@@ -839,9 +839,9 @@ class DNAQC extends QScript {
 
     var cmd = cmdString
 
-    this.memoryLimit = baseMemory 
-    this.residentRequest = baseMemory
-    this.residentLimit = baseMemory
+    this.memoryLimit = 32
+    this.residentRequest = 32
+    this.residentLimit = 32
 
     def commandLine = cmd
     this.isIntermediate = false
