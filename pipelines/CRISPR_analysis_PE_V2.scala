@@ -78,7 +78,7 @@ class DNAQC extends QScript {
   var treeOutput: File = new File("/var/www/html/trees/tree_data/")
 
   // our tree output directory -- outputTree
-  @Input(doc = "the maximum amount of memory on your machine", fullName = "memory", shortName = "m", required = false)
+  @Argument(doc = "the maximum amount of memory on your machine", fullName = "memory", shortName = "m", required = false)
   var baseMemory: Int = 8
 
   /** **************************************************************************
