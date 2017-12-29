@@ -733,7 +733,7 @@ class DNAQC extends QScript {
     @Output(doc = "the output merged stats file") var outStats = outputStatsFile
     @Output(doc = "the output umi information") var outUMIStats = outputUmiStatsFile
 
-    def commandLine = scalaPath + " -J-Xmx" + (baseMemory - 1) + g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
+    def commandLine = scalaPath + " -J-Xmx" + (baseMemory - 1) + "g " + scriptLoc + "/" + aggregateScripts + " " + inputFls.mkString(",") + " " + outStats + " " + outUMIStats
 
     this.analysisName = queueLogDir + outStats + ".outStats"
     this.jobName = queueLogDir + outStats + ".outStats"
