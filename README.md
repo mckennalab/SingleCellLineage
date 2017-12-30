@@ -43,3 +43,9 @@ You can then rerun the example script or create your own:
 ```
 sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 ```
+The example script creates a number of files in the output directory (specified in the tear_sheet, see /app/sc_GESTALT/tear_sheet_examples/basic_example.txt). The important outputs include: 
+
+* **dome_4_1X.stats** contains the collapsed reads and the event calls per target site
+* **dome_4_1X.umiCounts** information about what UMIs were seen, and if there were enough reads for an individual UMI to call it 'successfully captured'
+
+The pipeline also generates visualization output: plots for the editing pattern over the target, and 'phylogenetic' trees using PHYLIP mix. The default is to put this into the /var/www/html/ directory on the Docker container, but can be set with the --web parameter to the pipeline. If you've remapped your ports above (using -p 8080:80) you should be able to visualize the output by opening localhost:8080 when run locally. 
