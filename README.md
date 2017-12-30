@@ -46,7 +46,7 @@ sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 
 # Output
 
-The example script creates a number of files in the output directory (specified in the tear_sheet, see /app/sc_GESTALT/tear_sheet_examples/basic_example.txt). The important outputs include: 
+The example script creates a number of files in the output directory. This location is specified in the tear_sheet, see /app/sc_GESTALT/tear_sheet_examples/basic_example.txt which is a parameter to the script. The important outputs include: 
 
 * **dome_4_1X.stats** contains the collapsed reads and the event calls per target site
 * **dome_4_1X.umiCounts** information about what UMIs were seen, and if there were enough reads for an individual UMI to call it 'successfully captured'
