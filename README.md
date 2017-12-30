@@ -43,6 +43,9 @@ You can then rerun the example script or create your own:
 ```
 sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 ```
+
+# Output file
+
 The example script creates a number of files in the output directory (specified in the tear_sheet, see /app/sc_GESTALT/tear_sheet_examples/basic_example.txt). The important outputs include: 
 
 * **dome_4_1X.stats** contains the collapsed reads and the event calls per target site
