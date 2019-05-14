@@ -24,7 +24,7 @@ RUN apt-get install -y openssh-server
 # install GESTALT scripts and tools
 # ################################################
 
-RUN git clone https://github.com/aaronmck/SC_GESTALT.git /app/sc_GESTALT
+RUN git clone https://github.com/aaronmck/SingleCellLineage.git /app/sc_GESTALT
 
 RUN mkdir /app/data
 RUN mkdir /app/bin
