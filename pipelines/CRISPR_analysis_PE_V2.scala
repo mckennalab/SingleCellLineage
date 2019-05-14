@@ -661,7 +661,7 @@ class DNAQC extends QScript {
     @Input(doc = "all HMIDs") var allReads = allReadCount
     @Input(doc = "final summary numbers") var finalSum = finalSummary
 
-    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + finalSum + " " + scriptLoc.getAbsolutePath + "/../ " 
+    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
