@@ -502,10 +502,10 @@ class DNAQC extends QScript {
 
       val finalSummaryFile = new File(sampleOutput + File.separator + sampleTag + ".finalSummary")
 
-      if (barcodeSplit)
-        add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
-      else
-        add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
+      //if (barcodeSplit)
+      //  add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
+      //else
+      //  add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
         
       
       if (!dontWebPublish) {
