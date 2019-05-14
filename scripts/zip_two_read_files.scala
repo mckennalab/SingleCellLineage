@@ -24,6 +24,13 @@ def gis(s: String) = new GZIPInputStream(new BufferedInputStream(new FileInputSt
 def reverseComplement(str: String) = str.map{t => compBase(t)}.reverse.mkString("")
 def reverse(str: String) = str.map{t => t}.reverse.mkString("")
 
+// add to forward and reverse reads
+val addFwd     = args(3).filter{e => e != '_'}.mkString("")
+val addRev     = args(4).filter{e => e != '_'}.mkString("")
+val addFwdQS   = addFwd.map{case(e) => 'H'}.mkString("")
+val addRevQS   = addRev.map{case(e) => 'H'}.mkString("")
+
+
 // forward and reverse reads are compressed
 if (args(0) endsWith ".gz") {
   val forwardReads = Source.fromInputStream(gis(args(0))).getLines().grouped(4)
@@ -33,14 +40,14 @@ if (args(0) endsWith ".gz") {
 
   forwardReads.zip(reverseReads).foreach{case(read1,read2) =>
     interleavedFile.write(read1(0) + "\n")
-    interleavedFile.write(read1(1) + "\n")
+    interleavedFile.write(addFwd + read1(1) + "\n")
     interleavedFile.write(read1(2) + "\n")
-    interleavedFile.write(read1(3) + "\n")
+    interleavedFile.write(addFwdQS + read1(3) + "\n")
 
     interleavedFile.write(read2(0) + "\n")
-    interleavedFile.write(reverseComplement(read2(1)) + "\n")
+    interleavedFile.write(reverseComplement(addRev + read2(1)) + "\n")
     interleavedFile.write(read2(2) + "\n")
-    interleavedFile.write(reverse(read2(3)) + "\n")
+    interleavedFile.write(reverse(addRevQS + read2(3)) + "\n")
   }
 
   interleavedFile.close()
@@ -52,14 +59,14 @@ if (args(0) endsWith ".gz") {
 
   forwardReads.zip(reverseReads).foreach{case(read1,read2) =>
     interleavedFile.write(read1(0) + "\n")
-    interleavedFile.write(read1(1) + "\n")
+    interleavedFile.write(addFwd + read1(1) + "\n")
     interleavedFile.write(read1(2) + "\n")
-    interleavedFile.write(read1(3) + "\n")
+    interleavedFile.write(addFwdQS + read1(3) + "\n")
 
     interleavedFile.write(read2(0) + "\n")
-    interleavedFile.write(reverseComplement(read2(1)) + "\n")
+    interleavedFile.write(reverseComplement(addRev + read2(1)) + "\n")
     interleavedFile.write(read2(2) + "\n")
-    interleavedFile.write(reverse(read2(3)) + "\n")
+    interleavedFile.write(reverse(addRevQS + read2(3)) + "\n")
   }
 
   interleavedFile.close()

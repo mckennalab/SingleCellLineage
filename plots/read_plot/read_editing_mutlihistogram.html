@@ -74,18 +74,18 @@
         </div>
     </div>
 </div> <!-- close out the container and post divs-->
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://d3js.org/d3.v3.min.js"></script>
 <script src="https://d3js.org/d3-color.v1.min.js"></script>
-<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+<script src="https://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 <script src="JS_files.js"></script>
 <script src="read_editing_mutlihistogram.js"></script>
 
 <div id="selectors" style="position: relative;">
-  <a href="http://nytimes.github.io/svg-crowbar/">Use svg-crowbar</a> to download the SVG version of this plot
+  <a href="https://nytimes.github.io/svg-crowbar/">Use svg-crowbar</a> to download the SVG version of this plot
 <br>
-    <input type="checkbox" id="logScale" name="logScale" onchange="changeHistogram()" checked/>Check to log scale the HMID histogram<br>
+    <input type="checkbox" id="logScale" name="logScale" onchange="changeHistogram()"/>Check to log scale the HMID histogram<br>
     <input type="checkbox" id="logScaleTop" name="logScaleTop" onchange="logTheTop()"/>Check to log scale the per-site lines<br>
-    <input type="checkbox" id="scaleToHundred" name="scaleToHundred" onchange="scaleToHundred()"/>Scale to 100% percent on top histogram<br>
+    <input type="checkbox" id="scaleToHundred" name="scaleToHundred" onchange="scaleToHundred()" checked/>Scale to 100% percent on top histogram<br>
     <input type="text" id="startPosition" class="resizedTextbox" name="startPositionField" onchange="adjustPosition()"/>  Where to begin the plotting within the reference<br>
     <input type="text" id="endPosition" class="resizedTextbox" name="endPositionField" onchange="adjustPosition()"/>  Where to end the plotting within the reference<br>
     <select id="topX" onchange="changeSelection()"/>

@@ -3,16 +3,15 @@ import scala.sys.process._
 import java.io._
 import scala.io._
 
-// "scala -J-Xmx1g " + toWebPublishScript + " " + webLocation + " " + perBase + " " + topR + " " + topReadC + " " + allReadC
-
 val webLocation = new File(args(0))
 val perbaseFile = new File(args(1))
 val topReadsFile = new File(args(2))
 val topReadCountsFile = new File(args(3))
 val cutSiteFile = new File(args(4))
 val allReadFile = new File(args(5))
-val baseSourceDir = args(6)
-val interval_file = if (args.size == 8) Some(new File(args(7))) else None
+val finalSummary = new File(args(6))
+val baseSourceDir = args(7)
+val interval_file = if (args.size == 9) Some(new File(args(8))) else None
 
 val javaScriptFile = new File(baseSourceDir + "plots/read_plot/read_editing_mutlihistogram.js")
 val htmlFile = new File(baseSourceDir + "plots/read_plot/read_editing_mutlihistogram.html")
@@ -53,6 +52,7 @@ if (!copyToDir(htmlFile,webLocation))           throw new IllegalArgumentExcepti
 if (!copyToDir(javaScriptFile,webLocation))     throw new IllegalArgumentException("unable to copy " + javaScriptFile + " to " + webLocation)
 if (!copyToDir(cutSiteFile,webLocation))        throw new IllegalArgumentException("unable to copy " + cutSiteFile + " to " + webLocation)
 if (!copyToDir(allReadFile,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)
+if (!copyToDir(finalSummary,webLocation))       throw new IllegalArgumentException("unable to copy " + finalSummary + " to " + webLocation)
 
 if (interval_file.isDefined)
   if (!copyToDir(interval_file.get,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)

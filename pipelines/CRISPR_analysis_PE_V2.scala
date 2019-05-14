@@ -1,3 +1,4 @@
+
 /** *********************************************
   * Requires Java 1.7. On the UW machines this means
   * running at least: "module load java/7u17", or the appropriate
@@ -109,10 +110,10 @@ class DNAQC extends QScript {
   var umiStart: Int = 0
 
   @Argument(doc = "the number of UMIs required to call a successful UMI capture event, if you're using UMIs", fullName = "minimumUMIReads", shortName = "minimumUMIReads", required = false)
-  var minimumUMIReads = 10
+  var minimumUMIReads = 4
 
   @Argument(doc = "the number of surviving reads required to call a successful UMI capture event, if you're using UMIs", fullName = "minimumSurvivingUMIReads", shortName = "minimumSurvivingUMIReads", required = false)
-  var minimumSurvivingUMIReads = 6
+  var minimumSurvivingUMIReads = 3
 
 @Argument(doc = "maximum number of mismatches in the adapter sequences to allow", fullName = "maxAdapterMismatches", shortName = "maxAdapterMismatches", required = false)
   var maxAdaptMismatch = 3
@@ -126,11 +127,15 @@ class DNAQC extends QScript {
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
   var webSite: File = "/var/www/html"
 
+
+  @Argument(doc = "do we want to run the tree code", fullName = "noTree", shortName = "noTree", required = false)
+  var noTree: Boolean = false
+
   /** **************************************************************************
     * Path parameters -- where to find tools
     * ************************************************************************** */
   @Input(doc = "The path to a functional installation of the scala tool", fullName = "scala", shortName = "scala", required = false)
-  var scalaPath: File = new File("/usr/bin/scala")
+  var scalaPath: File = new File("/usr/bin/scala -nocompdaemon")
 
   @Input(doc = "The path to the Trimmomatic adapters file", fullName = "trimadapters", shortName = "tad", required = false)
   var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
@@ -216,7 +221,7 @@ class DNAQC extends QScript {
   @Argument(doc = "Do we want to check primers on both ends, one end, or neither", fullName = "primersToUse", shortName = "primersToUse", required = false)
   var primersToCheck: String = "BOTH"
 
-  @Argument(doc = "Do we want to check primers on both ends, one end, or neither", fullName = "minRead", shortName = "minRead", required = false)
+  @Argument(doc = "whats the minimum read length", fullName = "minRead", shortName = "minRead", required = false)
   var minLength: Int = 20
 
   @Argument(doc = "Use one of index runs as a UMI, and add it to read 1", fullName = "umiIndex", shortName = "umiIndex", required = false)
@@ -227,6 +232,12 @@ class DNAQC extends QScript {
 
   @Argument(doc = "do we want to do the whole web publishing thing?", fullName = "dontweb", shortName = "dontweb", required = false)
   var dontWebPublish: Boolean = false
+
+  @Argument(doc = "Add forward and reverse sequences", fullName = "addseq", shortName = "addseq", required = false)
+  var addSeq: String = "NONE" 
+
+  @Argument(doc = "Should we cluster the UMIs based on edit distance?", fullName = "clusterUMIs", shortName = "clusterUMIs", required = false)
+  var clusterUMIs = false
 
   /** **************************************************************************
     * Global Variables
@@ -262,7 +273,7 @@ class DNAQC extends QScript {
       // are we using zero, one, or two barcodes?
       val oneBarcode = sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode1.exists()
       val dualBarcode = sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()
-      val pairedEnd = sampleObj.fastq2.exists()
+      var pairedEnd = sampleObj.fastq2.exists()
 
       // **************************** Setup files and directories ******************************************
 
@@ -274,6 +285,7 @@ class DNAQC extends QScript {
       val sampleWebLocation =  dirOrCreateOrFail(new File(webSite +  File.separator + experimentalName + File.separator + sampleTag), "our output web publishing directory")
 
       // our barcode split files
+      var barcodeSplit = false
       var barcodeSplit1      = new File(sampleOutput + File.separator + sampleTag + ".barcodeSplit.fastq1.fq.gz")
       var barcodeSplit2      = new File(sampleOutput + File.separator + sampleTag + ".barcodeSplit.fastq2.fq.gz")
       var barcodeSplitIndex1 = new File(sampleOutput + File.separator + sampleTag + ".barcodeSplit.indexFastq1.fq.gz")
@@ -303,7 +315,8 @@ class DNAQC extends QScript {
         case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() && (trimStop - trimStart > 0)  => {
           val barcodeInputs = List[File]()
           val barcodeSplitFiles = List[File]()
-          println("HERE")
+
+          barcodeSplit = true
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
         }
         case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()  => {
@@ -315,6 +328,7 @@ class DNAQC extends QScript {
           val barcodeInputs = List[File](sampleObj.fastqBarcode1)
           val barcodeSplitFiles = List[File](barcodeSplitIndex1)
 
+          barcodeSplit = true
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
         }
         // we have no barcode 1, but a barcode 2
@@ -322,13 +336,17 @@ class DNAQC extends QScript {
           val barcodeInputs = List[File](sampleObj.fastqBarcode2)
           val barcodeSplitFiles =  List[File](barcodeSplitIndex2)
 
-          add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
+          barcodeSplit = true
+          
+          val barcodeReverse = Map(1 -> barcodes(2),2 -> barcodes(1))
+          add(Maul(inputFiles, barcodeInputs, barcodeReverse, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
         }
         // we have no barcode 1, but a barcode 2
         case (f1, f2) if (sampleObj.fastqBarcode1.exists() && sampleObj.fastqBarcode2.exists()) => {
           val barcodeInputs = List[File](sampleObj.fastqBarcode1,sampleObj.fastqBarcode2)
           val barcodeSplitFiles =  List[File](barcodeSplitIndex1,barcodeSplitIndex2)
 
+          barcodeSplit = true
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, barcodeSplitFiles, barcodeStats, barcodeConfusion,overlapFile, trimStart, trimStop))
 
         }
@@ -365,24 +383,39 @@ class DNAQC extends QScript {
           umiTemp = inputFiles
         } 
         case "INDEX1" => {
-          println("INDEX1")
           val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
-          add(addUMIToReads(umiTemp(0), barcodeSplitIndex1, outputFirstRead))
-          umiTemp = List[File](outputFirstRead,inputFiles(1))
+          add(addUMIToReads(umiTemp(0), List[File](barcodeSplitIndex1), outputFirstRead))
+          if (pairedEnd)
+            umiTemp = List[File](outputFirstRead,inputFiles(1))
+          else
+            umiTemp = List[File](outputFirstRead)
         }
         case "INDEX2" => {
-          println("INDEX2")
           val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
-          add(addUMIToReads(umiTemp(0), barcodeSplitIndex2, outputFirstRead ))
-          umiTemp = List[File](outputFirstRead,inputFiles(1))
+          add(addUMIToReads(umiTemp(0), List[File](barcodeSplitIndex2), outputFirstRead ))
+          
+          if (pairedEnd)
+            umiTemp = List[File](outputFirstRead,inputFiles(1))
+          else
+            umiTemp = List[File](outputFirstRead)
+        }
+        case "INDROPSV3" => {
+          val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
+          add(addUMIToReads(umiTemp(0), List[File](barcodeSplitIndex1,umiTemp(1)), outputFirstRead ))
+          
+          umiTemp = List[File](outputFirstRead)
+
+          pairedEnd = false
         }
         case _ => throw new IllegalStateException("Unknown UMI index: " + umiIndex)
       }
 
+      val cleanedOne = new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz")
+      val cleanedTwo = new File(sampleOutput + File.separator + sampleTag + ".cleanedInter2.fq.gz")
       var cleanedTmp = if (pairedEnd)
-        List[File](new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz"),new File(sampleOutput + File.separator + sampleTag + ".cleanedInter2.fq.gz"))
+        List[File](cleanedOne,cleanedTwo)
       else
-        List[File](new File(sampleOutput + File.separator + sampleTag + ".cleanedInter1.fq.gz"))
+        List[File](cleanedOne)
 
       if (!dontTrim) { // yes a double negitive...sorry: if we want to trim, do this
         add(Trimmomatic(umiTemp,adaptersFile,cleanedTmp,unpairedReads))
@@ -434,7 +467,10 @@ class DNAQC extends QScript {
       // again handle single vs paired end reads
       if (pairedEnd) {
         add(Flash(cleanedTmp, cleanedFastqs, mergedReads, sampleOutput + File.separator))
+
         add(ZipReadFiles(cleanedFastqs(0), cleanedFastqs(1), unmergedUnzipped))
+
+
         add(PerformAlignment(sampleObj.reference,mergedReads, unmergedUnzipped, samMergedFasta, samUnmergedFasta))
 
         add(ReadsToStats(samUnmergedFasta,
@@ -464,14 +500,27 @@ class DNAQC extends QScript {
       statsFiles :+= toAlignStats
       }
 
+      val finalSummaryFile = new File(sampleOutput + File.separator + sampleTag + ".finalSummary")
+
+      if (barcodeSplit)
+        add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
+      else
+        add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
+        
       
       if (!dontWebPublish) {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
-        add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount))
+        add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount,finalSummaryFile))
       }
 
+      
+
       // run the tree creation code
-      add(TreeUtils(allReadCount, "/tmp/", outputTree, sampleObj.sample))
+      if (!noTree) {
+        val treeSampleTemp =     dirOrCreateOrFail(new File(sampleObj.outputDir + File.separator + sampleObj.sample + "_tree"), "sample tree output directory"
+        )
+        add(TreeUtils(allReadCount, treeSampleTemp, outputTree, sampleObj.sample))
+      }
     })
 
     // agg. all of the stats together into a single file
@@ -603,15 +652,16 @@ class DNAQC extends QScript {
   }
 
   // ********************************************************************************************************
-  case class ToWebPublish(webLocation: File, perBaseEvents: File, topReads: File, topReadCounts: File, cutSites: File, allReadCount: File) extends ExternalCommonArgs {
-    @Input(doc = "per base event counts") var webL = webLocation
+  case class ToWebPublish(webLocation: File, perBaseEvents: File, topReads: File, topReadCounts: File, cutSites: File, allReadCount: File, finalSummary: File) extends ExternalCommonArgs {
+    @Input(doc = "where to write the files") var webL = webLocation
     @Input(doc = "per base event counts") var perBase = perBaseEvents
     @Input(doc = "the top reads and their base by base events") var topR = topReads
     @Input(doc = "the counts for all the top reads") var topReadC = topReadCounts
     @Input(doc = "the cutsites") var cuts = cutSites
     @Input(doc = "all HMIDs") var allReads = allReadCount
+    @Input(doc = "final summary numbers") var finalSum = finalSummary
 
-    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
+    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + finalSum + " " + scriptLoc.getAbsolutePath + "/../ " 
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
@@ -715,7 +765,15 @@ class DNAQC extends QScript {
     @Input(doc = "the read 2") var inF2 = inRead2File
     @Output(doc = "the output sam file") var outF = outFile
 
-    def commandLine = scalaPath + " " + scriptLoc + "/" + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF
+    def commandLine = 
+      if (addSeq != "NONE") {
+        val addSeqSplit = addSeq.split(",")
+        assert(addSeqSplit.size == 2,"The sequence to add needs to contain only one comma seperator")
+        scalaPath + " " + scriptLoc + "/" + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF + " " + addSeqSplit(0) + " " + addSeqSplit(1)
+      } else {
+        scalaPath + " " + scriptLoc + "/" + zipReadsPath + " " + inF1 + " " + inF2 + " " + outF + " _ _ "
+      }
+
 
     this.analysisName = queueLogDir + outF + ".gunzip"
     this.jobName = queueLogDir + outF + ".gunzip"
@@ -738,18 +796,37 @@ class DNAQC extends QScript {
 
   // move the UMI to the front of the first read
   // ********************************************************************************************************
- case class addUMIToReads(readFile: File, barcodeFile: File, outputReadsAndBarcodes: File)
+ case class addUMIToReads(readFile: File, barcodeFiles: List[File], outputReadsAndBarcodes: File)
       extends CommandLineFunction with ExternalCommonArgs {
 
     @Input(doc = "read file") var reads = readFile
-    @Input(doc = "barcodes") var barcodes = barcodeFile
+    @Input(doc = "barcodes") var barcodes = barcodeFiles
     @Output(doc = "the output umi + reads file") var output = outputReadsAndBarcodes
 
-    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes + " " + output
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes.mkString(",") + " " + output
 
     this.analysisName = queueLogDir + output + ".umiOnReads"
     this.jobName = queueLogDir + output + ".umiOnReads"
     this.isIntermediate = false
+  }
+
+  // create a final summary of the run 
+  // ********************************************************************************************************
+  case class FinalSummary(bcSplit: File, cleanedFQ: File, samMergedFasta: File, samUnmergedFasta: File , toAligUMICounts: File, toAlignStats: File, finalSummaryFile: File)
+      extends CommandLineFunction with ExternalCommonArgs {
+    @Input(doc = "barcode split raw files") var reads = bcSplit
+    @Input(doc = "barcode split clean files") var clean = cleanedFQ
+    @Input(doc = "merged fasta") var mFasta = samMergedFasta
+    @Input(doc = "unmerged fasta") var umFasta = samUnmergedFasta
+    @Input(doc = "aligned UMI count") var umiCounts = toAligUMICounts
+    @Input(doc = "stats file") var stats = toAlignStats
+
+    @Output(doc = "final summary output file") var output = finalSummaryFile
+
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/final_summary.scala " + reads + " " + clean + " " + mFasta + " " + umFasta + " " + umiCounts + " " + stats + " " + output
+
+    this.analysisName = queueLogDir + output + ".finalSummary"
+    this.jobName = queueLogDir + output + ".finalSummary"
   }
 
   // gzip a bunch of fastqs into a single gzipped fastq
@@ -822,7 +899,9 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    var cmdString = "java -Xmx4g -jar " + binaryLoc + "/" + umiName
+    val memLimit = 32
+
+    var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
 
     if (inMergedReads2.isDefined)
@@ -833,11 +912,13 @@ class DNAQC extends QScript {
     cmdString += " --umiCounts " + outUMIs + " --umiLength " + umiLength + " --primerMismatches " + maxAdaptMismatch
     cmdString += " --primersToCheck " + primersToCheck
 
+    if (clusterUMIs) cmdString += " --umiClustering true "
+
     var cmd = cmdString
 
-    this.memoryLimit = 5
-    this.residentRequest = 5
-    this.residentLimit = 5
+    this.memoryLimit = memLimit
+    this.residentRequest = memLimit
+    this.residentLimit = memLimit
 
     def commandLine = cmd
     this.isIntermediate = false
@@ -892,6 +973,8 @@ class DNAQC extends QScript {
     @Input(doc = "the mix run location") var mixRun = mixRunLocation
     @Output(doc = "output tree") var outTree = outputTree
     @Argument(doc = "the sample name") var sample = sampleName
+
+
 
     var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
     cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "

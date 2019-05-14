@@ -26,7 +26,7 @@ var heat_height = 400;
 var heat_width = 800;
 
 // should we use the data's high value or 100% on the top of the plot
-var highValueTop = true
+var highValueTop = false
 
 // top bar dims
 var top_height = 100;
@@ -48,7 +48,7 @@ var mutation_values = ["reference", "insertion", "deletion", "mismatch"];
 var maxValue = mutation_values.length;
 
 // state data -- these are a hack to get around the async data loading in D3 -- sorry!
-var xScaleIsLog = true
+var xScaleIsLog = false
 var topScaleIsLog = false
 occurance_data = ""
 read_block_data = ""
