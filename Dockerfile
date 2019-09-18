@@ -1,4 +1,4 @@
-FROM debian
+FROM ubuntu:latest
 
 MAINTAINER Aaron McKenna <aaronmck@uw.edu>
 
@@ -10,7 +10,7 @@ RUN mkdir -p /usr/share/man/man1
 
 # add basic tools to the instance, including sbt
 # ################################################
-RUN apt-get install -y default-jre wget unzip net-tools emboss scala gnupg2 bash make gcc g++ zlib1g-dev
+RUN apt-get install -y openjdk-8-jdk wget unzip net-tools emboss scala gnupg2 bash make gcc g++ zlib1g-dev
 
 RUN echo "deb https://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
 RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
