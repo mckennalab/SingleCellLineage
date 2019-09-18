@@ -25,7 +25,7 @@ object UmiClustering extends LazyLogging {
 
     // how many errors will we tolerate? this should be a function of the number of bases
     // and the total UMI space -- basically the birthday problem
-    val toleratedErrors = 3 // UmiClustering.maxMismatchAtCollisionProbablility(toleratedCollisionRate, umis.size.toDouble, umiSize)
+    val toleratedErrors = 1 // UmiClustering.maxMismatchAtCollisionProbablility(toleratedCollisionRate, umis.size.toDouble, umiSize)
 
     logger.info("We're going to allow " + toleratedErrors + " errors with a collision rate of " + toleratedCollisionRate + " and a UMI size of " + umiSize)
 

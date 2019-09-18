@@ -23,19 +23,19 @@ object UMIMerger {
                     sample: String,
                     minSurvivingReads: Int,
                     index: Int,
-                    aligner: Aligner): UMIMergePairResult = {
+                    aligner: Aligner,
+                    meanReadQualLevel: Double = 22.0): UMIMergePairResult = {
 
 
     // some constants we should probably bubble-up
     val minReadLength = 30
-    val minMeanQualScore = 30.0
+    val minMeanQualScore = meanReadQualLevel
     val debug = false
 
-    // use MSA to align all the reads
     val preparedFWD = Consensus.prepareConsensus(readsF.toArray, minReadLength, minMeanQualScore)
     val preparedREV = Consensus.prepareConsensus(readsR.toArray, minReadLength, minMeanQualScore)
 
-    if (preparedFWD.size > 1 && preparedREV.size > 1) {
+    if (preparedFWD.size >= 1 && preparedREV.size >= 1) {
 
       val mergedF = aligner.alignTo(preparedFWD, None)
       val mergedR = aligner.alignTo(preparedREV, None)
@@ -44,7 +44,7 @@ object UMIMerger {
       val fwdCleanedUp = Consensus.removeMismatchedReads(mergedF)
       val revCleanedUp = Consensus.removeMismatchedReads(mergedR)
 
-      if (fwdCleanedUp.size > 1 && revCleanedUp.size > 1) {
+      if (fwdCleanedUp.size >= 1 && revCleanedUp.size >= 1) {
 
         // make a consensus from the remaining 'good' reads
         val fwdConsensus = SequencingRead.stripDownToJustBases(Consensus.consensus(fwdCleanedUp, "ConsensusFWD"))
@@ -72,25 +72,26 @@ object UMIMerger {
                                sample: String,
                                minSurvivingReads: Int,
                                index: Int,
-                               aligner: Aligner): UMIMergeResult = {
+                               aligner: Aligner,
+                               meanReadQualLevel: Double = 22.0): UMIMergeResult = {
 
 
     // some constants we should probably push up
     val minReadLength = 30
-    val minMeanQualScore = 30.0
+    val minMeanQualScore = meanReadQualLevel
     val debug = false
 
     // use MSA to align all the reads
     val preparedFWD = Consensus.prepareConsensus(readsF.toArray, minReadLength, minMeanQualScore)
 
-    if (preparedFWD.size > 1) {
+    if (preparedFWD.size >= 1) {
 
       val mergedF = aligner.alignTo(preparedFWD, None)
 
       // remove the reads that are a really poor match
       val fwdCleanedUp = Consensus.removeMismatchedReads(mergedF, 0.9, minReadLength)
 
-      if (fwdCleanedUp.size > 1) {
+      if (fwdCleanedUp.size >= 1) {
 
         // make a consensus from the remaining 'good' reads
         val fwdConsensus = SequencingRead.stripDownToJustBases(Consensus.consensus(fwdCleanedUp, "ConsensusFWD"))

@@ -48,6 +48,12 @@ class ReadPairParser(readFile: File) extends Iterator[RefReadPair] {
 
       reads.next()
     }
+    // handle the last line of the file
+    if (inRead) {
+      return Some(RefReadPair(
+        SequencingRead.readFromNameAndSeq(refName, refString.result().mkString("").toUpperCase),
+        SequencingRead.readFromNameAndSeq(readName, readString.result().mkString("").toUpperCase), true))
+    }
     return None
   }
 

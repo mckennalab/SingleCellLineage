@@ -12,13 +12,13 @@ import scala.io.Source
 import scala.sys.process._
 
 /**
- * a simple case class to hold alignments -- results we get back from parsing reads aligned with MAFFTv7 or other aligners
+  * a simple case class to hold alignments -- results we get back from parsing reads aligned with MAFFTv7 or other aligners
   *
-  * @param refPos the reference position for the start of the event
- * @param refBase the reference bases over the event
- * @param readBase the read bases over the event
- * @param cigarCharacter the cigar character for the event -- I, D, and M are valid
- */
+  * @param refPos         the reference position for the start of the event
+  * @param refBase        the reference bases over the event
+  * @param readBase       the read bases over the event
+  * @param cigarCharacter the cigar character for the event -- I, D, and M are valid
+  */
 case class Alignment(val refPos: Int, refBase: String, readBase: String, cigarCharacter: CigarEvent) {
   def combine(next: Alignment): Array[Alignment] =
     if (next.cigarCharacter != cigarCharacter)
@@ -28,26 +28,29 @@ case class Alignment(val refPos: Int, refBase: String, readBase: String, cigarCh
 
   def prettyPrint: String = refPos + ":" + refBase + ":" + readBase + ":" + cigarCharacter.encoding
 
-  def toEditString: String = readBase.length + "" + cigarCharacter.encoding + "+" + refPos + {cigarCharacter match {
-    case Insertion => "+" + readBase
-    case Scar => "+" + readBase
-    case _ => ""
-  }}
-  def pctBasesMatching(): Double = refBase.toUpperCase.zip(readBase.toUpperCase).map{case(b1,b2) => if (b1 == b2) 1 else 0}.sum / refBase.length.toDouble
+  def toEditString: String = readBase.length + "" + cigarCharacter.encoding + "+" + refPos + {
+    cigarCharacter match {
+      case Insertion => "+" + readBase
+      case Scar => "+" + readBase
+      case _ => ""
+    }
+  }
+
+  def pctBasesMatching(): Double = refBase.toUpperCase.zip(readBase.toUpperCase).map { case (b1, b2) => if (b1 == b2) 1 else 0 }.sum / refBase.length.toDouble
 }
 
 object AlignmentManager {
 
   /**
-   * call edits over a matched reference and read string
+    * call edits over a matched reference and read string
     *
-    * @param reference the reference string
-   * @param read the read string, THE SAME LENGTH as the reference,  i.e. out of an MSA program
-   * @param minMatchOnEnd the minimum number of matches to end our calling, if we don't see an event like this we backtrack Is and Ds until we find an M of this size
-   * @param debugInfo should we dump a ton of debug info
-   * @return a list of alignments over the read/ref combo, and a list of sequences over the target
-   */
-  def callEdits(reference: String, read: String, minMatchOnEnd: Int, cutSites: CutSites, debugInfo: Boolean = false): Tuple3[List[Alignment], List[String], List[String]] = {
+    * @param reference     the reference string
+    * @param read          the read string, THE SAME LENGTH as the reference,  i.e. out of an MSA program
+    * @param minMatchOnEnd the minimum number of matches to end our calling, if we don't see an event like this we backtrack Is and Ds until we find an M of this size
+    * @param debugInfo     should we dump a ton of debug info
+    * @return a list of alignments over the read/ref combo, and a list of sequences over the target
+    */
+  def callEdits(reference: String, read: String, minMatchOnEnd: Int, cutSites: CutSites, debugInfo: Boolean, callScars: Boolean): Tuple3[List[Alignment], List[String], List[String]] = {
 
     if (reference.length != read.length)
       throw new IllegalStateException("The read and reference lengths are unequal!")
@@ -62,7 +65,8 @@ object AlignmentManager {
     cutSites.sites.foreach { fullCutSite => {
       targetIndexToSequence :+= new StringBuilder()
       targetIndexToRefSequence :+= new StringBuilder()
-    }}
+    }
+    }
 
 
     if (debugInfo) {
@@ -120,21 +124,23 @@ object AlignmentManager {
             println("3: " + refToEvent.map { st => st.prettyPrint }.mkString("<>") + " " + refToEvent.size)
         }
       }
-    }}
-
+    }
+    }
 
 
     // get the filtered list of the edits, plus the list of sequences over each target region
     // for filtering get a bit aggressive here -- start from both ends -- strip off insertions and deletions until we hit a match or mismatch of at least 10 bases
     var filteredList = filterEnds(refToEvent, minMatchOnEnd, debugInfo)
-    val targetSeqs = targetIndexToSequence.map{bld => bld.result()}
-    val refSeqs = targetIndexToRefSequence.map{bld => bld.result()}
+    val targetSeqs = targetIndexToSequence.map { bld => bld.result() }
+    val refSeqs = targetIndexToRefSequence.map { bld => bld.result() }
 
     // now we want to check each of the read sequences over the target cut sites for scars
-    cutSites.sites.zipWithIndex.foreach{case(cutSiteObj, index) => {
-      findScar(cutSiteObj.startPos, refSeqs(index), targetSeqs(index), cutSiteObj.cutPosition - cutSiteObj.startPos)
-        .map{case(newEvt) => filteredList :+= newEvt}
-    }}
+    if (callScars)
+      cutSites.sites.zipWithIndex.foreach { case (cutSiteObj, index) => {
+        findScar(cutSiteObj.startPos, refSeqs(index), targetSeqs(index), cutSiteObj.cutPosition - cutSiteObj.startPos)
+          .map { case (newEvt) => filteredList :+= newEvt }
+      }
+      }
 
     // return our new appended filtered list of events with scars
     (filteredList, targetSeqs, refSeqs)
@@ -144,12 +150,12 @@ object AlignmentManager {
   /**
     * given the read and reference strings, as well as cutsite position, determine if we've actually generated some sort of scar over the cutsite
     *
-    * @param offset where we are in the reference sequence
-    * @param readSeq the read sequence over the target
-    * @param refSeq the reference sequence over the target
-    * @param cutSitePos the cutsite position, zero based at the start of the reference
-    * @param minScarSize the minimum scar size we'll consider for a scar event
-    * @param maxScarSize the maximum scar size we allow
+    * @param offset         where we are in the reference sequence
+    * @param readSeq        the read sequence over the target
+    * @param refSeq         the reference sequence over the target
+    * @param cutSitePos     the cutsite position, zero based at the start of the reference
+    * @param minScarSize    the minimum scar size we'll consider for a scar event
+    * @param maxScarSize    the maximum scar size we allow
     * @param minScarredProp the number of scarred bases we allow
     * @return an optional alignment, or None if it's wildtype over the region
     */
@@ -162,8 +168,8 @@ object AlignmentManager {
 
     // now look for the mismatch window with the highest proportion of bases that exceed the threshold
     // set the window from the cutsite
-    val startingPosition = math.max(0,cutSitePos - maxScarSize)
-    val stopPosition = math.min(cutSitePos + maxScarSize,readSeq.size)
+    val startingPosition = math.max(0, cutSitePos - maxScarSize)
+    val stopPosition = math.min(cutSitePos + maxScarSize, readSeq.size)
 
     // state storage
     var maxPosition = -1
@@ -171,11 +177,11 @@ object AlignmentManager {
     var maxMismatchProp = 0.0
     var windowSize = 0
 
-    (startingPosition until stopPosition).foreach{position => {
-      (minScarSize until maxScarSize).foreach{activeWindowSize => {
+    (startingPosition until stopPosition).foreach { position => {
+      (minScarSize until maxScarSize).foreach { activeWindowSize => {
 
-        val mismatches = readSeq.slice(position,position+activeWindowSize).zip(refSeq.slice(position,position+activeWindowSize)).map{
-          case(b1,b2) => if (b1 == b2 || b1 == '-' || b2 == '-') 0 else 1
+        val mismatches = readSeq.slice(position, position + activeWindowSize).zip(refSeq.slice(position, position + activeWindowSize)).map {
+          case (b1, b2) => if (b1 == b2 || b1 == '-' || b2 == '-') 0 else 1
         }.sum
 
         val prop = mismatches.toDouble / activeWindowSize.toDouble
@@ -190,8 +196,10 @@ object AlignmentManager {
         } else {
           if (debug) println(position + "    mismatches: " + mismatches + " activeWindow: " + activeWindowSize + " prop: " + prop)
         }
-      }}
-    }}
+      }
+      }
+    }
+    }
 
     // we don't have to check minScarredProp as we check when recording the maxMismatches field
     if (maxMismatches >= minScarSize) {
@@ -205,19 +213,19 @@ object AlignmentManager {
 
 
   /**
-   * filter the alignments, when we have poor matches on the ends that allow us to accept and indel, peel back alignments until we've matched enough bases
+    * filter the alignments, when we have poor matches on the ends that allow us to accept and indel, peel back alignments until we've matched enough bases
     *
     * @param eventList the list of alignments over the read
-   * @param minMatch the minimum number of match bases to 'anchor' the ends, otherwise strip the trash off
-   * @return a filtered alignment set
-   */
+    * @param minMatch  the minimum number of match bases to 'anchor' the ends, otherwise strip the trash off
+    * @return a filtered alignment set
+    */
   def filterEnds(eventList: List[Alignment], minMatch: Int, debugInfo: Boolean = false, matchingBasePCT: Double = 0.60): List[Alignment] = {
 
     // find the first and last alignments that have at least X bases matched that aren't Ns
     var firstIndex = -1
     for (i <- 0 until eventList.size)
-      if (firstIndex < 0 && eventList(i).cigarCharacter == Match &&  // have to be a match
-        eventList(i).pctBasesMatching > matchingBasePCT &&  // and have over 60% of the bases match
+      if (firstIndex < 0 && eventList(i).cigarCharacter == Match && // have to be a match
+        eventList(i).pctBasesMatching > matchingBasePCT && // and have over 60% of the bases match
         (eventList(i).readBase.length - eventList(i).refBase.count(p => p == 'N')) >= minMatch) // and meet the minimum length, not counting Ns
         firstIndex = i
 
@@ -225,7 +233,7 @@ object AlignmentManager {
     for (i <- (eventList.size - 1).until(-1, -1))
       if (lastIndex < 0 && eventList(i).cigarCharacter == Match && // have to be a match
         eventList(i).pctBasesMatching > matchingBasePCT && // and have over 60% of the bases match
-        (eventList(i).readBase.length  - eventList(i).refBase.count(p => p == 'N')) >= minMatch) // and meet the minimum length, not counting Ns
+        (eventList(i).readBase.length - eventList(i).refBase.count(p => p == 'N')) >= minMatch) // and meet the minimum length, not counting Ns
         lastIndex = i
 
     if (debugInfo) {
@@ -236,29 +244,31 @@ object AlignmentManager {
 
 
   /**
-   * given a read and reference, align and call events at the cut-sites
+    * given a read and reference, align and call events at the cut-sites
     *
-    * @param fwdRead read string
-   * @param revRead reverse read string
-   * @param cutSites the cutsutes to consider
-   * @param minMatchOnEnd the minimum number of matches on the ends to keep from peeling crappy indels off
-   * @param debug should we dump a lot of debug info
-   * @return the rate of matching for cigar "M" bases for both reads and the array of events over cutsites
-   */
+    * @param fwdRead       read string
+    * @param revRead       reverse read string
+    * @param cutSites      the cutsutes to consider
+    * @param minMatchOnEnd the minimum number of matches on the ends to keep from peeling crappy indels off
+    * @param debug         should we dump a lot of debug info
+    * @return the rate of matching for cigar "M" bases for both reads and the array of events over cutsites
+    */
   def cutSiteEventsPair(fwdRead: RefReadPair,
-                    revRead: RefReadPair,
-                    cutSites: CutSites,
-                    minMatchOnEnd: Int = 8,
-                    debug: Boolean = false): PairedReadCutSiteEvent = {
+                        revRead: RefReadPair,
+                        cutSites: CutSites,
+                        debug: Boolean,
+                        scars: Boolean,
+                        minMatchOnEnd: Int = 8,
+                       ): PairedReadCutSiteEvent = {
 
     fwdRead.read.reverseCompAlign = false
     revRead.read.reverseCompAlign = true
 
-    val alignmentsF = Array[SequencingRead](fwdRead.reference,fwdRead.read)
-    val alignmentsR = Array[SequencingRead](revRead.reference,revRead.read)
+    val alignmentsF = Array[SequencingRead](fwdRead.reference, fwdRead.read)
+    val alignmentsR = Array[SequencingRead](revRead.reference, revRead.read)
 
-    val events1 = AlignmentManager.callEdits(alignmentsF(0).bases, alignmentsF(1).bases, minMatchOnEnd, cutSites)
-    val events2 = AlignmentManager.callEdits(alignmentsR(0).bases, alignmentsR(1).bases, minMatchOnEnd, cutSites)
+    val events1 = AlignmentManager.callEdits(alignmentsF(0).bases, alignmentsF(1).bases, minMatchOnEnd, cutSites, debug, scars)
+    val events2 = AlignmentManager.callEdits(alignmentsR(0).bases, alignmentsR(1).bases, minMatchOnEnd, cutSites, debug, scars)
 
     val combined = editsToCutSiteCalls(
       List[List[Alignment]](events1._1, events2._1),
@@ -295,16 +305,17 @@ object AlignmentManager {
                                     read2Ref: String)
 
   /**
-   * given a read and reference, align and call events at the cut-sites
+    * given a read and reference, align and call events at the cut-sites
     *
-    * @param mergedRead read object
-   * @param cutSites the cutsutes to consider
-   * @param minMatchOnEnd the minimum number of matches on the ends to keep from peeling crappy indels off
-   * @param debug should we dump a lot of debug info
-   * @return a cutsite event object
-   */
+    * @param mergedRead    read object
+    * @param cutSites      the cutsutes to consider
+    * @param minMatchOnEnd the minimum number of matches on the ends to keep from peeling crappy indels off
+    * @param debug         should we dump a lot of debug info
+    * @return a cutsite event object
+    */
   def cutSiteEvent(mergedRead: RefReadPair,
                    cutSites: CutSites,
+                   callScars: Boolean,
                    minMatchOnEnd: Int = 8,
                    debug: Boolean = false): SingleReadCutSiteEvent = {
 
@@ -312,9 +323,9 @@ object AlignmentManager {
 
     val alignmentsMerged = Array[SequencingRead](mergedRead.reference, mergedRead.read)
 
-    val events1 = AlignmentManager.callEdits(alignmentsMerged(0).bases, alignmentsMerged(1).bases, minMatchOnEnd, cutSites)
+    val events1 = AlignmentManager.callEdits(alignmentsMerged(0).bases, alignmentsMerged(1).bases, minMatchOnEnd, cutSites, debug, callScars)
 
-    val combined = editsToCutSiteCalls(List[List[Alignment]](events1._1), List[List[String]](events1._2),cutSites, debug)
+    val combined = editsToCutSiteCalls(List[List[Alignment]](events1._1), List[List[String]](events1._2), cutSites, debug)
 
     val matchRate1 = percentMatch(alignmentsMerged(0).bases, alignmentsMerged(1).bases)
 
@@ -322,7 +333,7 @@ object AlignmentManager {
   }
 
   // an inline case class to make the return of a cutsite call more readable
-  case class SingleReadCutSiteEvent(matchingRate: Double, matchingBaseCount: Int, alignments: Array[String],basesOverTargets: Array[String], collision: Boolean)
+  case class SingleReadCutSiteEvent(matchingRate: Double, matchingBaseCount: Int, alignments: Array[String], basesOverTargets: Array[String], collision: Boolean)
 
 
   def overlap(pos1Start: Int, pos1End: Int, pos2Start: Int, pos2End: Int): Boolean = (pos1Start, pos1End, pos2Start, pos2End) match {
@@ -342,14 +353,14 @@ object AlignmentManager {
   }
 
   /**
-   * combine the edits over two reads -- this is bit complicated, as we have to check for collisions between aligned reads
+    * combine the edits over two reads -- this is bit complicated, as we have to check for collisions between aligned reads
     *
     * @param readAlignments the set of edits aggregated by aligned read
-   * @param readSequences the read sequences -- we have to choose the right one in the two read case
-   * @param cutSites the cutsites over the reference we consider
-   * @param debug should we dump a lot of debugging info
-   * @return a tuple3 of: an indicator if there was a collision between edits, an array of events over the target cut sites, and an array of reference sequences
-   */
+    * @param readSequences  the read sequences -- we have to choose the right one in the two read case
+    * @param cutSites       the cutsites over the reference we consider
+    * @param debug          should we dump a lot of debugging info
+    * @return a tuple3 of: an indicator if there was a collision between edits, an array of events over the target cut sites, and an array of reference sequences
+    */
   def editsToCutSiteCalls(readAlignments: List[List[Alignment]],
                           readSequences: List[List[String]],
                           cutSites: CutSites,
@@ -369,7 +380,7 @@ object AlignmentManager {
       var nonWildType = Array[String]()
       var referenceSeq = Array[String]()
 
-      readAlignments.zipWithIndex.foreach { case(singleReadEdits,readIndex) => {
+      readAlignments.zipWithIndex.foreach { case (singleReadEdits, readIndex) => {
         var singleSampleEvent = Array[String]()
         singleReadEdits.foreach { edit => {
 
@@ -388,11 +399,12 @@ object AlignmentManager {
           } else if (edit.cigarCharacter == Match && span(edit.refPos, edit.refPos + edit.refBase.length, cutObj.downstreamWindowPos, cutObj.upstreamWindowPos)) {
             cigarMatchOverlapsEdit = true
           }
-        }}
+        }
+        }
 
         if (singleSampleEvent.size > 0 && !(candidates contains singleSampleEvent.mkString("&")))
           candidates :+= singleSampleEvent.mkString("&")
-        }
+      }
       }
 
       if (debug) {
@@ -407,7 +419,7 @@ object AlignmentManager {
             case 1 => referenceSeq(0)
             case _ => {
               // this is an edge case we should do better on: both reads 'overlap', we choose the one with the reference sequence
-              val nonWTbases = referenceSeq.map{sq => sq.map{base => if (base == '-') 0 else 1}.sum}.toArray
+              val nonWTbases = referenceSeq.map { sq => sq.map { base => if (base == '-') 0 else 1 }.sum }.toArray
               referenceSeq(nonWTbases.zipWithIndex.maxBy(_._1)._2)
             }
           }
@@ -438,16 +450,16 @@ object AlignmentManager {
         case (2, true) if (candidates(0) == candidates(1)) => {
           ret :+= "WT_" + candidates(0)
         }
-        case (2, false) if (candidates(0)== candidates(1)) => {
+        case (2, false) if (candidates(0) == candidates(1)) => {
           ret :+= candidates(0)
         }
         case (2, true) => {
           collision = true
-          ret :+= "WT_" + candidates(0)+ "&" + candidates(1)
+          ret :+= "WT_" + candidates(0) + "&" + candidates(1)
         }
         case (2, false) => {
           collision = true
-          ret :+= candidates(0)+ "&" + candidates(1)
+          ret :+= candidates(0) + "&" + candidates(1)
         }
         case _ => {
           ret :+= candidates.mkString("&")
@@ -461,12 +473,12 @@ object AlignmentManager {
   }
 
   /**
-   * for non gap bases, what is our matching proportion?
+    * for non gap bases, what is our matching proportion?
     *
-    * @param ref the reference string
-   * @param read the read string of the same length as the reference string
-   * @return a proportion of bases that match, and the count of non-gap bases
-   */
+    * @param ref  the reference string
+    * @param read the read string of the same length as the reference string
+    * @return a proportion of bases that match, and the count of non-gap bases
+    */
   def percentMatch(ref: String, read: String, minimumAlignedBases: Int = 25): Tuple2[Double, Int] = {
     var bases = 0
     var matches = 0

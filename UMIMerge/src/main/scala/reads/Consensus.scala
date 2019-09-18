@@ -281,12 +281,12 @@ object Consensus {
       val qualSum = quals.sum.toDouble
       var valid = true
       if (read.length < minimumReadLength) {
-        //println("SHORT: Dropping read " + read.umi + " quals " + read.intQuals.mkString(",") + " with min qual " + (qualSum / quals.length.toDouble) + " old len " + read.intQuals.length)
+        println("SHORT: Dropping read " + read.umi + " quals " + read.intQuals.mkString(",") + " with min qual " + (qualSum / quals.length.toDouble) + " old len " + read.intQuals.length)
         valid = false
       }
 
       if (qualSum / quals.length.toDouble < minimumMeanQualScore) {
-        //println("QUAL: Dropping read " + read.umi + " quals " + read.intQuals.mkString(",") + " with min qual " + (qualSum / quals.length.toDouble) + " old len " + read.intQuals.length)
+        println("QUAL: Dropping read " + read.umi + " quals " + read.intQuals.mkString(",") + " with min qual " + (qualSum / quals.length.toDouble) + " old len " + read.intQuals.length)
         valid = false
       }
 

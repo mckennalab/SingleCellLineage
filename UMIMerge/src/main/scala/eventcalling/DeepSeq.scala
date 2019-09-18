@@ -45,6 +45,7 @@ case class DeepConfig(inputFileUnmerged: Option[File] = None,
                       cutSites: File = new File(DeepSeq.NOTAREALFILENAME),
                       primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
                       reference: File = new File(DeepSeq.NOTAREALFILENAME),
+                      callScars: Boolean = false,
                       primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to zero
                       cutsiteWindow: Int = 3,
                       requiredMatchingProportion: Double = 0.85, // what proportion of the match/mismatch bases must be matches?
@@ -74,6 +75,7 @@ object DeepSeq extends App {
     opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
     opt[Double]("requiredMatchingProp") valueName ("<double>") action { (x, c) => c.copy(requiredMatchingProportion = x) } text ("what proportion of the match/mismatch bases must be matches?")
     opt[Int]("requiredRemainingBases") valueName ("<int>") action { (x, c) => c.copy(requiredRemainingBases = x) } text ("how many matches bases are required to call this a successful alignment (x2 for merged reads)?")
+    opt[Boolean]("callScars") action { (x, c) => c.copy(callScars = x) } text ("should we call scar events (default to false)")
 
     // some general command-line setup stuff
     note("process aligned reads from non-UMI samples\n")
@@ -117,6 +119,7 @@ object DeepSeq extends App {
 
     println("traversing merged reads...")
     mergedReadIterator.foreach { pair => {
+      println("Processing merged read..")
       printMergedRead(cutsSiteObj, outputStatsFile, pair, primers, config)
     }
     }
@@ -127,6 +130,7 @@ object DeepSeq extends App {
 
       println("traversing unmerged reads...")
       firstReadIterator.foreach { twoReads => {
+        println("Read pair")
         printPairedRead(cutsSiteObj,
           outputStatsFile,
           twoReads,
@@ -163,7 +167,7 @@ object DeepSeq extends App {
 
     val baseLen = mergedRead.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
-    val callEvents = AlignmentManager.cutSiteEvent(mergedRead, cutsSiteObj)
+    val callEvents = AlignmentManager.cutSiteEvent(mergedRead, cutsSiteObj, config.callScars)
 
     val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate >= config.requiredMatchingProportion &&
       callEvents.matchingBaseCount >= (config.requiredRemainingBases * 2) && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
@@ -199,6 +203,7 @@ object DeepSeq extends App {
                       primers: List[String],
                       config: DeepConfig): Unit = {
 
+    println("Processing " + readPairs.pair1.aligned)
 
     val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
       case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),config.primerMismatches)
@@ -211,7 +216,7 @@ object DeepSeq extends App {
     val base1Len = readPairs.pair1.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
     val base2Len = readPairs.pair2.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
-    val callEvents = AlignmentManager.cutSiteEventsPair(readPairs.pair1, readPairs.pair2, cutsSiteObj)
+    val callEvents = AlignmentManager.cutSiteEventsPair(readPairs.pair1, readPairs.pair2, cutsSiteObj, false, config.callScars)
 
     val pass = containsFwdPrimer && containsRevPrimer &&
       callEvents.matchingRate1 >= config.requiredMatchingProportion && callEvents.matchingRate2 >= config.requiredMatchingProportion &&

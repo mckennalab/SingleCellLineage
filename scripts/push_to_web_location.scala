@@ -52,7 +52,9 @@ if (!copyToDir(htmlFile,webLocation))           throw new IllegalArgumentExcepti
 if (!copyToDir(javaScriptFile,webLocation))     throw new IllegalArgumentException("unable to copy " + javaScriptFile + " to " + webLocation)
 if (!copyToDir(cutSiteFile,webLocation))        throw new IllegalArgumentException("unable to copy " + cutSiteFile + " to " + webLocation)
 if (!copyToDir(allReadFile,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)
-if (!copyToDir(finalSummary,webLocation))       throw new IllegalArgumentException("unable to copy " + finalSummary + " to " + webLocation)
+
+if (args(6) != "NONE")
+  if (!copyToDir(finalSummary,webLocation))       throw new IllegalArgumentException("unable to copy " + finalSummary + " to " + webLocation)
 
 if (interval_file.isDefined)
   if (!copyToDir(interval_file.get,webLocation))        throw new IllegalArgumentException("unable to copy " + allReadFile + " to " + webLocation)

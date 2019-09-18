@@ -20,9 +20,9 @@ class TransitionModel {
 
   private def initialize(): Unit = {
     // match to all
-    values(0)(0) = 0.95
-    values(0)(1) = 0.01
-    values(0)(2) = 0.04
+    values(0)(0) = 0.96
+    values(0)(1) = 0.02
+    values(0)(2) = 0.02
 
     // insertion to all
     values(1)(0) = 0.10

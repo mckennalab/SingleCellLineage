@@ -52,7 +52,8 @@ case class Config(inputFileReads1: Option[File] = None,
                   downsampleSize: Int = 40,
                   primersToCheck: String = "BOTH",
                   primerMismatches: Int = 7,
-                  processSingleReads: Boolean = false)
+                  processSingleReads: Boolean = false,
+                  umiClustering: Boolean = false)
 
 
 
@@ -77,8 +78,9 @@ object UMIProcessing extends App {
     opt[Int]("downsampleSize") action { (x, c) => c.copy(downsampleSize = x) } text ("the maximum number of top-reads we'll store for any UMI")
     opt[Int]("primerMismatches") action { (x, c) => c.copy(primerMismatches = x) } text ("how many mismatches are allowed in primer regions")
     opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
-    opt[Boolean]("processSingleReads") action { (x, c) => c.copy(processSingleReads = x) } text ("process single reads instead of paired end")
+    opt[Boolean]("processSingleReads") action { (x, c) => c.copy(processSingleReads = true) } text ("process single reads instead of paired end")
 
+    opt[Boolean]("umiClustering") action { (x, c) => c.copy(umiClustering = true) } text ("should we attempt to cluster UMIs")
 
     opt[Int]("umiStart") required() action { (x, c) => c.copy(umiStartPos = x) } text ("the start position, zero based, of our UMIs")
     opt[Int]("umiLength") required() action { (x, c) => c.copy(umiLength = x) } text ("the length of our UMIs")
@@ -219,7 +221,8 @@ object UMIProcessing extends App {
     // take the collection of UMIs and cluster them down to a core set of UMIs, and
     // output an error rate based on that clustering
     // --------------------------------------------------------------------------------
-    //umiReads = UmiClustering.mergeAndConvertUMIS(config.umiLength, umiReads, hasReverseReads, config.downsampleSize)
+    if (config.umiClustering)
+      umiReads = UmiClustering.mergeAndConvertUMIS(config.umiLength, umiReads, hasReverseReads, config.downsampleSize)
 
 
     // --------------------------------------------------------------------------------

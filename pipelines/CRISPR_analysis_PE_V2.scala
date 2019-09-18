@@ -135,7 +135,7 @@ class DNAQC extends QScript {
     * Path parameters -- where to find tools
     * ************************************************************************** */
   @Input(doc = "The path to a functional installation of the scala tool", fullName = "scala", shortName = "scala", required = false)
-  var scalaPath: File = new File("/usr/bin/scala -nocompdaemon")
+  var scalaPath: File = new File("/net/gs/vol1/home/aaronmck/tools/bin/scala -nocompdaemon")
 
   @Input(doc = "The path to the Trimmomatic adapters file", fullName = "trimadapters", shortName = "tad", required = false)
   var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
@@ -506,7 +506,7 @@ class DNAQC extends QScript {
         add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
       else
         add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
-        
+       
       
       if (!dontWebPublish) {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
@@ -744,6 +744,7 @@ class DNAQC extends QScript {
 
     this.analysisName = queueLogDir + outputMergedFasta + ".aligner"
     this.jobName = queueLogDir + outputMergedFasta + ".aligner"
+    this.memoryLimit = 8
   }
 
   // Needleman-Wunsch aligner needs uncompressed input -- stupid aligner

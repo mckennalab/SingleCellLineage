@@ -17,18 +17,18 @@ class UnmergedReadParser(readFiles: File) extends Iterator[ReadPair] {
 
   // fill the reads from our iterator
   def nextReads() {
-    if (parser.hasNext)
+    if (parser.hasNext) {
       read1 = Some(parser.next())
-    if (parser.hasNext)
+      println("Read1 " + read1.get.read.name)
+    } else
+      read1 = None
+    if (parser.hasNext) {
       read2 = Some(parser.next())
-
-    while (read1.isDefined && read2.isDefined && read1.get.read.name.split(" ")(0) != read2.get.read.name.split(" ")(0)) {
-      read1 = read2
-      if (parser.hasNext)
-        read2 = Some(parser.next())
-      else
-        read2 = None
+      println("Read2 " + read2.get.read.name)
     }
+    else
+      read2 = None
+
   }
 
   override def hasNext: Boolean = read1.isDefined && read2.isDefined

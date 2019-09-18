@@ -48,7 +48,7 @@ def doAlignment(fq: String, outFasta: String): Boolean = {
 
       // Align with our homebrew convex / general gap penality code
     case "convex" => {
-      val aligner = "java -jar /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/HMMAlign-assembly-1.0.jar " +
+      val aligner = "java -Xmx7g -jar /net/shendure/vol10/projects/CRISPR.lineage/nobackup/bin/HMMAlign-assembly-1.0.jar " +
       "--inputReads " + fq + " --reference " + ref + " --outputReads " + outFasta
       println(aligner)
       val result = (aligner).!
