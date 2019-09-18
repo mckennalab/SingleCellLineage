@@ -11,7 +11,7 @@ java -Xmx4g -jar /app/queue.jar \
  --noTree \
  --scala "/usr/bin/scala -nocompdaemon" \
  --umiLength 26 \
- --primersToUse FORWARD \
+ --primersToUse NONE \
  --minimumUMIReads 2 \
  --umiIndex index2
  
