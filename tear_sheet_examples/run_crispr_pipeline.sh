@@ -10,7 +10,8 @@ java -Xmx4g -jar /app/queue.jar \
  -resMemReqParam mfree \
  -s /app/sc_GESTALT/scripts/ \
  -b /app/bin/ \
- --noTree
+ --noTree \
+ --scala "/usr/bin/scala -nocompdaemon"
 
 cd /var/www/html/trees/ && scala make_json_file.scala
  
