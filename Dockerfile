@@ -24,7 +24,7 @@ RUN apt-get install -y openssh-server
 # install GESTALT scripts and tools
 # ################################################
 
-RUN git clone https://github.com/aaronmck/SC_GESTALT.git /app/sc_GESTALT
+RUN git clone https://github.com/aaronmck/SingleCellLineage.git /app/sc_GESTALT
 
 RUN mkdir /app/data
 RUN mkdir /app/bin
@@ -102,5 +102,5 @@ RUN cp /app/sc_GESTALT/plots/phylogeny/* /var/www/html/trees/
 
 RUN wget -q -O /var/www/html/trees/jquery.zip http://jquerymobile.com/resources/download/jquery.mobile-1.4.5.zip
 
-RUN unzip -d /var/www/html/trees/ /var/www/html/trees/jquery.zip
+RUN unzip -o -f -d /var/www/html/trees/ /var/www/html/trees/jquery.zip
 

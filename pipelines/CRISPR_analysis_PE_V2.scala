@@ -502,12 +502,12 @@ class DNAQC extends QScript {
 
       val finalSummaryFile = new File(sampleOutput + File.separator + sampleTag + ".finalSummary")
 
+
       if (barcodeSplit)
         add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
       else
         add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
        
-      
       if (!dontWebPublish) {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
         add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount,finalSummaryFile))
@@ -661,7 +661,7 @@ class DNAQC extends QScript {
     @Input(doc = "all HMIDs") var allReads = allReadCount
     @Input(doc = "final summary numbers") var finalSum = finalSummary
 
-    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + finalSum + " " + scriptLoc.getAbsolutePath + "/../ " 
+    def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
 
     this.analysisName = queueLogDir + perBase + ".web"
     this.jobName = queueLogDir + perBase + ".web"
@@ -900,7 +900,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    val memLimit = 32
+    val memLimit = 5
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1

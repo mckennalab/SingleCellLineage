@@ -20,12 +20,12 @@ Things you need to have:
 
 Download the docker container:
 ```
-docker pull aaronmck/genomics:sc_GESTALT
+docker pull aaronmck/single_cell_gestalt:SC_GESTALT
 ```
 
 Run and connect to the container, remapping port 80 of the container to port 8080 on your local machine:
 ```
- docker run -it -p 8080:80 aaronmck/genomics:sc_GESTALT /bin/bash
+ docker run -it -p 8080:80 aaronmck/single_cell_gestalt:SC_GESTALT /bin/bash
 ```
 ## Run the example script
 
@@ -37,7 +37,7 @@ sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 
 You can adjust the input files by changing filenames in the tearsheet: app/sc_GESTALT/tear_sheet_examples/basic_example.txt. To mount your data on a local disk to a location within the docker filesystem, use the ```-v``` option:
 ```
-docker run -it -p 8080:80 -v /Users/aaronmck/Desktop/gel_images/:/my_data aaronmck/genomics:sc_GESTALT /bin/bash
+docker run -it -p 8080:80 -v /Users/aaronmck/Desktop/gel_images/:/my_data aaronmck/single_cell_gestalt:SC_GESTALT /bin/bash
 ```
 You can then rerun the example script or create your own:
 ```
