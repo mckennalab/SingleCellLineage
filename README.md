@@ -46,11 +46,22 @@ sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 
 # Output
 
-The example script creates a number of files in the output directory. This location is specified in the input sample spreadsheet, in the *output.dir* column. See our example spreadsheet used in the script here: /app/sc_GESTALT/tear_sheet_examples/basic_example.txt. In that file the base output location is set to */app/data/*, which should have a sub-directory for the *testrun*. Within the the base output directory there are a couple important output files:
+The example script creates a number of files in the output directory. This location is specified in the input sample spreadsheet, in the *output.dir* column. See our example spreadsheet used in the script here: 
 
-* **dome_4_1X.stats** contains the collapsed reads and the event calls per target site
-* **dome_4_1X.umiCounts** information about what UMIs were seen, and if there were enough reads for an individual UMI to call it 'successfully captured'
+`/app/sc_GESTALT/tear_sheet_examples/basic_example.txt`
 
-The pipeline also generates visualization output: plots for the editing pattern over the target, and 'phylogenetic' trees using PHYLIP mix. The default is to put this into the */var/www/html/* directory on the Docker container, but can be set with the --web parameter to the pipeline. If you've remapped your ports above (using -p 8080:80) you should be able to visualize the output by opening localhost:8080 when run locally. 
+In that file the base output location is set to */app/data/*, which should have a sub-directory for the *dome_4_1X*. 
 
-Within the the base output directory will be a *trees* directory, and a directory for each run. In the example case, our run is called *testrun*, and there will be a directory matching this name. In that, our sample is called *dome_4_1X*. Within that folder, important outputs include: 
+Within the the base output directory there are a couple important output files:
+
+* **dome_4_1X.stats** contains the collapsed reads and the event calls per target site. This is the most important file, as it contains the final collapsed output for individual UMIs.
+
+* **dome_4_1X.umiCounts** information about each UMIs that we saw and if there were enough reads for an individual UMI to call it 'successfully captured'. You should check this file to see if there are any problems with the UMI collapsing step.  
+
+The pipeline also generates visualization output: plots for the editing pattern over the target. The default is to put this into the */var/www/html/* directory on the Docker container, but can be set with the --web parameter to the pipeline. If you've remapped your ports above (using -p 8080:80) you should be able to visualize the output by opening localhost:8080 when run locally. 
+
+Within the the base output directory there will be a directory for each run. In the example case, our run is called *testdata*, and there will be a directory matching this name. In that, our sample is called *dome_4_1X*. This folder contains the html output to visualize editing patterns over your sample. If you've setup your port (the `-p 8080:80` option when running Docker) you can open a browser and view your output here:
+
+http://localhost:8080/testdata/dome_4_1X/read_editing_mutlihistogram.html
+
+Each sample processed should have a `ead_editing_mutlihistogram.html` html file in it's base output directory.
