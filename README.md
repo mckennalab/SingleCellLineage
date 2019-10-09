@@ -44,6 +44,11 @@ You can then rerun the example script or create your own:
 sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 ```
 
+### Some considerations for your single-cell sequencing run
+
+Often you're using the single-cell sequencing tags (UMIs and cell barcodes) to recover GESTALT tags, which are the result of either whole mRNA pull-down or with a targeted PCR. 
+
+
 # Output
 
 The example script creates a number of files in the output directory. This location is specified in the input sample spreadsheet, in the *output.dir* column. See our example spreadsheet used in the script here: 
