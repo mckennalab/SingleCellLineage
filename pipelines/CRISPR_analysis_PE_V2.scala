@@ -903,17 +903,17 @@ class DNAQC extends QScript {
     val memLimit = 5
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
-    cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
+    cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputFastq1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
-      cmdString += " --inputFileReads2 " + inMergedReads2.get + " --outputFastq2 " + outputFASTA2.get
+      cmdString += " -inputFileReads2=" + inMergedReads2.get + " -outputFastq2=" + outputFASTA2.get
 
-    cmdString += " --primersEachEnd " + primers + " --samplename " + sample
-    cmdString += " --umiStart " + umiStart + " --minimumUMIReads " + minimumUMIReads + " --minimumSurvivingUMIReads " + minimumSurvivingUMIReads
-    cmdString += " --umiCounts " + outUMIs + " --umiLength " + umiLength + " --primerMismatches " + maxAdaptMismatch
+    cmdString += " -primersEachEnd=" + primers + " -samplename=" + sample
+    cmdString += " -umiStart=" + umiStart + " -minimumUMIReads=" + minimumUMIReads + " -minimumSurvivingUMIReads=" + minimumSurvivingUMIReads
+    cmdString += " -umiCounts=" + outUMIs + " -umiLength=" + umiLength + " -primerMismatches=" + maxAdaptMismatch
     cmdString += " --primersToCheck " + primersToCheck
 
-    if (clusterUMIs) cmdString += " --umiClustering true "
+    if (clusterUMIs) cmdString += " -umiClustering=true "
 
     var cmd = cmdString
 
@@ -943,13 +943,13 @@ class DNAQC extends QScript {
     @Argument(doc = "the sample name") var sample = sampleName
 
     var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + callerName
-    cmdString += " --inputUnmerged " + inputUnmerged + " --inputMerged " + inputMerged + " --cutSites "
-    cmdString += cutSiteFile + " --outputStats "
-    cmdString += outStat + " --primersEachEnd " + primers + " --sample "
-    cmdString += sample + " --primerMismatches " + maxAdaptMismatch
-    cmdString += " --primersToCheck " + primersToCheck 
-    cmdString += " --requiredMatchingProp " + matchProportion
-    cmdString += " --requiredRemainingBases " + matchCount
+    cmdString += " DeepSeq -inputUnmerged=" + inputUnmerged + " -inputMerged=" + inputMerged + " -cutSites="
+    cmdString += cutSiteFile + " -outputStats="
+    cmdString += outStat + " -primersEachEnd=" + primers + " -sample="
+    cmdString += sample + " -primerMismatches=" + maxAdaptMismatch
+    cmdString += " -primersToCheck=" + primersToCheck 
+    cmdString += " -requiredMatchingProp=" + matchProportion
+    cmdString += " -requiredRemainingBases=" + matchCount
 
     var cmd = cmdString
 
