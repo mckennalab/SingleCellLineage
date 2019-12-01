@@ -3,7 +3,9 @@ package eventcalling
 import java.io._
 
 import aligner.{AlignmentManager, NeedlemanWunsch}
+import com.typesafe.scalalogging.LazyLogging
 import pacbio.PacBioInverter
+import picocli.CommandLine.{Command, Option}
 import utils.CutSites
 import stats._
 import utils._
@@ -39,59 +41,64 @@ import scala.io._
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  *
  */
-case class DeepConfig(inputFileUnmerged: Option[File] = None,
-                      inputMerged: File = new File(DeepSeq.NOTAREALFILENAME),
-                      outputStats: File = new File(DeepSeq.NOTAREALFILENAME),
-                      cutSites: File = new File(DeepSeq.NOTAREALFILENAME),
-                      primersEachEnd: File = new File(DeepSeq.NOTAREALFILENAME),
-                      reference: File = new File(DeepSeq.NOTAREALFILENAME),
-                      callScars: Boolean = false,
-                      primerMismatches: Int = 0, // the maximum number of mismatches allowed in the primer, default to zero
-                      cutsiteWindow: Int = 3,
-                      requiredMatchingProportion: Double = 0.85, // what proportion of the match/mismatch bases must be matches?
-                      requiredRemainingBases: Int = 25, // how many matches bases are required to not fail this alignment?
+case class DeepConfig(
                       primersToCheck: String = "BOTH",
                       samplename: String = "TEST")
 
 
-object DeepSeq extends App {
+@Command(name = "DeepSeq", description = Array("Call CRISPR outcome events from aligned sequences"))
+class DeepSeq extends Runnable with LazyLogging {
+  @Option(names = Array("-inputFileUnmerged", "--inputFileUnmerged"), required = true, paramLabel = "FILE", description = Array("the unmerged input read file"))
+  private var inputFileUnmerged: scala.Option[File] = None
+
+  @Option(names = Array("-inputMerged", "--inputMerged"), required = true, paramLabel = "FILE", description = Array("the merged input read file"))
+  private var inputMerged: File = new File("UNKNOWN")
+
+  @Option(names = Array("-outputStats", "--outputStats"), required = true, paramLabel = "FILE", description = Array("the output stats file with our per-read or UMI details"))
+  private var outputStats: File = new File("UNKNOWN")
+
+  @Option(names = Array("-primersEachEnd", "--primersEachEnd"), required = true, paramLabel = "FILE", description = Array("the expected primers on each end of the read"))
+  private var primersEachEnd: File = new File("UNKNOWN")
+
+  @Option(names = Array("-reference", "--reference"), required = true, paramLabel = "FILE", description = Array("the reference fasta file"))
+  private var reference: File = new File("UNKNOWN")
+
+  @Option(names = Array("-cutSites", "--cutSites"), required = true, paramLabel = "FILE", description = Array("the cutsites file"))
+  private var cutSites: File = new File("UNKNOWN")
+
+  @Option(names = Array("-primerMismatches", "--primerMismatches"), required = false, paramLabel = "INT", description = Array("how many mismatches are allowed in a primer"))
+  private var primerMismatches: Int = 0
+
+  @Option(names = Array("-primersToCheck", "--primersToCheck"), required = false, paramLabel = "STRING", description = Array("which ends of the read should we check for the matching primers"))
+  private var primersToCheck: String = "BOTH"
+
+  @Option(names = Array("-sample", "--sample"), required = false, paramLabel = "STRING", description = Array("our sample name"))
+  private var samplename: String = "TEST"
+
+  @Option(names = Array("-cutsiteWindow", "--cutsiteWindow"), required = false, paramLabel = "INT", description = Array("how far from the cutsite will an indel be included"))
+  private var cutsiteWindow: Int = 3
+
+  @Option(names = Array("-umiStart", "--umiStart"), required = false, paramLabel = "INT", description = Array("Where does the UMI start in the read, starting at 0. Negative values for the reverse read, starting at -1 "))
+  private var umiStart: Int = 7
+
+  @Option(names = Array("-requiredMatchingProp", "--requiredMatchingProp"), required = false, paramLabel = "INT", description = Array("what proportion of the match/mismatch bases must be matches?"))
+  private var requiredMatchingProportion: Double = 0.85
+
+  @Option(names = Array("-requiredRemainingBases", "--requiredRemainingBases"), required = false, paramLabel = "DOUBLE", description = Array("how many bases do we need to call in a read to record it"))
+  private var requiredRemainingBases: Int = 25
+
+  @Option(names = Array("-callScars", "--callScars"), required = false, paramLabel = "FLAG", description = Array("should we call mismatched bases as a CRISPR scar"))
+  private var callScars: Boolean = false
+
+
+
   val NOTAREALFILENAME = "/0192348102jr10234712930h8j19p0hjf129-348h512935"
   // please don't make a file with this name
   val NOTAREALFILE = new File(NOTAREALFILENAME)
 
-  // parse the command line arguments
-  val parser = new scopt.OptionParser[DeepConfig]("DeepSeq") {
-    head("DeepSeq", "1.1")
-
-    // *********************************** Inputs *******************************************************
-    opt[File]("inputUnmerged") valueName ("<file>") action { (x, c) => c.copy(inputFileUnmerged = Some(x)) } text ("unmerged reads")
-    opt[File]("inputMerged") required() valueName ("<file>") action { (x, c) => c.copy(inputMerged = x) } text ("the merged read file")
-    opt[File]("outputStats") required() valueName ("<file>") action { (x, c) => c.copy(outputStats = x) } text ("the output stats file")
-    opt[File]("cutSites") required() valueName ("<file>") action { (x, c) => c.copy(cutSites = x) } text ("the location of the cutsites")
-    opt[Int]("primerMismatches") required() valueName ("<int>") action { (x, c) => c.copy(primerMismatches = x) } text ("the maximum number of mismatches to allow in the adapter sequences")
-    opt[Int]("cutsiteWindow") valueName ("<int>") action { (x, c) => c.copy(cutsiteWindow = x) } text ("the amount of upstream and downstream bases to consider when looking for overlapping edits")
-    opt[File]("primersEachEnd") required() valueName ("<file>") action { (x, c) => c.copy(primersEachEnd = x) } text ("the file containing the amplicon primers requred to be present, one per line, two lines total")
-    opt[String]("sample") required() action { (x, c) => c.copy(samplename = x) } text ("the sample name of this run")
-    opt[String]("primersToCheck") action { (x, c) => c.copy(primersToCheck = x) } text ("should we check both primers, or just one? Or none?")
-    opt[Double]("requiredMatchingProp") valueName ("<double>") action { (x, c) => c.copy(requiredMatchingProportion = x) } text ("what proportion of the match/mismatch bases must be matches?")
-    opt[Int]("requiredRemainingBases") valueName ("<int>") action { (x, c) => c.copy(requiredRemainingBases = x) } text ("how many matches bases are required to call this a successful alignment (x2 for merged reads)?")
-    opt[Boolean]("callScars") action { (x, c) => c.copy(callScars = x) } text ("should we call scar events (default to false)")
-
-    // some general command-line setup stuff
-    note("process aligned reads from non-UMI samples\n")
-    help("help") text ("prints the usage information you see here")
+  override def run()= {
+    alignedReads()
   }
-
-  // *********************************** Run *******************************************************
-  // run the actual read processing -- our argument parser found all of the parameters it needed
-  parser.parse(args, DeepConfig()) map {
-    config: DeepConfig => {
-      alignedReads(config)
-    }
-  } getOrElse {
-    println("Unable to parse the command line arguments you passed in, please check that your parameters are correct")
-  }
-
 
   /**
    * Process the merged and paired reads into the output stats file
@@ -99,12 +106,12 @@ object DeepSeq extends App {
     * @param config our config object
    *
    */
-  def alignedReads(config: DeepConfig): Unit = {
-    val cutsSiteObj = CutSites.fromFile(config.cutSites, config.cutsiteWindow)
+  def alignedReads(): Unit = {
+    val cutsSiteObj = CutSites.fromFile(cutSites, cutsiteWindow)
 
-    val outputStatsFile = new StatsOutput(config.outputStats,cutsSiteObj.size)
+    val outputStatsFile = new StatsOutput(outputStats,cutsSiteObj.size)
 
-    val primers = Source.fromFile(config.primersEachEnd.getAbsolutePath).getLines().map { line => line }.toList
+    val primers = Source.fromFile(primersEachEnd.getAbsolutePath).getLines().map { line => line }.toList
     if (primers.length != 2)
       throw new IllegalStateException("You should only provide a primer file with two primers")
 
@@ -115,18 +122,18 @@ object DeepSeq extends App {
     var readString = ArrayBuilder.make[String]
     var inRead = false
 
-    val mergedReadIterator = new ReadPairParser(config.inputMerged)
+    val mergedReadIterator = new ReadPairParser(inputMerged)
 
     println("traversing merged reads...")
     mergedReadIterator.foreach { pair => {
       println("Processing merged read..")
-      printMergedRead(cutsSiteObj, outputStatsFile, pair, primers, config)
+      printMergedRead(cutsSiteObj, outputStatsFile, pair, primers)
     }
     }
 
-    // now process paired reads
-    if (config.inputFileUnmerged.isDefined) {
-      val firstReadIterator = new UnmergedReadParser(config.inputFileUnmerged.get)
+    // now process unpaired reads
+    if (inputFileUnmerged.isDefined) {
+      val firstReadIterator = new UnmergedReadParser(inputFileUnmerged.get)
 
       println("traversing unmerged reads...")
       firstReadIterator.foreach { twoReads => {
@@ -134,8 +141,7 @@ object DeepSeq extends App {
         printPairedRead(cutsSiteObj,
           outputStatsFile,
           twoReads,
-          primers,
-          config)
+          primers)
       }
       }
     }
@@ -153,24 +159,23 @@ object DeepSeq extends App {
   def printMergedRead(cutsSiteObj: CutSites,
                       outputStatsFile: StatsOutput,
                       mergedRead: RefReadPair,
-                      primers: List[String],
-                      config: DeepConfig): Unit = {
+                      primers: List[String]): Unit = {
 
-    val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
-      case "BOTH" => Utils.containsBothPrimerByAlignment(mergedRead.read.bases, primers(0), primers(1),config.primerMismatches)
-      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(mergedRead.read.bases,primers(0),config.primerMismatches),true)
-      case "REVERSE" => (true,Utils.readEndsWithPrimerExistingDirection(mergedRead.read.bases,primers(1),config.primerMismatches))
+    val (containsFwdPrimer, containsRevPrimer) = primersToCheck match {
+      case "BOTH" => Utils.containsBothPrimerByAlignment(mergedRead.read.bases, primers(0), primers(1),primerMismatches)
+      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(mergedRead.read.bases,primers(0),primerMismatches),true)
+      case "REVERSE" => (true,Utils.readEndsWithPrimerExistingDirection(mergedRead.read.bases,primers(1),primerMismatches))
       case "NONE" => (true,true)
-      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
+      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + primerMismatches)
     }
 
 
     val baseLen = mergedRead.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
-    val callEvents = AlignmentManager.cutSiteEvent(mergedRead, cutsSiteObj, config.callScars)
+    val callEvents = AlignmentManager.cutSiteEvent(mergedRead, cutsSiteObj, callScars)
 
-    val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate >= config.requiredMatchingProportion &&
-      callEvents.matchingBaseCount >= (config.requiredRemainingBases * 2) && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
+    val pass = (containsFwdPrimer && containsRevPrimer && callEvents.matchingRate >= requiredMatchingProportion &&
+      callEvents.matchingBaseCount >= (requiredRemainingBases * 2) && !(callEvents.alignments.mkString("") contains "WT_")) && !callEvents.collision
 
     outputStatsFile.outputStatEntry(new StatsContainer(mergedRead.read.name, pass, callEvents.collision, containsFwdPrimer, containsRevPrimer,
       false, true, baseLen, -1, 1, 1, callEvents.matchingRate, -1.0, callEvents.matchingBaseCount, -1,
@@ -200,27 +205,26 @@ object DeepSeq extends App {
   def printPairedRead(cutsSiteObj: CutSites,
                       outputStatsFile: StatsOutput,
                       readPairs: ReadPair,
-                      primers: List[String],
-                      config: DeepConfig): Unit = {
+                      primers: List[String]): Unit = {
 
     println("Processing " + readPairs.pair1.aligned)
 
-    val (containsFwdPrimer, containsRevPrimer) = config.primersToCheck match {
-      case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),config.primerMismatches)
-      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readPairs.pair1.read.bases,primers(0),config.primerMismatches),true)
-      case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readPairs.pair2.read.bases,primers(1),config.primerMismatches))
+    val (containsFwdPrimer, containsRevPrimer) = primersToCheck match {
+      case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),primerMismatches)
+      case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readPairs.pair1.read.bases,primers(0),primerMismatches),true)
+      case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readPairs.pair2.read.bases,primers(1),primerMismatches))
       case "NONE" => (true,true)
-      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + config.primerMismatches)
+      case _ => throw new IllegalArgumentException("Unable to parse primer configuration state: " + primerMismatches)
     }
 
     val base1Len = readPairs.pair1.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
     val base2Len = readPairs.pair2.read.bases.map { case (ch) => if (ch == '-') 0 else 1 }.sum
 
-    val callEvents = AlignmentManager.cutSiteEventsPair(readPairs.pair1, readPairs.pair2, cutsSiteObj, false, config.callScars)
+    val callEvents = AlignmentManager.cutSiteEventsPair(readPairs.pair1, readPairs.pair2, cutsSiteObj, false, callScars)
 
     val pass = containsFwdPrimer && containsRevPrimer &&
-      callEvents.matchingRate1 >= config.requiredMatchingProportion && callEvents.matchingRate2 >= config.requiredMatchingProportion &&
-      callEvents.matchingBaseCount1 >= config.requiredRemainingBases && callEvents.matchingBaseCount2 >= config.requiredRemainingBases &&
+      callEvents.matchingRate1 >= requiredMatchingProportion && callEvents.matchingRate2 >= requiredMatchingProportion &&
+      callEvents.matchingBaseCount1 >= requiredRemainingBases && callEvents.matchingBaseCount2 >= requiredRemainingBases &&
       !(callEvents.alignments.mkString("") contains "WT_") &&
       !callEvents.collision
 
@@ -251,9 +255,9 @@ object DeepSeq extends App {
 
   }
 
-  def containsPrimer(primer: String, config: DeepConfig, readStrFWD: String): Boolean = {
-    val containsFwdPrimer = if ((config.primersToCheck == "BOTH" || config.primersToCheck == "FORWARD") && readStrFWD.size >= primer.length)
-      Utils.editDistance(readStrFWD.slice(0, primer.length), primer) <= config.primerMismatches
+  def containsPrimer(primer: String, readStrFWD: String): Boolean = {
+    val containsFwdPrimer = if ((primersToCheck == "BOTH" || primersToCheck == "FORWARD") && readStrFWD.size >= primer.length)
+      Utils.editDistance(readStrFWD.slice(0, primer.length), primer) <= primerMismatches
     else if (readStrFWD.size < primer.length)
       false
     else true
