@@ -150,10 +150,10 @@ class DNAQC extends QScript {
   var treeJar: File = "TreeUtils.jar"
 
   @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
-  var umiName: File = "UMIMerge.jar"
+  var umiName: File = "MergeAndCall.jar"
 
   @Input(doc = "The filename of the calling jar", fullName = "Caller", shortName = "Caller", required = false)
-  var callerName: File = "DeepSeq.jar"
+  var callerName: File = "MergeAndCall.jar"
 
   @Input(doc = "The location of MIX", fullName = "mix", shortName = "mix", required = false)
   var mixLoc: File = "/usr/local/bin/mix"
