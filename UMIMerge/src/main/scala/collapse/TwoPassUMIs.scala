@@ -87,21 +87,28 @@ class TwoPassUMIs extends Runnable with LazyLogging {
     val outputFastq2File = if (read2.exists()) Some(new PrintWriter(outRead2.getAbsolutePath)) else None
 
     collapsers.foreach{case(umi,collections) => {
-      val read1Col = collections.read1.countsToSequence(baseCallThresh,minBaseCallRate)
-      if (read1Col.string.isDefined) {
-        val read1Name = "@READ1_" + collections.read1.readCount + "_" + collections.read1.readCount + "_" + umi
-        val read1QualityScore = "H" * read1Col.string.get.size
-        outputFastq1File.write(read1Name + "\n" + read1Col.string.get + "\n+\n" + read1QualityScore + "\n")
-      }
 
+      var output = true // we use this to keep the output's in sync: if the second read isn't output, don't output the first
       if (outputFastq2File.isDefined) {
         val read2Col = collections.read2.countsToSequence(baseCallThresh, minBaseCallRate)
         if (read2Col.string.isDefined) {
-          val read2Name = "@READ1_" + collections.read2.readCount + "_" + collections.read2.readCount + "_" + umi
+          val read2Name = "@READ2_" + collections.read2.readCount + "_" + collections.read2.readCount + "_" + umi
           val read2QualityScore = "H" * read2Col.string.get.size
           outputFastq2File.get.write(read2Name + "\n" + read2Col.string.get + "\n+\n" + read2QualityScore + "\n")
+        } else {
+          output = false
         }
       }
+
+      if (output) {
+        val read1Col = collections.read1.countsToSequence(baseCallThresh, minBaseCallRate)
+        if (read1Col.string.isDefined) {
+          val read1Name = "@READ1_" + collections.read1.readCount + "_" + collections.read1.readCount + "_" + umi
+          val read1QualityScore = "H" * read1Col.string.get.size
+          outputFastq1File.write(read1Name + "\n" + read1Col.string.get + "\n+\n" + read1QualityScore + "\n")
+        }
+      }
+
     }}
 
     outputFastq1File.close()
