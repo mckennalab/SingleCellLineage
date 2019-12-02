@@ -64,6 +64,10 @@ class TwoPassUMIs extends Runnable with LazyLogging {
     outputCalledUMIs(collapsers)
   }
 
+  /**
+    * output the called UMIs
+    * @param collapsers collapser down UMIs
+    */
   private def outputCalledUMIs(collapsers: mutable.LinkedHashMap[String,SequenceCounterCollection]): Unit = {
     // output consensus reads from the collapsed UMI read pairs
     val outputStats = new PrintWriter(statsFile.getAbsolutePath)

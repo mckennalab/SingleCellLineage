@@ -18,6 +18,7 @@ class SequenceCounter(stringLen: Int) {
     * @param seqs
     */
   def addSequence(sq: String): Unit = {
+    assert(sq.length <= baseCount,"The sequence container isnt long enough: " + sq.length + " for container size " + baseCount)
     sq.toUpperCase().zipWithIndex.foreach{case(base,index) => {
       counts(index)(SequenceCounter.baseToIndex(base)) += 1
     }}

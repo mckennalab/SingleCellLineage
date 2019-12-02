@@ -1,5 +1,0 @@
-package collapse
-
-class CompactUMIMerger {
-
-}
