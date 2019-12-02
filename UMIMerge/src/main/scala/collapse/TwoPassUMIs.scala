@@ -95,9 +95,8 @@ class TwoPassUMIs extends Runnable with LazyLogging {
         ((outputFastq2File.isDefined && collections.read2.countsToSequence(baseCallThresh, minBaseCallRate).string.isDefined) ||
           !outputFastq2File.isDefined) &&
           collections.read1.countsToSequence(baseCallThresh, minBaseCallRate).string.isDefined
-      )
 
-      
+
       if (output) {
         if (outputFastq2File.isDefined) {
           val read2Col = collections.read2.countsToSequence(baseCallThresh, minBaseCallRate)
