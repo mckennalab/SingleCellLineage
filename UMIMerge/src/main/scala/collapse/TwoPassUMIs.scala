@@ -13,13 +13,13 @@ class TwoPassUMIs extends Runnable with LazyLogging {
   @Option(names = Array("-inputReads1", "--read1"), required = true, paramLabel = "FILE", description = Array("the first input read file"))
   private var read1: File = new File("UNKNOWN")
 
-  @Option(names = Array("-inputReads2", "--read2"), required = true, paramLabel = "FILE", description = Array("the second input read file"))
+  @Option(names = Array("-inputReads2", "--read2"), required = false, paramLabel = "FILE", description = Array("the second input read file"))
   private var read2: File = new File("UNKNOWN")
 
   @Option(names = Array("-outputReads1", "--outread1"), required = true, paramLabel = "FILE", description = Array("the first output read file"))
   private var outRead1: File = new File("UNKNOWN")
 
-  @Option(names = Array("-outputReads2", "--outread2"), required = true, paramLabel = "FILE", description = Array("the second output read file"))
+  @Option(names = Array("-outputReads2", "--outread2"), required = false, paramLabel = "FILE", description = Array("the second output read file"))
   private var outRead2: File = new File("UNKNOWN")
 
   @Option(names = Array("-umiStatsFile", "--statsFile"), required = true, paramLabel = "FILE", description = Array("an output file containing stats about each captured UMI"))
