@@ -49,7 +49,7 @@ case class DeepConfig(
 @Command(name = "DeepSeq", description = Array("Call CRISPR outcome events from aligned sequences"))
 class DeepSeq extends Runnable with LazyLogging {
   @Option(names = Array("-inputFileUnmerged", "--inputFileUnmerged"), required = true, paramLabel = "FILE", description = Array("the unmerged input read file"))
-  private var inputFileUnmerged: scala.Option[File] = None
+  private var inputFileUnmerged = new File("UNKNOWN")
 
   @Option(names = Array("-inputMerged", "--inputMerged"), required = true, paramLabel = "FILE", description = Array("the merged input read file"))
   private var inputMerged: File = new File("UNKNOWN")
@@ -129,8 +129,8 @@ class DeepSeq extends Runnable with LazyLogging {
     }
 
     // now process unpaired reads
-    if (inputFileUnmerged.isDefined) {
-      val firstReadIterator = new UnmergedReadParser(inputFileUnmerged.get)
+    if (!inputFileUnmerged.equals(NOTAREALFILE)) {
+      val firstReadIterator = new UnmergedReadParser(inputFileUnmerged)
 
       println("traversing unmerged reads...")
       firstReadIterator.foreach { twoReads => {
