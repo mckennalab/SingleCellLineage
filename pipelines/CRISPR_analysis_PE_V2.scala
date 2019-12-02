@@ -938,7 +938,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the sample name") var sample = sampleName
 
     var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + callerName
-    cmdString += " DeepSeq -inputUnmerged=" + inputUnmerged + " -inputMerged=" + inputMerged + " -cutSites="
+    cmdString += " DeepSeq -inputFileUnmerged=" + inputUnmerged + " -inputMerged=" + inputMerged + " -cutSites="
     cmdString += cutSiteFile + " -outputStats="
     cmdString += outStat + " -primersEachEnd=" + primers + " -sample="
     cmdString += sample + " -primerMismatches=" + maxAdaptMismatch
