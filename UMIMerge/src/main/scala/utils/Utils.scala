@@ -170,4 +170,32 @@ object Utils {
       throw new IllegalStateException("Unable to compare edit distances for unequal strings: " + seq1 + " AND " + seq2)
     seq1.toUpperCase().zip(seq2.toUpperCase).map { case (s1, s2) => if (s1 == s2) 0 else 1 }.sum
   }
+
+  /**
+    * convert char to a Phred quality score
+    * @param char the character to convert
+    * @return a Double of the Phred (0-~40)
+    */
+  def charToPhredQual(c:Char): Double = {
+    (c.toInt - 33).toDouble
+  }
+
+  /**
+    * remove any low-quality score region within the string
+    * @param str the sequence string
+    * @param quals the string of quals
+    * @param minPhredAverageQual the min phred score (averaged)
+    * @param windowSize the window size to scan over
+    * @return the sliced string
+    */
+  def filterReadBySlidingWindow(str: String, quals: String, minPhredAverageQual: Double, windowSize: Int): String = {
+    val phreds = quals.map{g => charToPhredQual(g)}
+    val averages = (0 until (phreds.length - windowSize)).map{index => phreds.slice(index,index + windowSize).sum / windowSize}
+    val firstLowScore = averages.indexWhere(p => p <= minPhredAverageQual)
+
+    if (firstLowScore >= 0)
+      str.slice(0,firstLowScore)
+    else
+      str
+  }
 }

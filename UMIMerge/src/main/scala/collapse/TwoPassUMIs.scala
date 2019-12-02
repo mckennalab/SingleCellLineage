@@ -47,6 +47,9 @@ class TwoPassUMIs extends Runnable with LazyLogging {
 
     // read in the input file, recording UMI counts
     val umis = new mutable.LinkedHashMap[String, Int]()
+    val umiMaxsize1 = new mutable.LinkedHashMap[String, Int]()
+    val umiMaxsize2 = new mutable.LinkedHashMap[String, Int]()
+
     val readers = TwoPassUMIs.forwardRevereseReaders(read1,read2)
     readers._1.foreach{r1 => {
       val r2 = if (readers._2.isDefined) Some(readers._2.get.next()) else None
@@ -54,11 +57,19 @@ class TwoPassUMIs extends Runnable with LazyLogging {
       val r2qual = if (r2.isDefined) Some(r2.get(TwoPassUMIs.qualFastqPosition)) else None
 
       val umi = umiExtractor.slice(r1(TwoPassUMIs.baseFastqPositon), r1(TwoPassUMIs.qualFastqPosition), r2seq, r2qual)
+
+      val slicedSeq1 = Utils.filterReadBySlidingWindow(umi.read1,umi.read1Qual,20,5)
+
       umis(umi.umi) = umis.getOrElse(umi.umi,0) + 1
+      umiMaxsize1(umi.umi) = math.max(umiMaxsize1.getOrElse(umi.umi,0),slicedSeq1.size)
+      if (r2.isDefined) {
+        val slicedSeq2 = Utils.filterReadBySlidingWindow(umi.read2.get,umi.read2Qual.get,20,5)
+        umiMaxsize2(umi.umi) = math.max(umiMaxsize2.getOrElse(umi.umi, 0), slicedSeq2.size)
+      }
     }}
 
     // get a set of collapsers for any UMI with adequate coverage
-    val collapsers = findPassingUMIs(umiExtractor, umis)
+    val collapsers = findPassingUMIs(umiExtractor, umis, umiMaxsize1, umiMaxsize2)
 
     // output the called UMIs
     outputCalledUMIs(collapsers)
@@ -77,16 +88,19 @@ class TwoPassUMIs extends Runnable with LazyLogging {
 
     collapsers.foreach{case(umi,collections) => {
       val read1Col = collections.read1.countsToSequence(baseCallThresh,minBaseCallRate)
-      val read1Name = "@READ1_" + collections.read1.counts + "_" + collections.read1.counts + "_" + umi
-      val read1QualityScore = "H"  * read1Col.string.get.size
-      outputFastq1File.write(read1Name + "\n" + read1Col.string.get + "\n+\n" + read1QualityScore)
-
+      if (read1Col.string.isDefined) {
+        val read1Name = "@READ1_" + collections.read1.readCount + "_" + collections.read1.readCount + "_" + umi
+        val read1QualityScore = "H" * read1Col.string.get.size
+        outputFastq1File.write(read1Name + "\n" + read1Col.string.get + "\n+\n" + read1QualityScore + "\n")
+      }
 
       if (outputFastq2File.isDefined) {
         val read2Col = collections.read2.countsToSequence(baseCallThresh, minBaseCallRate)
-        val read2Name = "@READ1_" + collections.read2.counts + "_" + collections.read2.counts + "_" + umi
-        val read2QualityScore = "H"  * read2Col.string.get.size
-        outputFastq2File.get.write(read2Name + "\n" + read2Col.string.get + "\n+\n" + read2QualityScore)
+        if (read2Col.string.isDefined) {
+          val read2Name = "@READ1_" + collections.read2.readCount + "_" + collections.read2.readCount + "_" + umi
+          val read2QualityScore = "H" * read2Col.string.get.size
+          outputFastq2File.get.write(read2Name + "\n" + read2Col.string.get + "\n+\n" + read2QualityScore + "\n")
+        }
       }
     }}
 
@@ -101,7 +115,10 @@ class TwoPassUMIs extends Runnable with LazyLogging {
     * @param knownUMIs
     * @return
     */
-  private def findPassingUMIs(umiExtractor: UMISlicer, knownUMIs: mutable.LinkedHashMap[String, Int]): mutable.LinkedHashMap[String,SequenceCounterCollection] = {
+  private def findPassingUMIs(umiExtractor: UMISlicer,
+                              knownUMIs: mutable.LinkedHashMap[String, Int],
+                              umiLength1: mutable.LinkedHashMap[String, Int],
+                              umiLength2: mutable.LinkedHashMap[String, Int]): mutable.LinkedHashMap[String,SequenceCounterCollection] = {
     // setup a collapser for each UMI that has more than the minimum number of reads
     val collapsers = new mutable.LinkedHashMap[String,SequenceCounterCollection]()
 
@@ -115,10 +132,13 @@ class TwoPassUMIs extends Runnable with LazyLogging {
       val umi = umiExtractor.slice(r1(TwoPassUMIs.baseFastqPositon), r1(TwoPassUMIs.qualFastqPosition), r2seq, r2qual)
 
       if (knownUMIs(umi.umi) >= umiThrehold) {
-        val collapser = collapsers.getOrElse(umi.umi, SequenceCounterCollection(umi.read1, umi.read2))
-        collapser.read1.addSequence(umi.read1)
+        val slicedSeq1 = Utils.filterReadBySlidingWindow(umi.read1,umi.read1Qual,20,5)
+        val slicedSeq2 = if (r2.isDefined) Some(Utils.filterReadBySlidingWindow(umi.read2.get,umi.read2Qual.get,20,5)) else None
+        val collapser = collapsers.getOrElse(umi.umi, SequenceCounterCollection(slicedSeq1, slicedSeq2, umiLength1(umi.umi), umiLength2(umi.umi)))
+        collapser.read1.addSequence(slicedSeq1)
         if (umi.read2.isDefined)
-          collapser.read2.addSequence(umi.read2.get)
+          collapser.read2.addSequence(slicedSeq2.get)
+        collapsers(umi.umi) = collapser
       }
     }
     }
@@ -150,9 +170,10 @@ object TwoPassUMIs {
 case class SequenceCounterCollection(read1: SequenceCounter, read2: SequenceCounter)
 object SequenceCounterCollection {
   def apply(len1: Int, len2: Int): SequenceCounterCollection = SequenceCounterCollection(new SequenceCounter(len1), new SequenceCounter(len2))
-  def apply(s1: String, s2: scala.Option[String]): SequenceCounterCollection = {
+  def apply(s1: String, s2: scala.Option[String], len1: Int, len2: Int): SequenceCounterCollection = {
     if (s2.isDefined)
-      SequenceCounterCollection(new SequenceCounter(s1.size), new SequenceCounter(s2.get.size))
-    SequenceCounterCollection(new SequenceCounter(s1.size), new SequenceCounter(0))
+      SequenceCounterCollection(new SequenceCounter(len1), new SequenceCounter(len2))
+    else
+      SequenceCounterCollection(new SequenceCounter(len1), new SequenceCounter(0))
   }
 }

@@ -32,7 +32,7 @@ class SequenceCounter(stringLen: Int) {
     * @return a SequenceCounterResult with a string representing the collapsed read,
     *         wrapped in an Option, or NONE if we couldn't call the sequence. Also some stats about the process
     */
-  def countsToSequence(minBaseCallRate: Double, maxNProportion: Double): SequenceCounterResult = {
+  def countsToSequence(minBaseCallRate: Double, maxNProportion: Double, minPerBase:Int=1, trimTerminalNs: Boolean = true): SequenceCounterResult = {
     val returnString = new mutable.ArrayBuffer[Char]()
 
     (0 until baseCount).foreach{case(index) => {
@@ -42,10 +42,10 @@ class SequenceCounter(stringLen: Int) {
     val finalString = returnString.toArray.mkString("")
     val nProp = finalString.map{base => if(base == 'N') 1.0 else 0.0}.sum / finalString.size.toDouble
 
-    println("NPROP " + nProp + " from " + finalString)
-    if (nProp < maxNProportion)
-      SequenceCounterResult(Some(finalString),readCount,nProp)
-    else
+    if (nProp < maxNProportion) {
+      val fString = if (trimTerminalNs) finalString.replaceAll("[N]+$", "") else finalString
+      SequenceCounterResult(Some(fString), readCount, nProp)
+    } else
       SequenceCounterResult(None,readCount,nProp)
   }
 }

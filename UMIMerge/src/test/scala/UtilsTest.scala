@@ -81,4 +81,28 @@ class UtilsTest extends FlatSpec with Matchers {
 
     Utils.containsFWDPrimerByAlignment(read,primer,0) should be (true)
   }
+
+  "filterReadBySlidingWindow" should "remove nothing in a high quality string" in {
+    val read =     "AAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTT"
+    val quals =    "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+
+    (Utils.filterReadBySlidingWindow(read, quals, 20, 5)) should be (read)
+
+  }
+
+  "filterReadBySlidingWindow" should "remove a low qual region" in {
+    val read =     "AAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTT"
+    val quals =    "HHHHHHHHHHHHHHHHHHHHHHHHHLLLLZ/////HHHHHHHHHHHHHHH"
+
+    val retRead = Utils.filterReadBySlidingWindow(read, quals, 20, 5)
+    (retRead) should be ("AAAAATTTTTAAAAATTTTTAAAAATTTTT")
+  }
+
+  "filterReadBySlidingWindow" should "remove a low qual region before a lower qual region" in {
+    val read =     "AAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTTAAAAATTTTT"
+    val quals =    "HHHHHHHHHHHHHHHHHHHHHHHHHHLLLZ/////HHHHHHHHH!!!!!!"
+
+    val retRead = Utils.filterReadBySlidingWindow(read, quals, 20, 5)
+    (retRead) should be ("AAAAATTTTTAAAAATTTTTAAAAATTTTT")
+  }
 }
