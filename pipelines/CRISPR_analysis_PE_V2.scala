@@ -906,14 +906,11 @@ class DNAQC extends QScript {
     cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputReads1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
-      cmdString += " -inputFileReads2=" + inMergedReads2.get + " -outputFastq2=" + outputFASTA2.get
+      cmdString += " -inputReads2=" + inMergedReads2.get + " -outputReads2=" + outputFASTA2.get
 
     cmdString += " -primersEachEnd=" + primers + " -samplename=" + sample
-    cmdString += " -umiStart=" + umiStart + " -minimumUMIReads=" + minimumUMIReads + " -minimumSurvivingUMIReads=" + minimumSurvivingUMIReads
-    cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength + " -primerMismatches=" + maxAdaptMismatch
-    cmdString += " --primersToCheck " + primersToCheck
-
-    if (clusterUMIs) cmdString += " -umiClustering=true "
+    cmdString += " -umiStart=" + umiStart + " -umiThrehold=" + minimumUMIReads
+    cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength
 
     var cmd = cmdString
 
