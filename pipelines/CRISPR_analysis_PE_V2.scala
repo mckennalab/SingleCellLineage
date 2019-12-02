@@ -903,14 +903,14 @@ class DNAQC extends QScript {
     val memLimit = 5
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
-    cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputFastq1=" + outFASTA1
+    cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputReads1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
       cmdString += " -inputFileReads2=" + inMergedReads2.get + " -outputFastq2=" + outputFASTA2.get
 
     cmdString += " -primersEachEnd=" + primers + " -samplename=" + sample
     cmdString += " -umiStart=" + umiStart + " -minimumUMIReads=" + minimumUMIReads + " -minimumSurvivingUMIReads=" + minimumSurvivingUMIReads
-    cmdString += " -umiCounts=" + outUMIs + " -umiLength=" + umiLength + " -primerMismatches=" + maxAdaptMismatch
+    cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength + " -primerMismatches=" + maxAdaptMismatch
     cmdString += " --primersToCheck " + primersToCheck
 
     if (clusterUMIs) cmdString += " -umiClustering=true "
