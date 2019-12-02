@@ -60,9 +60,6 @@ class DeepSeq extends Runnable with LazyLogging {
   @Option(names = Array("-primersEachEnd", "--primersEachEnd"), required = true, paramLabel = "FILE", description = Array("the expected primers on each end of the read"))
   private var primersEachEnd: File = new File("UNKNOWN")
 
-  @Option(names = Array("-reference", "--reference"), required = true, paramLabel = "FILE", description = Array("the reference fasta file"))
-  private var reference: File = new File("UNKNOWN")
-
   @Option(names = Array("-cutSites", "--cutSites"), required = true, paramLabel = "FILE", description = Array("the cutsites file"))
   private var cutSites: File = new File("UNKNOWN")
 
