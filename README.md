@@ -1,6 +1,6 @@
 # Single-cell GESTALT pipeline
 
-This Docker image processes GESTALT barcode sequencing data. Reads are merged by UMI, aligned to the reference file, and aggregated into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. 
+This Docker image processes GESTALT barcode sequencing data. Reads are merged by UMI, aligned to the reference file, and aggregated into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep the releases as stable, testing implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
 
 
 # Processing data using the GESTALT pipeline
