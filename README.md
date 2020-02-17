@@ -20,12 +20,12 @@ Things you need to have:
 
 Download the docker container:
 ```
-docker pull aaronmck/single_cell_gestalt:SC_GESTALT
+docker pull aaronmck/single_cell_gestalt:stable
 ```
 
 Run and connect to the container, remapping port 80 of the container to port 8080 on your local machine:
 ```
- docker run -it -p 8080:80 aaronmck/single_cell_gestalt:SC_GESTALT /bin/bash
+ docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
 ```
 ## Run the example script
 
