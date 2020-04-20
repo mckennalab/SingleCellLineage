@@ -29,14 +29,14 @@ Run and connect to the container, remapping port 80 of the container to port 808
 * **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the /app/sc_GESTALT/tear_sheet_examples directory. This file can be editing in Excel or a text editor and saved as a tab-delimited file. The columns are as follows:
  - sample: used to create sample-specific output files
  - umi: Do the amplicons have UMIs? These are sequences that uniquely identify  a unique DNA fragment which was amplified by PCR.
-  - reference: What reference file (.fa) to use for this sample. This reference should have the cutSites and primers files along-side (in the same directory).
-  - output.dir: where to put the output. A directory matching the sample name above will be created within this parent directory
-  - fastq1: The fastq.gz file containing the first reads.
-  - fastq2: Second read, can be set to NA if there isn't a second read file	
-  - barcode.fastq1: barcode (index) file 1
-  - barcode.fastq2: barcode (index) file 2
-  - barcode1: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq1 file. Can be set to ALL to include all reads
-  - barcode2: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq2 file. Can be set to ALL to include all reads
+   - reference: What reference file (.fa) to use for this sample. This reference should have the cutSites and primers files along-side (in the same directory).
+   - output.dir: where to put the output. A directory matching the sample name above will be created within this parent directory
+   - fastq1: The fastq.gz file containing the first reads.
+   - fastq2: Second read, can be set to NA if there isn't a second read file	
+   - barcode.fastq1: barcode (index) file 1
+   - barcode.fastq2: barcode (index) file 2
+   - barcode1: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq1 file. Can be set to ALL to include all reads
+   - barcode2: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq2 file. Can be set to ALL to include all reads
   
 Again, you can save this to a tab-delimited file on the same filesystem you plan to run the pipeline on.
 
