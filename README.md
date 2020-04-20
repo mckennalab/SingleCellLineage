@@ -1,24 +1,15 @@
 # Single-cell GESTALT pipeline
 
-This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting concensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep individual releases as stable, tested implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
+This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting consensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep individual releases as stable, tested implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
 
 
 # Processing data using the GESTALT pipeline
 
 ## Before you begin
 Things you need to have:
-* **If you're using Docker, then a Docker installation**. Follow the documentation here: https://docs.docker.com/engine/installation/. If the pipeline is already installed locally then there's no need.
+* **If you're using Docker, then a Docker installation**. Follow the documentation here: https://docs.docker.com/engine/installation/. If the pipeline is already installed locally then there's no need. If 
 
-* Reference files. See examples in /app/references/ in the Docker container
-  - **reference file (fasta)**: this should be a single entry fasta file containing a standard header line that starts with a ">", followed by the name of the sequence (totally arbritrary). The second line is the reference sequence, which can be split over many lines if you prefer.
-  - **A cutsite file**. This should have the same name as the reference file, with the cutSites extension ( <reference.fa>.cutSites, where the <reference.fa> is the name of your reference). This describes where CRISPR/Cas9 binds to the sequence and makes a cut. There are three columns, the first is the sequence of the CRISPR target, the second is the position of the start of that target (5'), and the third is the position of the cutsite (17 basepairs downstream from the start of the target for Cas9). See the example_data directory for an example version. Positions are relative to the start of the reference.
-  - **A primers file**, This file is named <reference.fa>.primers. It contains the invariant sequences that are expected to be present at both ends of the amplicon used to PCR-up the amplicon from the background. This file is two lines, a primer on each line **oriented** with the reference. This is used to filter out non-specific PCR products that may be present in your sequencing run. This filtering is optional (you can use both ends, either, or none), and will depend on if this was done with PCR (both ends can be used) or with single-cell approaches where just one end is relevent. 
-
-* **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the /app/sc_GESTALT/tear_sheet_examples directory. 
-
-## Install the Docker container
-
-Download the docker container:
+Then download the docker container:
 ```
 docker pull aaronmck/single_cell_gestalt:stable
 ```
@@ -27,6 +18,28 @@ Run and connect to the container, remapping port 80 of the container to port 808
 ```
  docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
 ```
+
+# Setup an individual run
+
+* Reference files. See examples in /app/references/ in the Docker container
+  - **reference file (fasta)**: this should be a single entry fasta file containing a standard header line that starts with a ">", followed by the name of the sequence (totally arbritrary). The second line is the reference sequence, which can be split over many lines if you prefer.
+  - **A cutsite file**. This should have the same name as the reference file, with the cutSites extension ( <reference.fa>.cutSites, where the <reference.fa> is the name of your reference). This describes where CRISPR/Cas9 binds to the sequence and makes a cut. There are three columns, the first is the sequence of the CRISPR target, the second is the position of the start of that target (5'), and the third is the position of the cutsite (17 basepairs downstream from the start of the target for Cas9). See the example_data directory for an example version. Positions are relative to the start of the reference.
+  - **A primers file**, This file is named <reference.fa>.primers. It contains the invariant sequences that are expected to be present at both ends of the amplicon used to PCR-up the amplicon from the background. This file is two lines, a primer on each line **oriented** with the reference. This is used to filter out non-specific PCR products that may be present in your sequencing run. This filtering is optional (you can use both ends, either, or none), and will depend on if this was done with PCR (both ends can be used) or with single-cell approaches where just one end is relevant. 
+
+* **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the /app/sc_GESTALT/tear_sheet_examples directory. This file can be editing in Excel or a text editor and saved as a tab-delimited file. The columns are as follows:
+ - sample: used to create sample-specific output files
+ - umi: Do the amplicons have UMIs? These are sequences that uniquely identify  a unique DNA fragment which was amplified by PCR.
+  - reference: What reference file (.fa) to use for this sample. This reference should have the cutSites and primers files along-side (in the same directory).
+  - output.dir: where to put the output. A directory matching the sample name above will be created within this parent directory
+  - fastq1: The fastq.gz file containing the first reads.
+  - fastq2: Second read, can be set to NA if there isn't a second read file	
+  - barcode.fastq1: barcode (index) file 1
+  - barcode.fastq2: barcode (index) file 2
+  - barcode1: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq1 file. Can be set to ALL to include all reads
+  - barcode2: If we want to split out this sample from the fastq files, this sequence should match what's in the barcode.fastq2 file. Can be set to ALL to include all reads
+  
+Again, you can save this to a tab-delimited file on the same filesystem you plan to run the pipeline on.
+
 ## Run the example script
 
 Now within the container, run the example script:
