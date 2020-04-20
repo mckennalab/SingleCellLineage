@@ -27,10 +27,10 @@ Run and connect to the container, remapping port 80 of the container to port 808
   - **A primers file**, This file is named <reference.fa>.primers. It contains the invariant sequences that are expected to be present at both ends of the amplicon used to PCR-up the amplicon from the background. This file is two lines, a primer on each line **oriented** with the reference. This is used to filter out non-specific PCR products that may be present in your sequencing run. This filtering is optional (you can use both ends, either, or none), and will depend on if this was done with PCR (both ends can be used) or with single-cell approaches where just one end is relevant. 
 
 * **A processing tearsheet**, describing your samples. See the example 'sample_tearsheet.tsv' in the /app/sc_GESTALT/tear_sheet_examples directory. This file can be editing in Excel or a text editor and saved as a tab-delimited file. The columns are as follows:
- - sample: used to create sample-specific output files
- - umi: Do the amplicons have UMIs? These are sequences that uniquely identify  a unique DNA fragment which was amplified by PCR.
+   - sample: used to create sample-specific output files
+   - umi: Do the amplicons have UMIs? These are sequences that uniquely identify  a unique DNA fragment which was amplified by PCR.
    - reference: What reference file (.fa) to use for this sample. This reference should have the cutSites and primers files along-side (in the same directory).
-   - output.dir: where to put the output. A directory matching the sample name above will be created within this parent directory
+   - output.dir: where to put the output on the filesystem. This directory should exist. A sub-directory matching the sample name above will be created within this parent directory
    - fastq1: The fastq.gz file containing the first reads.
    - fastq2: Second read, can be set to NA if there isn't a second read file	
    - barcode.fastq1: barcode (index) file 1
@@ -40,7 +40,30 @@ Run and connect to the container, remapping port 80 of the container to port 808
   
 Again, you can save this to a tab-delimited file on the same filesystem you plan to run the pipeline on.
 
+### Setup a run script
+
+The run script specifies what parameters should be used with the tearsheet above, and executes the full processing pipeline. The idea is to separate what's run (the samples in the tearsheet above) from how they're run (this script). Generally this is run as a bash or shell script that looks like the following. Items with brackets ```<like_so>``` are paths that are specific to your installation:
+
+```
+java -Xmx4g \
+    -jar <path_to_queue.jar> \
+    -S <pipeline_path_plus>/CRISPR_analysis_PE_V2.scala  \
+    -i <your_tearsheet_path>/crispr_tearsheet_04_16_2020.txt \
+    --aggLocation <some_path_here>/data/pipeline_output/ \
+    --expName 2020_04_16_new_libs \
+    --web <where_to_put_webfiles> \
+    -s <path_to_github_clone_on_filesystem>/SingleCellLineage/scripts/ \
+    -b <path_to_external_tools>/dartfs-hpc/rc/lab/M/McKennaLab/resources/tools/bin/ \
+    -run
+
+```
+
+We generally run java with ~4g of memory; this is overkill but generally not a big issue on large compute environments. The ```-jar``` parameter is the path to the Queue execution manager, which runs the ```-S``` script for us. This script takes the ```-i``` tearsheet information, parses it out, and creates a number of compute jobs to transform the raw reads into GESTALT barcode calls. You also need to specify the aggregate data location with ```--aggLocation``` parameter; this is where the pipeline will put a couple files about the run as a whole (across samples). The ```--expName``` parameter gives a name to the experiment as a whole (used for web output and run statistics), and the ```--web``` directory is where the pipeline will dump web-visable plots for later analysis. The ```-s``` and ```-b``` parameters describe the location of tools we'll need to run the pipeline, and finally ```-run``` tells the script to actually start jobs (without ```-run``` it will just list the commands it would run).
+
+
 ## Run the example script
+
+
 
 Now within the container, run the example script:
 ```
