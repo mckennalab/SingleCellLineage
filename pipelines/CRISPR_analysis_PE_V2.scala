@@ -646,7 +646,7 @@ class DNAQC extends QScript {
   }
 
   // ********************************************************************************************************
-  case class ToWebPublish(webLocation: File, perBaseEvents: File, topReads: File, topReadCounts: File, cutSites: File, allReadCount: File, finalSummary: File) extends ExternalCommonArgs {
+  case class ToWebPublish(webLocation: File, perBaseEvents: File, topReads: File, topReadCounts: File, cutSites: File, allReadCount: File) extends ExternalCommonArgs {
     @Input(doc = "where to write the files") var webL = webLocation
     @Input(doc = "per base event counts") var perBase = perBaseEvents
     @Input(doc = "the top reads and their base by base events") var topR = topReads
