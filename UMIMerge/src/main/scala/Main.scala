@@ -1,4 +1,4 @@
-  import collapse.TwoPassUMIs
+  import collapse.{TwoPassUMIs, UMIProcessing}
   import com.typesafe.scalalogging.LazyLogging
   import eventcalling.DeepSeq
   import org.slf4j.LoggerFactory
@@ -20,7 +20,7 @@ object Main {
 
     val initialTime = System.nanoTime()
 
-    commandLine.addSubcommand("UMIMerge", new TwoPassUMIs())
+    commandLine.addSubcommand("UMIMerge", new UMIProcessing())
     commandLine.addSubcommand("DeepSeq", new DeepSeq())
 
     commandLine.parseWithHandler(new CommandLine.RunLast, args)
