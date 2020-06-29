@@ -502,15 +502,9 @@ class DNAQC extends QScript {
 
       val finalSummaryFile = new File(sampleOutput + File.separator + sampleTag + ".finalSummary")
 
-
-      if (barcodeSplit)
-        add(FinalSummary(barcodeSplit1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
-      else
-        add(FinalSummary(sampleObj.fastq1,cleanedOne,samMergedFasta,samUnmergedFasta,toAligUMICounts,toAlignStats,finalSummaryFile))
-       
       if (!dontWebPublish) {
         add(ToJavascriptTables(toAlignStats, cutSites, sampleObj.reference, perBaseEventFile, topReadFile, topReadCount, allReadCount, topReadFileNew))
-        add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount,finalSummaryFile))
+        add(ToWebPublish(sampleWebLocation, perBaseEventFile, topReadFileNew, topReadCount, cutSites, allReadCount)) 
       }
 
       
@@ -811,25 +805,6 @@ class DNAQC extends QScript {
     this.isIntermediate = false
   }
 
-  // create a final summary of the run 
-  // ********************************************************************************************************
-  case class FinalSummary(bcSplit: File, cleanedFQ: File, samMergedFasta: File, samUnmergedFasta: File , toAligUMICounts: File, toAlignStats: File, finalSummaryFile: File)
-      extends CommandLineFunction with ExternalCommonArgs {
-    @Input(doc = "barcode split raw files") var reads = bcSplit
-    @Input(doc = "barcode split clean files") var clean = cleanedFQ
-    @Input(doc = "merged fasta") var mFasta = samMergedFasta
-    @Input(doc = "unmerged fasta") var umFasta = samUnmergedFasta
-    @Input(doc = "aligned UMI count") var umiCounts = toAligUMICounts
-    @Input(doc = "stats file") var stats = toAlignStats
-
-    @Output(doc = "final summary output file") var output = finalSummaryFile
-
-    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/final_summary.scala " + reads + " " + clean + " " + mFasta + " " + umFasta + " " + umiCounts + " " + stats + " " + output
-
-    this.analysisName = queueLogDir + output + ".finalSummary"
-    this.jobName = queueLogDir + output + ".finalSummary"
-  }
-
   // gzip a bunch of fastqs into a single gzipped fastq
   // ********************************************************************************************************
   case class ConcatFastqs(inFastqs: List[File], outFastq: File) extends ExternalCommonArgs {
@@ -903,7 +878,7 @@ class DNAQC extends QScript {
     val memLimit = 5
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
-    
+
     cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputReads1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
