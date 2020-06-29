@@ -261,7 +261,7 @@ class UMIProcessing extends Runnable with LazyLogging {
 
       // setup clustered input of the fastq files
       // ------------------------------------------------------------------------------------------
-      val forwardReads = Source.fromInputStream(Utils.gis(outRead1.getAbsolutePath)).getLines().grouped(4)
+      val forwardReads = Source.fromInputStream(Utils.gis(read1.getAbsolutePath)).getLines().grouped(4)
 
       val primers = Source.fromFile(primersFile.getAbsolutePath).getLines().map { line => line }.toList
       if (primers.length != 2)
