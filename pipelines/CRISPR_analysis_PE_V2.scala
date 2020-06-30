@@ -458,6 +458,7 @@ class DNAQC extends QScript {
             None,
             10,
             new File(sampleObj.reference + ".primers"),
+            primersToCheck,
             sampleObj.sample,
           toAligUMICounts))
 
