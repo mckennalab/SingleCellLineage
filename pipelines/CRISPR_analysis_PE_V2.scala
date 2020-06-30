@@ -441,6 +441,7 @@ class DNAQC extends QScript {
             Some(toAlignFastq2),
             10,
             new File(sampleObj.reference + ".primers"),
+            primersToCheck,
             sampleObj.sample,
           toAligUMICounts))
 
@@ -865,13 +866,14 @@ class DNAQC extends QScript {
    */
   // ********************************************************************************************************
   case class UMIProcessingPaired(inMergedReads1: File, inMergedReads2: Option[File], outputFASTA1: File, outputFASTA2: Option[File],
-    umiCutOff: Int, primersFile: File, sampleName: String, umiCountsFile: File) extends CommandLineFunction with ExternalCommonArgs {
+    umiCutOff: Int, primersFile: File, primersToCheck: String, sampleName: String, umiCountsFile: File) extends CommandLineFunction with ExternalCommonArgs {
 
     @Input(doc = "input reads (fwd)") var inReads1 = inMergedReads1
     @Output(doc = "output fasta for further alignment (fwd)") var outFASTA1 = outputFASTA1
     @Output(doc = "output a counts of the reads behind each UMI") var outUMIs = umiCountsFile
     @Argument(doc = "how many UMIs do we need to initial have to consider merging them") var umiCut = umiCutOff
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
+    @Argument(doc = "which end(s) of the amplicon should we check for a primer") var primersCh = primersToCheck
     @Argument(doc = "the sample name") var sample = sampleName
 
     val memLimit = 5
@@ -884,7 +886,7 @@ class DNAQC extends QScript {
       cmdString += " -inputReads2=" + inMergedReads2.get + " -outputReads2=" + outputFASTA2.get
     cmdString += " -umiStart=" + umiStart + " -umiThrehold=" + minimumUMIReads
     cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength
-    cmdString += " -primers " + primers
+    cmdString += " --primers " + primers + " --primersToCheck " + 
 
     var cmd = cmdString
 
