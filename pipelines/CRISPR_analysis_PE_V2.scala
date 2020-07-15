@@ -663,7 +663,7 @@ class DNAQC extends QScript {
     @Input(doc = "the counts for all the top reads") var topReadC = topReadCounts
     @Input(doc = "the cutsites") var cuts = cutSites
     @Input(doc = "all HMIDs") var allReads = allReadCount
-    @Input(doc = "final summary numbers") var finalSum = finalSummary
+
 
     def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
 
