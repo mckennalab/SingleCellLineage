@@ -401,8 +401,16 @@ class DNAQC extends QScript {
         }
         case "INDROPSV3" => {
           val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
-          add(addUMIToReads(umiTemp(0), List[File](barcodeSplitIndex1,umiTemp(1)), outputFirstRead ))
+          add(addUMIToReads(umiTemp(0), List[File](barcodeSplitIndex1,umiTemp(1)), outputFirstRead,14))
           
+          umiTemp = List[File](outputFirstRead)
+
+          pairedEnd = false
+        }
+        case "10X" => {
+          val outputFirstRead = new File(sampleOutput + File.separator + sampleTag + ".withUMI.fq.gz")
+          add(addUMIToReads(umiTemp(0), List[File](umiTemp(1)), outputFirstRead,27)) // TODO: CHANGE ME IN THE FUTURE BACK TO 28
+
           umiTemp = List[File](outputFirstRead)
 
           pairedEnd = false
@@ -655,6 +663,7 @@ class DNAQC extends QScript {
     @Input(doc = "the counts for all the top reads") var topReadC = topReadCounts
     @Input(doc = "the cutsites") var cuts = cutSites
     @Input(doc = "all HMIDs") var allReads = allReadCount
+    @Input(doc = "final summary numbers") var finalSum = finalSummary
 
     def commandLine = scalaPath + " -J-Xmx1g " + scriptLoc + "/" + toWebPublishScript + " " + webL + " " + perBase + " " + topR + " " + topReadC + " " + cuts + " " + allReads + " " + scriptLoc.getAbsolutePath + "/../ " 
 
@@ -792,14 +801,14 @@ class DNAQC extends QScript {
 
   // move the UMI to the front of the first read
   // ********************************************************************************************************
- case class addUMIToReads(readFile: File, barcodeFiles: List[File], outputReadsAndBarcodes: File)
+ case class addUMIToReads(readFile: File, barcodeFiles: List[File], outputReadsAndBarcodes: File, cutLength: Int = 100)
       extends CommandLineFunction with ExternalCommonArgs {
 
     @Input(doc = "read file") var reads = readFile
     @Input(doc = "barcodes") var barcodes = barcodeFiles
     @Output(doc = "the output umi + reads file") var output = outputReadsAndBarcodes
 
-    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes.mkString(",") + " " + output
+    def commandLine = scalaPath + " -J-Xmx8g " + scriptLoc + "/" + convertUMIFile + " " + reads + " " + barcodes.mkString(",") + " " + output + " " + cutLength
 
     this.analysisName = queueLogDir + output + ".umiOnReads"
     this.jobName = queueLogDir + output + ".umiOnReads"
@@ -880,7 +889,6 @@ class DNAQC extends QScript {
     val memLimit = 5
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
-
     cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputReads1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
