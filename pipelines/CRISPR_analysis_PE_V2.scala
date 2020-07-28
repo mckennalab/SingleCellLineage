@@ -298,11 +298,12 @@ class DNAQC extends QScript {
       val barcodes: Map[Int, String] = (Array[String](sampleObj.barcode1, sampleObj.barcode2)).zipWithIndex.map { case (barcode, index) => (index + 1, barcode) }.toMap
 
       (sampleObj.fastqBarcode1, sampleObj.fastqBarcode2) match {
-        // we have no barcode 1 and no barcode 2, just pass them through
-        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() && (trimStop - trimStart > 0) => {
+        // we want to trim the barcodes
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
           val barcodeInputs = List[File]()
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, processedBarcodeFiles, barcodeStats, barcodeConfusion, overlapFile, trimStart, trimStop))
         }
+        // we have no barcode 1 and no barcode 2, just pass them through
         case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
           processedFastqs = inputFiles
           processedBarcodeFiles = barcodes
