@@ -38,7 +38,19 @@
 package org.broadinstitute.gatk.queue.qscripts
 
 import java.io.File
+import org.broadinstitute.gatk.queue.extensions.gatk._
+import org.broadinstitute.gatk.queue.QScript
+import org.broadinstitute.gatk.queue.extensions.picard._
+import org.broadinstitute.gatk.queue.util.QScriptUtils
+import org.broadinstitute.gatk.queue.function.ListWriterFunction
+import org.broadinstitute.gatk.utils.commandline.Hidden
+import org.broadinstitute.gatk.utils.commandline
 
+import collection.JavaConversions._
+import htsjdk.samtools.SAMFileReader
+import htsjdk.samtools.SAMFileHeader.SortOrder
+import scala.io.Source
+import scala.collection.immutable._
 import scala.collection.immutable._
 import scala.io.Source
 
@@ -115,7 +127,7 @@ class DNAQC extends QScript {
   var matchCount = 15
 
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
-  var webSite: String = "/var/www/html"
+  var webSite: File = "/var/www/html"
 
   @Argument(doc = "do we want to run the tree code", fullName = "noTree", shortName = "noTree", required = false)
   var noTree: Boolean = false
@@ -130,7 +142,7 @@ class DNAQC extends QScript {
   var adaptersFile: File = new File("/app/Trimmomatic-0.36/adapters/TruSeq3-PE.fa")
 
   @Input(doc = "The path to the jar file for trimmomatic", fullName = "trim", shortName = "tm", required = false)
-  var trimmomaticPath: String = "trimmomatic.jar"
+  var trimmomaticPath: File = "trimmomatic.jar"
 
   @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
   var maulName: File = "Maul.jar"
@@ -306,7 +318,7 @@ class DNAQC extends QScript {
         // we have no barcode 1 and no barcode 2, just pass them through
         case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
           processedFastqs = inputFiles
-          processedBarcodeFiles = barcodes
+          processedBarcodeFiles = barcodes.map{case(index,fl) => new File(fl)}.toList
         }
         // we have barcode 1, but no barcode 2
         case (f1, f2) if (sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()) => {
