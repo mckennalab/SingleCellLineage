@@ -311,7 +311,7 @@ class DNAQC extends QScript {
 
       (sampleObj.fastqBarcode1, sampleObj.fastqBarcode2) match {
         // we want to trim the barcodes
-        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()  && (trimStop - trimStart > 0) => {
           val barcodeInputs = List[File]()
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, processedBarcodeFiles, barcodeStats, barcodeConfusion, overlapFile, trimStart, trimStop))
         }
