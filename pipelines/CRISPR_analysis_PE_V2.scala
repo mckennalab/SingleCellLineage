@@ -255,10 +255,11 @@ class DNAQC extends QScript {
   // * **************************************************************************
   def script() {
     var statsFiles = List[File]()
-
-    val sampleWebBase = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName), "our output web publishing directory")
-    val aggReportDir = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName + File.separator + "aggregateHMIDReport"), "our report output directory")
-    val aggWebTreeLocation = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName + File.separator + "tree"), "our output tree directory")
+    
+    if (!dontWebPublish) {
+       val sampleWebBase = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName), "our output web publishing directory")
+       val aggReportDir = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName + File.separator + "aggregateHMIDReport"), "our report output directory")
+     }
 
     // read in the tear sheet and process each sample
     parseTearSheet(input).foreach(sampleObj => {
@@ -284,7 +285,8 @@ class DNAQC extends QScript {
       // duplicated, as don't try to make it if it exists
       val webLoc = webSite + File.separator + sampleObj.sample + File.separator
       val sampleOutput = dirOrCreateOrFail(new File(sampleObj.outputDir + File.separator + sampleObj.sample), "sample output directory")
-      val sampleWebLocation = dirOrCreateOrFail(new File(webSite + File.separator + experimentalName + File.separator + sampleTag), "our output web publishing directory")
+      
+      val sampleWebLocation = if (!dontWebPublish) dirOrCreateOrFail(new File(webSite + File.separator + experimentalName + File.separator + sampleTag), "our output web publishing directory") else new File("")
 
       // our barcode split files
       var barcodeSplit1 = new File(sampleOutput + File.separator + sampleTag + ".barcodeSplit.fastq1.fq.gz")
@@ -319,7 +321,7 @@ class DNAQC extends QScript {
 
       (sampleObj.fastqBarcode1, sampleObj.fastqBarcode2) match {
         // we want to trim the barcodes
-        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists()  && (trimStop - trimStart > 0) => {
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() && (trimStop - trimStart > 0) => {
           val barcodeInputs = List[File]()
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, processedBarcodeFiles, barcodeStats, barcodeConfusion, overlapFile, trimStart, trimStop))
         }
