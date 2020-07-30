@@ -132,6 +132,9 @@ class DNAQC extends QScript {
   @Argument(doc = "do we want to run the tree code", fullName = "noTree", shortName = "noTree", required = false)
   var noTree: Boolean = false
 
+  @Argument(doc = "the maximum amount of memory we give to the UMI merging step. Increase if you have memory overflow issues (with complex libraries)", fullName = "umiMemLimit", shortName = "umiMemLimit", required = false)
+  var umiMemLimit = 8
+
   /** **************************************************************************
    * Path parameters -- where to find tools
    * ************************************************************************** */
@@ -299,7 +302,12 @@ class DNAQC extends QScript {
       var inputFiles = if (pairedEnd) List[File](sampleObj.fastq1, sampleObj.fastq2) else List[File](sampleObj.fastq1)
 
       var processedFastqs = if (pairedEnd) List[File](barcodeSplit1, barcodeSplit2) else List[File](barcodeSplit1)
-      var processedBarcodeFiles = if (pairedEnd) List[File](barcodeSplitIndex1, barcodeSplitIndex2) else List[File](barcodeSplitIndex1)
+      var processedBarcodeFiles = (sampleObj.fastqBarcode1,sampleObj.fastqBarcode2) match {
+      	  case (x1,x2) if x1.exists() && x2.exists() => {List[File](barcodeSplitIndex1, barcodeSplitIndex2)}
+	  case (x1,x2) if x1.exists() => {List[File](barcodeSplitIndex1)}
+	  case (x1,x2) if x2.exists() => {List[File](barcodeSplitIndex2)}
+	  case _ => {List[File]()}
+	  }
 
       val barcodeConfusion = new File(sampleOutput + File.separator + sampleTag + ".barcodeConfusion")
       val barcodeStats = new File(sampleOutput + File.separator + sampleTag + ".barcodeStats")
@@ -311,7 +319,7 @@ class DNAQC extends QScript {
 
       (sampleObj.fastqBarcode1, sampleObj.fastqBarcode2) match {
         // we want to trim the barcodes
-        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() => {
+        case (f1, f2) if !sampleObj.fastqBarcode1.exists() && !sampleObj.fastqBarcode2.exists() && (trimStop - trimStart > 0) => {
           val barcodeInputs = List[File]()
           add(Maul(inputFiles, barcodeInputs, barcodes, processedFastqs, processedBarcodeFiles, barcodeStats, barcodeConfusion, overlapFile, trimStart, trimStop))
         }
@@ -879,22 +887,22 @@ class DNAQC extends QScript {
     @Argument(doc = "which end(s) of the amplicon should we check for a primer") var primersCh = primersToCheck
     @Argument(doc = "the sample name") var sample = sampleName
 
-    val memLimit = 5
+    
 
-    var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
+    var cmdString = "java -Xmx" + (umiMemLimit) + "g -jar " + binaryLoc + "/" + umiName
     cmdString += " UMIMerge -inputReads1=" + inReads1 + " -outputReads1=" + outFASTA1
 
     if (inMergedReads2.isDefined)
       cmdString += " -inputReads2=" + inMergedReads2.get + " -outputReads2=" + outputFASTA2.get
     cmdString += " -umiStart=" + umiStart + " -umiThrehold=" + minimumUMIReads
     cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength
-    cmdString += " --primers " + primers + " --primersToCheck " + primersCh
+    cmdString += " --primers " + primers + " --primersToCheck " + primersCh + " --primerMismatches " + maxAdaptMismatch
 
     var cmd = cmdString
 
-    this.memoryLimit = memLimit
-    this.residentRequest = memLimit
-    this.residentLimit = memLimit
+    this.memoryLimit = umiMemLimit
+    this.residentRequest = umiMemLimit
+    this.residentLimit = umiMemLimit
 
     def commandLine = cmd
 
