@@ -79,9 +79,7 @@ RUN ifconfig | awk '/inet addr/{print substr($2,6)}' ## Display IP address (opti
 
 # setup the various tools
 RUN cd /app/sc_GESTALT/UMIMerge && sbt assembly
-RUN cd /app/sc_GESTALT/TreeUtils && sbt assembly
 
-RUN cp /app/sc_GESTALT/TreeUtils/target/scala-2.11/TreeUtils-assembly-1.1.jar /app/bin/TreeUtils.jar
 RUN cp /app/sc_GESTALT/UMIMerge/target/scala-2.12/MergeAndCall.jar /app/bin
 RUN wget -q -O /app/bin/Maul.jar http://krishna.gs.washington.edu/content/members/aaron/fate_map/all_trees/data/Maul.jar
 

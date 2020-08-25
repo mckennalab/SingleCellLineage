@@ -76,10 +76,6 @@ class DNAQC extends QScript {
   @Input(doc = "Where to find script files we need", fullName = "scriptLoc", shortName = "s", required = true)
   var scriptLoc: File = new File("/app/sc_GESTALT/scripts/")
 
-  // our tree output directory -- outputTree
-  @Input(doc = "the tree output location", fullName = "treeLoc", shortName = "t", required = false)
-  var treeOutput: File = new File("/var/www/html/trees/tree_data/")
-
   /** **************************************************************************
    * Data Parameters
    * ************************************************************************** */
@@ -129,9 +125,6 @@ class DNAQC extends QScript {
   @Input(doc = "where to put the web files", fullName = "web", shortName = "web", required = false)
   var webSite: File = "/var/www/html"
 
-  @Argument(doc = "do we want to run the tree code", fullName = "noTree", shortName = "noTree", required = false)
-  var noTree: Boolean = false
-
   @Argument(doc = "the maximum amount of memory we give to the UMI merging step. Increase if you have memory overflow issues (with complex libraries)", fullName = "umiMemLimit", shortName = "umiMemLimit", required = false)
   var umiMemLimit = 8
 
@@ -149,9 +142,6 @@ class DNAQC extends QScript {
 
   @Input(doc = "The filename to the barcode splitter", fullName = "maulpath", shortName = "mlp", required = false)
   var maulName: File = "Maul.jar"
-
-  @Input(doc = "The TreeUtils file", fullName = "treeUtils", shortName = "treeUtils", required = false)
-  var treeJar: File = "TreeUtils.jar"
 
   @Input(doc = "The filename of the UMI merger", fullName = "maul", shortName = "maul", required = false)
   var umiName: File = "MergeAndCall.jar"
@@ -365,7 +355,6 @@ class DNAQC extends QScript {
       val topReadFileNew = new File(sampleOutput + File.separator + sampleTag + ".topReadEventsNew")
       val topReadCount = new File(sampleOutput + File.separator + sampleTag + ".topReadCounts")
       val allReadCount = new File(sampleOutput + File.separator + sampleTag + ".allReadCounts")
-      val outputTree = new File(treeOutput.getAbsolutePath + File.separator + sampleTag + ".json")
 
       val cutSites = new File(sampleObj.reference + ".cutSites")
       val unpairedReads = List[File](new File(sampleOutput + File.separator + sampleTag + ".unpaired1.fq.gz"), new File(sampleOutput + File.separator + sampleTag + ".unpaired2.fq.gz"))
@@ -519,12 +508,6 @@ class DNAQC extends QScript {
 
 
 
-      // run the tree creation code
-      if (!noTree) {
-        val treeSampleTemp = dirOrCreateOrFail(new File(sampleObj.outputDir + File.separator + sampleObj.sample + "_tree"), "sample tree output directory"
-        )
-        add(TreeUtils(allReadCount, treeSampleTemp, outputTree, sampleObj.sample))
-      }
     })
 
     // agg. all of the stats together into a single file
@@ -948,36 +931,6 @@ class DNAQC extends QScript {
     this.isIntermediate = false
     this.analysisName = queueLogDir + outStat + ".calls"
     this.jobName = queueLogDir + outStat + ".calls"
-  }
-
-
-  //--inputUnmerged --inputMerged --outputStats --cutSites --primersEachEnd --sample test
-  case class TreeUtils(allEventsFile: File,
-                       mixRunLocation: File,
-                       outputTree: File,
-                       sampleName: String) extends CommandLineFunction with ExternalCommonArgs {
-
-    @Input(doc = "all events files") var allEventsFl = allEventsFile
-    @Input(doc = "the mix run location") var mixRun = mixRunLocation
-    @Output(doc = "output tree") var outTree = outputTree
-    @Argument(doc = "the sample name") var sample = sampleName
-
-
-    var cmdString = "java -jar -Xmx2g " + binaryLoc + "/" + treeJar
-    cmdString += " --allEventsFile " + allEventsFl + " --mixRunLocation " + mixRunLocation + " --outputTree "
-    cmdString += outTree + " --sample " + sample + " --mixLocation " + mixLoc
-
-    var cmd = cmdString
-
-    this.memoryLimit = 3
-    this.residentRequest = 3
-    this.residentLimit = 3
-
-    def commandLine = cmd
-
-    this.isIntermediate = false
-    this.analysisName = queueLogDir + outTree + ".tree"
-    this.jobName = queueLogDir + outTree + ".tree"
   }
 
   /**
