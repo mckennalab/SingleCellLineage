@@ -105,3 +105,59 @@ Within the the base output directory there will be a directory for each run. In 
 http://localhost:8080/testdata/dome_4_1X/read_editing_mutlihistogram.html
 
 Each sample processed should have a ```read_editing_mutlihistogram.html``` html file in it's base output directory.
+
+# Setup a 10X run
+
+A question that often comes up is how do I setup a 10X sequencing barcode run? I've generated a bit of fake lineage data from our fish barcode to demonstrate the process. First run the docker container (add optional disk mounting commands to your run as seen above):
+
+```
+ docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
+```
+
+Now we'll make a directory for our run data:
+
+```
+cd /app/
+mkdir my_test_run
+cd my_test_run/
+mkdir data
+mkdir data/raw
+```
+
+Download the test reads:
+
+```
+wget -O data/raw/read1.fq.gz https://downloads.mckennalab.org/public/read1.fq.gz
+wget -O data/raw/read2.fq.gz https://downloads.mckennalab.org/public/read2.fq.gz
+
+```
+
+And download the reference files (making some folders we'll need as well):
+
+```
+mkdir data/reference/
+mkdir data/pipeline_output
+wget -O data/reference/tol2.fa https://downloads.mckennalab.org/public/tol2.fa 
+wget -O data/reference/tol2.fa.cutSites https://downloads.mckennalab.org/public/tol2.fa.cutSites 
+wget -O data/reference/tol2.fa.primers https://downloads.mckennalab.org/public/tol2.fa.primers 
+```
+
+The first reference file describes the sequence itself, the second file is a tab-delimited file describing where the targets and their cut-sites (17bp into the target) are, and lastly a file describing any primers we expect to be on either end of the construct. We can tell the pipeline to use neither, both or just one of these primers to filter out unintended PCR products. 
+
+Now we'll need to setup a _tearsheet_ to tell the pipeline all about our data. We can download the test tearsheet, which uses the exact directories we've setup above. I've preconfigured one you can download:
+
+```
+wget -O data/tol2_simulated_data_tear_sheet.txt https://downloads.mckennalab.org/public/tol2_simulated_data_tear_sheet.txt
+```
+
+You can browse the columns in the file with standard unix commands, or download it yourself and open it in Excel. Generally for each sample there's a line in this file. The first column lists the sample name, the second indicates if it has a UMI sequence (10X does, so set this to TRUE), the third is where to find the reference file, the forth is where to put the output of the pipeline, and then the rest of the columns describe the compressed FASTQ files and which indexes to use. In this case we don't files with indexes mixed together, so we can set the barcode FASTQ columns to _NA_ and the barcode columns to _ALL_, which tells the pipeline to just use all the reads in the input files for that sample. *It's important to note: for 10X data the sequence data, often read2, needs to be in the first FASTQ slot. The combined 10X barcode/UMI should be in the second FASTQ slot*.
+
+
+Lastly we want to setup a script to run everything; we can pull an example I setup. Here we describe a number of parameters that are important to a 10X run:
+
+```
+wget -O test_run.sh https://downloads.mckennalab.org/public/test_run.sh
+bash test_run.sh
+```
+
+
