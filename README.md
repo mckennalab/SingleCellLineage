@@ -13,7 +13,7 @@ This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing bar
   * [Run the example script](#run-the-example-script)
   * [More Docker information](#more-docker-information)
 - [Output](#output)
-- [Setup a 10X run](10X example run)
+- [Setup a 10X run](#10X-example-run)
 
 
 # Processing data using the GESTALT pipeline
