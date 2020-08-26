@@ -1,18 +1,19 @@
-- [Single-cell GESTALT pipeline](#single-cell-gestalt-pipeline)
-- [Processing data using the GESTALT pipeline](#processing-data-using-the-gestalt-pipeline)
-  * [Before you begin](#before-you-begin)
-- [Setup an individual run](#setup-an-individual-run)
-    + [Setup a run script](#setup-a-run-script)
-  * [Run the example script](#run-the-example-script)
-  * [More Docker information](#more-docker-information)
-- [Output](#output)
-- [Setup a 10X run](#setup-a-10x-run)
-
 
 
 # Single-cell GESTALT pipeline
 
 This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting consensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep individual releases as stable, tested implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
+
+
+- [Single-cell GESTALT pipeline](#single-cell-gestalt-pipeline)
+- [Processing data using the GESTALT pipeline](#processing-data-using-the-gestalt-pipeline)
+  * [Before you begin](#before-you-begin)
+  * [Setup an individual run](#setup-an-individual-run)
+    + [Setup a run script](#setup-a-run-script)
+  * [Run the example script](#run-the-example-script)
+  * [More Docker information](#more-docker-information)
+- [Output](#output)
+- [Setup a 10X run](10X example run)
 
 
 # Processing data using the GESTALT pipeline
@@ -31,7 +32,7 @@ Run and connect to the container, remapping port 80 of the container to port 808
  docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
 ```
 
-# Setup an individual run
+## Setup an individual run
 
 * Reference files. See examples in /app/references/ in the Docker container
   - **reference file (fasta)**: this should be a single entry fasta file containing a standard header line that starts with a ">", followed by the name of the sequence (totally arbritrary). The second line is the reference sequence, which can be split over many lines if you prefer.
@@ -96,7 +97,7 @@ You can then rerun the example script or create your own:
 sh /app/sc_GESTALT/tear_sheet_examples/run_crispr_pipeline.sh
 ```
 
-# Output
+## Output
 
 A run of the GESTALT pipeline creates a number of files in the output directory of each sample. This location is specified in the input sample spreadsheet, in the *output.dir* column. See our example spreadsheet used in the script here: 
 
@@ -118,7 +119,7 @@ http://localhost:8080/testdata/dome_4_1X/read_editing_mutlihistogram.html
 
 Each sample processed should have a ```read_editing_mutlihistogram.html``` html file in it's base output directory.
 
-# Setup a 10X run
+# 10X example run
 
 A question that often comes up is how do I setup a 10X sequencing barcode run? I've generated a bit of fake lineage data from our fish barcode to demonstrate the process. First run the docker container (add optional disk mounting commands to your run as seen above):
 
