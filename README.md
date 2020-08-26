@@ -173,4 +173,15 @@ wget -O test_run.sh https://downloads.mckennalab.org/public/test_run.sh
 bash test_run.sh
 ```
 
+This should kick-off a process that generates a large amount of output, terminating with something that looks like:
+```
+INFO  00:40:51,659 QCommandLine - Script completed successfully with 5 total jobs
+```
 
+The main output file you're interested in for each of your samples is the _stats_ file, located in the sample specific output folder. In this case it's located in _data/pipeline_output/simulated_sample_1/simulated_sample_1.stats_ for our one sample. This data was derived from ~8200 simulated cell lineages, which you can browse in that file. When you go to match it up against your 10X barcodes, one of the most important parts is the read name. For example, the line starting with:
+
+```
+NS500488:132:H7JCTAFXX:1:11101:8025:2_TATTAGATCTCGCAGCCCTCGATAGACAFWD_18_1_ConsensusFWD__
+```
+
+This line describes a collapsed read UMI, collapsed down from 18 reads, with the combined barcode TATTAGATCTCGCAGCCCTCGATAGACA. The first 16 bases of which are the 10X barcode and the remaining 12 bases are the UMI. 
