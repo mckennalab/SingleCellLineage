@@ -1,3 +1,15 @@
+- [Single-cell GESTALT pipeline](#single-cell-gestalt-pipeline)
+- [Processing data using the GESTALT pipeline](#processing-data-using-the-gestalt-pipeline)
+  * [Before you begin](#before-you-begin)
+- [Setup an individual run](#setup-an-individual-run)
+    + [Setup a run script](#setup-a-run-script)
+  * [Run the example script](#run-the-example-script)
+  * [More Docker information](#more-docker-information)
+- [Output](#output)
+- [Setup a 10X run](#setup-a-10x-run)
+
+
+
 # Single-cell GESTALT pipeline
 
 This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting consensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep individual releases as stable, tested implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
