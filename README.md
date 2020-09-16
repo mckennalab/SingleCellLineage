@@ -121,7 +121,7 @@ Each sample processed should have a ```read_editing_mutlihistogram.html``` html 
 
 # 10X example run
 
-A question that often comes up is how do I setup a 10X sequencing barcode run? I've generated a bit of fake lineage data from our fish barcode to demonstrate the process. First run the docker container (add optional disk mounting commands to your run as seen above):
+A question that often comes up is how do I setup a 10X sequencing barcode run? I've generated a bit of fake lineage data from our fish barcode to demonstrate the process. First run the docker container (add optional disk mounting commands to your run as seen above, and *be sure to update the container, as there's been changes*):
 
 ```
  docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
