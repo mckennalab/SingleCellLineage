@@ -123,7 +123,7 @@ class DeepSeq extends Runnable with LazyLogging {
 
     println("traversing merged reads...")
     mergedReadIterator.foreach { pair => {
-      println("Processing merged read..")
+      //println("Processing merged read..")
       printMergedRead(cutsSiteObj, outputStatsFile, pair, primers)
     }
     }
@@ -134,7 +134,7 @@ class DeepSeq extends Runnable with LazyLogging {
 
       println("traversing unmerged reads...")
       firstReadIterator.foreach { twoReads => {
-        println("Read pair")
+        //println("Read pair")
         printPairedRead(cutsSiteObj,
           outputStatsFile,
           twoReads,
@@ -204,7 +204,7 @@ class DeepSeq extends Runnable with LazyLogging {
                       readPairs: ReadPair,
                       primers: List[String]): Unit = {
 
-    println("Processing " + readPairs.pair1.aligned)
+    //println("Processing " + readPairs.pair1.aligned)
 
     val (containsFwdPrimer, containsRevPrimer) = primersToCheck match {
       case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),primerMismatches)

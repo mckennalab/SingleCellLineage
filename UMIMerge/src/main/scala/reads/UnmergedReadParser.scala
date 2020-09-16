@@ -19,12 +19,12 @@ class UnmergedReadParser(readFiles: File) extends Iterator[ReadPair] {
   def nextReads() {
     if (parser.hasNext) {
       read1 = Some(parser.next())
-      println("Read1 " + read1.get.read.name)
+      //println("Read1 " + read1.get.read.name)
     } else
       read1 = None
     if (parser.hasNext) {
       read2 = Some(parser.next())
-      println("Read2 " + read2.get.read.name)
+     // println("Read2 " + read2.get.read.name)
     }
     else
       read2 = None
