@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="fooJS [file:/Users/aaronmck/Desktop/code/SingleCellLineage/UMIMerge/]" external.linked.project.path="$MODULE_DIR$/../../js" external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/../../js/target/scala-2.12/classes" />
+    <output-test url="file://$MODULE_DIR$/../../js/target/scala-2.12/test-classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../js">
+      <excludeFolder url="file://$MODULE_DIR$/../../js/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="UMIMerge-sources" exported="" />
+    <orderEntry type="library" name="sbt: org.scala-js:scalajs-library_2.12:1.1.1:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scala-js:scalajs-test-bridge_2.12:1.1.1:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: org.scala-js:scalajs-test-interface_2.12:1.1.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.12.4:jar" level="project" />
+  </component>
+</module>

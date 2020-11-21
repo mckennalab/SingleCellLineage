@@ -4,11 +4,13 @@ import main.scala.dp.NeedlemanWunsch
 
 import collection.mutable.Stack
 import org.scalatest._
+import matchers.should._
+import org.scalatest.flatspec._
 
 /**
   * Created by aaronmck on 7/23/17.
   */
-class NeedlemanWunschTest extends FlatSpec with Matchers {
+class NeedlemanWunschTest extends AnyFlatSpec with Matchers {
 
   "Needleman Wunsch" should "correcly align two sequences" in {
     val seqA = "AAA"

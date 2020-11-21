@@ -2,8 +2,10 @@ package test.scala.dp
 
 import main.scala.dp.{ConvexDP, NeedlemanWunschAffine}
 import org.scalatest._
+import matchers.should._
+import org.scalatest.flatspec._
 
-class ConvexDPTest extends FlatSpec with Matchers {
+class ConvexDPTest extends AnyFlatSpec with Matchers {
 
   "ConvexDPTest" should "correctly align two sequences" in {
     val seqA = "AAA"

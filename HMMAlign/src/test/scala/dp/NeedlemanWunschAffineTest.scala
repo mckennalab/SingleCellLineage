@@ -3,10 +3,12 @@ package test.scala.dp
 import main.scala.dp.{NeedlemanWunsch, NeedlemanWunschAffine}
 import collection.mutable.Stack
 import org.scalatest._
+import matchers.should._
+import org.scalatest.flatspec._
 /**
   * Created by aaronmck on 7/23/17.
   */
-class NeedlemanWunschAffineTest extends FlatSpec with Matchers {
+class NeedlemanWunschAffineTest extends AnyFlatSpec with Matchers {
   /*
   "Needleman Wunsch Affine" should "correcly align two sequences" in {
     val seqA = "AAA"

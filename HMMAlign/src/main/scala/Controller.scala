@@ -1,6 +1,5 @@
 package main.scala
 
-import scala.collection.JavaConversions._
 import scala.io._
 import java.io._
 
@@ -9,9 +8,18 @@ import scala.sys.process._
 import java.util.zip._
 
 import main.scala.dp.ConvexDP
+import main.scala.actors._
 import main.scala.fasta.Fasta
-
+import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props }
+import akka.routing.SmallestMailboxPool
+import akka.routing.SmallestMailboxPool
 import scala.util.Random
+import akka.NotUsed
+import akka.event.Logging
+import akka.actor._
+import akka.routing.Broadcast
+
+import akka.event.Logging
 
 /**
   * created by aaronmck on 2/13/14
@@ -54,13 +62,14 @@ object Controller extends App {
     head("Alignment", "1.1")
 
     // *********************************** Inputs *******************************************************
-    opt[File]("inputReads") required() valueName ("<file>") action { (x, c) => c.copy(input = x) } text ("the input file to align")
-    opt[File]("reference") required() valueName ("<file>") action { (x, c) => c.copy(fasta = x) } text ("the fasta reference")
-    opt[File]("outputReads") required() valueName ("<file>") action { (x, c) => c.copy(output = x) } text ("the the output alignment, in FASTA format")
+    opt[File]("inputReads").required() valueName ("<file>") action { (x, c) => c.copy(input = x) } text ("the input file to align")
+    opt[File]("reference").required() valueName ("<file>") action { (x, c) => c.copy(fasta = x) } text ("the fasta reference")
+    opt[File]("outputReads").required() valueName ("<file>") action { (x, c) => c.copy(output = x) } text ("the the output alignment, in FASTA format")
     opt[Double]("matchSchore") valueName ("<Double>") action { (x, c) => c.copy(matchScore = x) } text ("how much a match is worth (default 3)")
     opt[Double]("mismatchCost") valueName ("<Double>") action { (x, c) => c.copy(mismatchScore = x) } text ("how much a mimatch costs (default 4, this is a cost, so inverted)")
     opt[Double]("gapOpenCost") valueName ("<Double>") action { (x, c) => c.copy(gapOpenCost = x) } text ("how much a gap open costs (default 10, this is a cost, so inverted)")
     opt[Double]("gapExtensionCost") valueName ("<Double>") action { (x, c) => c.copy(gapExtensionCost = x) } text ("how much a gap extension costs (default 1, this is a cost, so inverted)")
+    opt[Int]("threads") valueName ("<Int>") action { (x, c) => c.copy(threads = x) } text ("how many threads to run with")
 
     // some general command-line setup stuff
     note("align a set of reads to a reference sequence\n")
@@ -70,34 +79,14 @@ object Controller extends App {
 
   // *********************************** Run *******************************************************
   parser.parse(args, AlignmentConfig()) map { config => {
+    val system = ActorSystem("Aligner")
+    val overwatch = system.actorOf(Props(classOf[SystemKillingRouterOverwatch], config, system), name="overwatch")
 
 
-    // read in the reference file
-    val ref = new Fasta(config.fasta.getAbsolutePath).readBuffer(0)
-
-    val reads = new Fastq(config.input.getAbsolutePath)
-
-    val output = new PrintWriter(config.output)
-
-    reads.readBuffer.zipWithIndex.foreach { case (read, index) => {
-      val nmw = new ConvexDP(read.sequence, ref.sequence, config.matchScore, -1.0 * config.mismatchScore, config.gapOpenCost, config.gapExtensionCost)
-      val align = nmw.alignment
-
-      output.write(">" + ref.name + "\n" + align.getAlignmentString._2 + "\n")
-      output.write(">" + read.name + "\n" + align.getAlignmentString._1 + "\n")
-
-      if ((index + 1) % 20 == 0) println("count " + (index + 1))
-    }
-    }
-
-    output.close()
-
-  }
-
-  } getOrElse {
+  }} getOrElse {
     println("Unable to parse the command line arguments you passed in, please check that your parameters are correct")
   }
-
+  val str = ""
 }
 
 case class AlignmentConfig(input: File = new File(Controller.NOTAREALFILENAME),
@@ -106,4 +95,47 @@ case class AlignmentConfig(input: File = new File(Controller.NOTAREALFILENAME),
                            matchScore: Double = 3.0,
                            mismatchScore: Double = -4.0,
                            gapOpenCost: Double = 10.0,
-                           gapExtensionCost: Double = 1.0)
+                           gapExtensionCost: Double = 1.0,
+                           threads: Int = 4)
+
+
+// https://github.com/bwmcadams/akka-router-shutdown-demo/blob/master/src/main/scala/RoutedPoisonerWithShutdown.scala
+class SystemKillingRouterOverwatch(config: AlignmentConfig, system: ActorSystem) extends Actor {
+  val log = Logging(context.system, this)
+
+  val router = system.actorOf(SmallestMailboxPool(config.threads).props(Props[ConvexAlignerActor]))
+  val writer = system.actorOf(Props(classOf[OutputWriter], config.output.getAbsolutePath()), "writer")
+
+  // Setup our other two actors, so we supervise
+  context.watch(router)
+  context.watch(writer)
+
+  // read in the reference file
+  val ref = new Fasta(config.fasta.getAbsolutePath).readBuffer(0)
+
+  val reads = new Fastq(config.input.getAbsolutePath)
+
+  val output = new PrintWriter(config.output)
+
+  var memoryHits = 0
+
+  reads.readBuffer.zipWithIndex.foreach { case (read, index) => {
+    router ! AlignTo(config, read.name, ref.name, read.sequence, ref.sequence, writer)
+  }}
+
+  router ! Broadcast(PoisonPill)
+
+  def receive = {
+    case Terminated(corpse) =>
+      if (corpse == router) {
+        log.warning("Received termination notification for '" + corpse + "'," +
+          "is in our watch list. Terminating ActorSystem.")
+        writer ! Close()
+        writer ! PoisonPill
+        system.terminate
+      } else {
+        log.info("Received termination notification for '" + corpse + "'," +
+          "which is not in our deathwatch list.".format(corpse))
+      }
+  }
+}

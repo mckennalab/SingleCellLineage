@@ -51,8 +51,8 @@ object TracebackMatrix {
     var indexB = sequenceB.size
 
     // make storage for the aligned string results
-    var alignedStringA = mutable.ArrayBuilder.make[Char]()
-    var alignedStringB = mutable.ArrayBuilder.make[Char]()
+    var alignedStringA = new mutable.ArrayBuffer[Char]()
+    var alignedStringB = new mutable.ArrayBuffer[Char]()
 
     // find the best final score
     var currentBestMatrix = Matched().str
