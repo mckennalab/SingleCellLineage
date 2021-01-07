@@ -196,7 +196,7 @@ class UMIProcessing extends Runnable with LazyLogging {
 
       println("\n\nTotal UMIs to process: " + umiReads.size)
       umiReads.foreach { case (umi, reads) => {
-        val greaterThanMinimumReads = reads.size >= minimumUMIReads
+        val greaterThanMinimumReads = reads.totalPassedReads >= minimumUMIReads
 
         if (greaterThanMinimumReads) {
           val (readList,counts) = reads.result()
