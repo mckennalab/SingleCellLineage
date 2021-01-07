@@ -1,13 +1,11 @@
 package collapse
 
-import java.io._
-
-import aligner.BasicAligner
-import reads.{ForwardReadOrientation, RankedReadContainer, ReverseReadOrientation, SequencingRead, SortedRead, SortedReadPair}
 import java.io.{File, PrintWriter}
 
+import aligner.BasicAligner
 import com.typesafe.scalalogging.LazyLogging
 import picocli.CommandLine.{Command, Option}
+import reads._
 import utils.Utils
 
 import scala.collection.mutable
@@ -66,16 +64,13 @@ class UMIProcessing extends Runnable with LazyLogging {
   private var primersToCheck: String = "BOTH"
 
   @Option(names = Array("-primerMismatches", "--primerMismatches"), required = false, paramLabel = "INT", description = Array("Number of primer mismatches allowed"))
-  private var primerMismatches: Int = 7
-
-  @Option(names = Array("-umiThrehold", "--thresh"), required = false, paramLabel = "INT", description = Array("how many reads are required to save a UMI"))
-  private var umiThrehold: Int = 7
+  private var primerMismatches: Int = 3
 
   @Option(names = Array("-umiStart", "--umiStart"), required = false, paramLabel = "INT", description = Array("Where does the UMI start in the read, starting at 0. Negative values for the reverse read, starting at -1 "))
-  private var umiStart: Int = 7
+  private var umiStart: Int = 0
 
   @Option(names = Array("-umiLength", "--umiLength"), required = false, paramLabel = "INT", description = Array("how long is the UMI"))
-  private var umiLength: Int = 7
+  private var umiLength: Int = 10
 
   @Option(names = Array("-minimumUMIReads", "--minimumUMIReads"), required = false, paramLabel = "INT", description = Array("the minimum number of input reads to output a UMI"))
   private var minimumUMIReads: Int = 4
@@ -85,12 +80,6 @@ class UMIProcessing extends Runnable with LazyLogging {
 
   @Option(names = Array("-minimumSurvivingUMIReads", "--minimumSurvivingUMIReads"), required = false, paramLabel = "INT", description = Array("the minimum number of final reads to output a UMI"))
   private var minimumSurvivingUMIReads: Int = 3
-
-  @Option(names = Array("-minBaseCallRate", "--minBaseCallRate"), required = false, paramLabel = "DOUBLE", description = Array("how many bases do we need to call in a read to record it"))
-  private var minBaseCallRate: Double = 0.90
-
-  @Option(names = Array("-baseCallThresh", "--baseCallThresh"), required = false, paramLabel = "DOUBLE", description = Array("what proportion of reads need to have base X to call the consensus"))
-  private var baseCallThresh: Double = 0.90
 
   @Option(names = Array("-downsampleSize", "--downsampleSize"), required = false, paramLabel = "INT", description = Array("How many reads are considered per UMI"))
   private var downsampleSize: Int = 40
@@ -203,7 +192,7 @@ class UMIProcessing extends Runnable with LazyLogging {
       var index = 1
       val outputUMIData: scala.Option[PrintWriter] = Some(new PrintWriter(statsFile.getAbsolutePath))
 
-      outputUMIData.get.write("umi\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\tsequence\n")
+      outputUMIData.get.write("umi\treadSize\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\tread1Survived\tread2Survived\tsequence\n")
 
 
       println("\n\nTotal UMIs to process: " + umiReads.size)
@@ -226,7 +215,7 @@ class UMIProcessing extends Runnable with LazyLogging {
             index,
             BasicAligner)
 
-          outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
+          outputUMIData.get.write(umi + "\t" + reads.size + "\t" + reads.totalReads + "\t" +
             reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
             reads.noPrimer2 + "\t" + res.read1SurvivingCount + "\t" + res.read2SurvivingCount + "\t" + res.read1Consensus + ";" + res.read2Consensus + "\n")
 
@@ -282,7 +271,7 @@ class UMIProcessing extends Runnable with LazyLogging {
       forwardReads foreach { fGroup => {
 
         // for the forward read the UMI start position is used literally,
-        // for the reverse read (when start is negitive) we go from the end of the read backwards that much. To
+        // for the reverse read (when start is negative) we go from the end of the read backwards that much. To
         // allow UMIs to start at the zero'th base on the reverse, we say the first base is one, second is 2, etc.
         var umi: scala.Option[String] = None
 
@@ -327,7 +316,7 @@ class UMIProcessing extends Runnable with LazyLogging {
       val outputUMIData: scala.Option[PrintWriter] = Some(new PrintWriter(statsFile.getAbsolutePath))
 
       if (outputUMIData.isDefined)
-        outputUMIData.get.write("umi\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\n")
+        outputUMIData.get.write("umi\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\treadsSurviving\tseq\n")
 
 
       println("\n\nTotal UMIs to process: " + umiReads.size)
@@ -350,12 +339,12 @@ class UMIProcessing extends Runnable with LazyLogging {
 
           outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
             reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-            reads.noPrimer2 + res.readSurvivingCount + "\tNA\t" + "\t" + res + "\n")
+            reads.noPrimer2 + "\t" + res.readSurvivingCount + "\t" + res + "\n")
 
         } else {
           outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
             reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-            "NA\tNA\t" + reads.noPrimer2 + "\tNOTENOUGHREADS\n")
+            reads.noPrimer2 + "\tNA\tNA\n")
         }
 
         if (index % 1000 == 0) {
