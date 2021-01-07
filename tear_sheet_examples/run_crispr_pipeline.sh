@@ -1,5 +1,3 @@
-/etc/init.d/lighttpd start
-
 java -Xmx4g -jar /app/queue.jar \
  -S /app/sc_GESTALT/pipelines/CRISPR_analysis_PE_V2.scala  \
  -i /app/sc_GESTALT/tear_sheet_examples/basic_example.txt \
@@ -10,9 +8,5 @@ java -Xmx4g -jar /app/queue.jar \
  -resMemReqParam mfree \
  -s /app/sc_GESTALT/scripts/ \
  -b /app/bin/ \
- --noTree \
- --scala "/usr/bin/scala -nocompdaemon"
-
-cd /var/www/html/trees/ && scala make_json_file.scala
- 
+ --scala "/usr/bin/scala -nocompdaemon" 
  
