@@ -207,7 +207,7 @@ class DeepSeq extends Runnable with LazyLogging {
     //println("Processing " + readPairs.pair1.aligned)
 
     val (containsFwdPrimer, containsRevPrimer) = primersToCheck match {
-      case "BOTH" => Utils.containsBothPrimerByAlignment(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),primerMismatches)
+      case "BOTH" => Utils.containsBothPrimerByAlignmentReoriented(readPairs.pair1.read.bases,readPairs.pair2.read.bases, primers(0), primers(1),primerMismatches)
       case "FORWARD" => (Utils.containsFWDPrimerByAlignment(readPairs.pair1.read.bases,primers(0),primerMismatches),true)
       case "REVERSE" => (true,Utils.containsREVCompPrimerByAlignment(readPairs.pair2.read.bases,primers(1),primerMismatches))
       case "NONE" => (true,true)
