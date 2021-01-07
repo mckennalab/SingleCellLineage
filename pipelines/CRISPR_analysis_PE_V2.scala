@@ -869,7 +869,7 @@ class DNAQC extends QScript {
 
     if (inMergedReads2.isDefined)
       cmdString += " -inputReads2=" + inMergedReads2.get + " -outputReads2=" + outputFASTA2.get
-    cmdString += " -umiStart=" + umiStart + " -umiThrehold=" + minimumUMIReads
+    cmdString += " -umiStart=" + umiStart + " --minimumUMIReads=" + minimumUMIReads
     cmdString += " -umiStatsFile=" + outUMIs + " -umiLength=" + umiLength
     cmdString += " --primers " + primers + " --primersToCheck " + primersCh + " --primerMismatches " + maxAdaptMismatch
 
