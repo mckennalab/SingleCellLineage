@@ -2,7 +2,7 @@
 
 # Single-cell GESTALT pipeline
 
-This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting consensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*. I will try to keep individual releases as stable, tested implementations. The current V1.0 release should be used for anyone but those needing the absolute latest code.
+This pipeline processes 2nd-generation sequencing of GESTALT lineage tracing barcodes. You can either setup the tool manually (following the directions in the Docker file), or use the Docker installation option. The pipeline merges reads by UMI, aligned the resulting consensus to a reference file, and aggregates results into plots describing the overall editing, as well as trees describing the relative lineage relationships within your data. *This code is a moving target, and may contain buggy implementations or changing code*.
 
 
 - [Single-cell GESTALT pipeline](#single-cell-gestalt-pipeline)
@@ -124,7 +124,7 @@ Each sample processed should have a ```read_editing_mutlihistogram.html``` html 
 A question that often comes up is how do I setup a 10X sequencing barcode run? I've generated a bit of fake lineage data from our fish barcode to demonstrate the process. First run the docker container (add optional disk mounting commands to your run as seen above, and *be sure to update the container, as there's been changes*):
 
 ```
- docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
+ docker run -it -p 8080:80 aaronmck/single_cell_gestalt:latest /bin/bash
 ```
 
 Now we'll make a directory for our run data:
