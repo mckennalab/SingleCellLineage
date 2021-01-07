@@ -24,12 +24,12 @@ Things you need to have:
 
 Then download the docker container:
 ```
-docker pull aaronmck/single_cell_gestalt:stable
+docker pull aaronmck/single_cell_gestalt:latest
 ```
 
 Run and connect to the container, remapping port 80 of the container to port 8080 on your local machine:
 ```
- docker run -it -p 8080:80 aaronmck/single_cell_gestalt:stable /bin/bash
+ docker run -it -p 8080:80 aaronmck/single_cell_gestalt:latest /bin/bash
 ```
 
 ## Setup an individual run
