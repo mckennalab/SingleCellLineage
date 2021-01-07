@@ -192,8 +192,8 @@ class UMIProcessing extends Runnable with LazyLogging {
       var index = 1
       val outputUMIData: scala.Option[PrintWriter] = Some(new PrintWriter(statsFile.getAbsolutePath))
 
-      outputUMIData.get.write("umi\tcontainerSize\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\tread1Survived\tread2Survived\tsequence\n")
-      
+      outputUMIData.get.write("umi\ttotalCount\tpassCount\tmissingPrimer1\tmissingPrimer2\tread1Survived\tread2Survived\tsequence\n")
+
       println("\n\nTotal UMIs to process: " + umiReads.size)
       umiReads.foreach { case (umi, reads) => {
         val greaterThanMinimumReads = reads.size >= minimumUMIReads
@@ -214,14 +214,14 @@ class UMIProcessing extends Runnable with LazyLogging {
             index,
             BasicAligner)
 
-          outputUMIData.get.write(umi + "\t" + reads.size + "\t" + reads.totalReads + "\t" +
+          outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
             reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
             reads.noPrimer2 + "\t" + res.read1SurvivingCount + "\t" + res.read2SurvivingCount + "\t" + res.read1Consensus + ";" + res.read2Consensus + "\n")
 
         } else {
-          outputUMIData.get.write(umi + "\t" + reads.size + "\t" + reads.totalReads + "\t" +
+          outputUMIData.get.write(umi + "\t" + reads.totalReads + "\t" +
             reads.totalPassedReads + "\t" + reads.noPrimer1 + "\t" +
-            "NA\tNA\t" + reads.noPrimer2 + "\tNOTENOUGHREADS\n")
+            reads.noPrimer2 + "\tNA\tNA\tNOTENOUGHREADS\n")
         }
 
 
