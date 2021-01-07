@@ -121,7 +121,7 @@ object Utils {
     * @return a tuple for each read, where true means the # of mismatches <= allowedMismatches
     */
   def containsBothPrimerByAlignment(read1: String, read2: String, primer1: String, primer2: String, allowedMismatches: Int): Tuple2[Boolean,Boolean] = {
-    (containsFWDPrimerByAlignment(read1,primer1,allowedMismatches), readEndsWithPrimerExistingDirection(read2,primer2,allowedMismatches))
+    (containsFWDPrimerByAlignment(read1,primer1,allowedMismatches), containsFWDPrimerByAlignment(read2,Utils.reverseComplement(primer2),allowedMismatches))
   }
 
   /**

@@ -1,10 +1,5 @@
-import aligner.{Aligner, Waterman}
-import reads.SequencingRead
-import utils.Utils
-import utils._
-import org.scalatest.junit.JUnitSuite
-
 import org.scalatest._
+import utils.Utils
 /**
   * Created by aaronmck on 12/6/16.
   */
@@ -20,7 +15,16 @@ class UtilsTest extends FlatSpec with Matchers {
     val read1 =     "ATCGGCGTATTTTTTATAGGGGGGTA"
     val read2 =     "TTTTATAGGGGGGTAATATA"
     val primer1 =  "ATCGGCG"
-    val primer2 =  "AATATA"
+    val primer2 =  "ATAAAA"
+
+    Utils.containsBothPrimerByAlignment(read1,read2,primer1,primer2,0) should be ((true,true))
+  }
+
+  "containsBothPrimerByAlignment" should "find primers on both ends of each read with read data" in {
+    val read1 =     "ACTCAGATCTCGAGCTCAAGCTTCCCCTCGCTGGAGCTCAGCTCTCCTCAAATGGCTCTGCAGCGAGCACCACTTGGCTCCAGCCGGGTCCGACGCTATCGCCTGAACTCTGTCTTGAACCACTGTGCTCAGGGGAGAGC"
+    val read2 =     "ATCGTACCATGGCTGCCATTTGCGCCGCCCGGCAACTCATACTTACCTGGCAGGGGAGATACCATGATCAAGAAGGTGGTTCACCCAGGGCGAGGCTTGGCCATTGCACTCCGGCCACGCTGACCCCTGCGAATTCCCCAAATGTGGGA"
+    val primer1 =  "ACTCAGATCTCGAGCTCAAG"
+    val primer2 =  "AATGGCAGCCATGGTACGAT"
 
     Utils.containsBothPrimerByAlignment(read1,read2,primer1,primer2,0) should be ((true,true))
   }
