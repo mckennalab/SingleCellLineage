@@ -233,6 +233,10 @@ class DNAQC extends QScript {
   @Argument(doc = "Should we cluster the UMIs based on edit distance?", fullName = "clusterUMIs", shortName = "clusterUMIs", required = false)
   var clusterUMIs = false
 
+  @Argument(doc = "The maximum overlap allowed in Flash", fullName = "flashMaxOverlap", shortName = "flashMaxOverlap", required = false)
+  var flashMaxOverlap = 65
+
+
   /** **************************************************************************
    * Global Variables
    * ************************************************************************** */
@@ -547,17 +551,6 @@ class DNAQC extends QScript {
                           val barcode1: String,
                           val barcode2: String)
 
-  // a read group, as defined in a sam/bam file
-  case class ReadGroup(val id: String, // readgroup id
-                       val lb: String, // the library name
-                       val pl: String, // platform name: almost always ILLUMINA
-                       val pu: String, // a platform unit, should be unique to this exact sample+run combination
-                       val sm: String, // the sample name
-                       val cn: String, // sequencing center
-                       val ds: String)
-
-  // a description of the sequencing data
-
   /**
    * reads in the sample tear sheet, a tab separated file with the columns listed at the top of the file
    */
@@ -592,9 +585,6 @@ class DNAQC extends QScript {
       }
     }).toArray
   }
-
-  /** Turn a source entry into a read group.  The mapping is rather simple */
-  def sourceToReadGroup(source: SourceEntry): ReadGroup = ReadGroup(id = source.sample, lb = source.sample, pl = "ILLUMINA", pu = source.sample, sm = source.sample, cn = "UW", ds = source.sample)
 
   /** **************************************************************************
    * traits that get tacked onto runnable objects
@@ -982,7 +972,7 @@ class DNAQC extends QScript {
     this.residentRequest = 4
     this.residentLimit = 4
 
-    var cmd = flashPath + " --min-overlap 30 --max-mismatch-density 0.02 --output-directory=" + outputDr + " " + fqs(0) + " " + fqs(1)
+    var cmd = flashPath + " --min-overlap 30 --max-overlap " + flashMaxOverlap + " --max-mismatch-density 0.02 --output-directory=" + outputDr + " " + fqs(0) + " " + fqs(1)
 
     def commandLine = cmd
 
