@@ -8,8 +8,9 @@ resolvers += "erichseifert.de" at "https://mvn.erichseifert.de/maven2"
 
 scalaVersion := "2.13.1"
 
-val AkkaVersion = "2.6.10"
+val AkkaVersion = "2.6.13"
 libraryDependencies += "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion
+
 
 libraryDependencies ++= {
   object v {

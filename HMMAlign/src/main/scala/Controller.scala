@@ -62,7 +62,7 @@ object Controller extends App {
     // *********************************** Inputs *******************************************************
     opt[File]("inputReads").required() valueName ("<file>") action { (x, c) => c.copy(input = x) } text ("the input file to align")
     opt[File]("reference").required() valueName ("<file>") action { (x, c) => c.copy(fasta = x) } text ("the fasta reference")
-    opt[Boolean]("paired") valueName ("<boolean>") action { (x, c) => c.copy(pairedReads = true) } text ("the fasta reference")
+    opt[Boolean]("paired") valueName ("<boolean>") action { (x, c) => c.copy(pairedReads = true) } text ("run with paired reads")
     opt[File]("outputReads").required() valueName ("<file>") action { (x, c) => c.copy(output = x) } text ("the the output alignment, in FASTA format")
     opt[Double]("matchSchore") valueName ("<Double>") action { (x, c) => c.copy(matchScore = x) } text ("how much a match is worth (default 3)")
     opt[Double]("mismatchCost") valueName ("<Double>") action { (x, c) => c.copy(mismatchScore = x) } text ("how much a mimatch costs (default 4, this is a cost, so inverted)")
