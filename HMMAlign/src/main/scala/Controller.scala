@@ -8,17 +8,15 @@ import scala.sys.process._
 import java.util.zip._
 
 import main.scala.dp.ConvexDP
-import main.scala.actors._
 import main.scala.fasta.Fasta
 import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props }
-import akka.routing.SmallestMailboxPool
 import akka.routing.SmallestMailboxPool
 import scala.util.Random
 import akka.NotUsed
 import akka.event.Logging
 import akka.actor._
 import akka.routing.Broadcast
-
+import main.scala.actors._
 import akka.event.Logging
 
 /**
@@ -64,6 +62,7 @@ object Controller extends App {
     // *********************************** Inputs *******************************************************
     opt[File]("inputReads").required() valueName ("<file>") action { (x, c) => c.copy(input = x) } text ("the input file to align")
     opt[File]("reference").required() valueName ("<file>") action { (x, c) => c.copy(fasta = x) } text ("the fasta reference")
+    opt[Boolean]("paired") valueName ("<boolean>") action { (x, c) => c.copy(pairedReads = true) } text ("the fasta reference")
     opt[File]("outputReads").required() valueName ("<file>") action { (x, c) => c.copy(output = x) } text ("the the output alignment, in FASTA format")
     opt[Double]("matchSchore") valueName ("<Double>") action { (x, c) => c.copy(matchScore = x) } text ("how much a match is worth (default 3)")
     opt[Double]("mismatchCost") valueName ("<Double>") action { (x, c) => c.copy(mismatchScore = x) } text ("how much a mimatch costs (default 4, this is a cost, so inverted)")
@@ -88,13 +87,14 @@ object Controller extends App {
   }
   val str = ""
 }
-
+// 3,-2,60.0,1.0
 case class AlignmentConfig(input: File = new File(Controller.NOTAREALFILENAME),
                            fasta: File = new File(Controller.NOTAREALFILENAME),
                            output: File = new File(Controller.NOTAREALFILENAME),
+                           pairedReads: Boolean = false,
                            matchScore: Double = 3.0,
-                           mismatchScore: Double = -4.0,
-                           gapOpenCost: Double = 10.0,
+                           mismatchScore: Double = -2.0,
+                           gapOpenCost: Double = 60.0,
                            gapExtensionCost: Double = 1.0,
                            threads: Int = 4)
 
@@ -106,7 +106,7 @@ class SystemKillingRouterOverwatch(config: AlignmentConfig, system: ActorSystem)
   val router = system.actorOf(SmallestMailboxPool(config.threads).props(Props[ConvexAlignerActor]))
   val writer = system.actorOf(Props(classOf[OutputWriter], config.output.getAbsolutePath()), "writer")
 
-  // Setup our other two actors, so we supervise
+  // Setup our other two actors, which we supervise
   context.watch(router)
   context.watch(writer)
 
@@ -119,9 +119,17 @@ class SystemKillingRouterOverwatch(config: AlignmentConfig, system: ActorSystem)
 
   var memoryHits = 0
 
-  reads.readBuffer.zipWithIndex.foreach { case (read, index) => {
-    router ! AlignTo(config, read.name, ref.name, read.sequence, ref.sequence, writer)
-  }}
+  if (config.pairedReads) {
+    reads.readBuffer.grouped(2).zipWithIndex.foreach { case (reads, index) => {
+      val rd1 = AlignTo(config, reads(0).name, ref.name, reads(0).sequence, ref.sequence, writer)
+      val rd2 = AlignTo(config, reads(1).name, ref.name, reads(1).sequence, ref.sequence, writer)
+      router ! AlignedToPair(rd1,rd2, writer)
+    }}
+  } else {
+    reads.readBuffer.zipWithIndex.foreach { case (read, index) => {
+      router ! AlignTo(config, read.name, ref.name, read.sequence, ref.sequence, writer)
+    }}
+  }
 
   router ! Broadcast(PoisonPill)
 
