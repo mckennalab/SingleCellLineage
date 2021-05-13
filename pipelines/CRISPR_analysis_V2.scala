@@ -823,9 +823,9 @@ class DNAQC extends QScript {
 
     var cmd = "scala -J-Xmx7g " + umiScript + " " + inReads + " " + outFASTA + " " + outStat + " " + umiCut + " " + primers + " " + ref + " " + sample
 
-    this.memoryLimit = 8
-    this.residentRequest = 8
-    this.residentLimit = 8
+    this.memoryLimit = 51
+    this.residentRequest = 50
+    this.residentLimit = 50
 
     def commandLine = cmd
     this.isIntermediate = false
