@@ -25,7 +25,7 @@ RUN apt-get install -y openssh-server
 # ################################################
 
 RUN git clone https://github.com/aaronmck/SingleCellLineage.git /app/sc_GESTALT
-RUN cd /app/sc_GESTALT && git checkout -b macsGESTALT b5cf8ed628c52cab6be98777dfd118e1fd183338
+RUN cd /app/sc_GESTALT && git checkout -b macsGESTALT 776243b6c4a34aa4f4c25d05afd2ac46faa35270
  
 RUN mkdir /app/data
 RUN mkdir /app/bin
