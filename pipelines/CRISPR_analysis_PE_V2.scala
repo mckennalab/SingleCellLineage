@@ -900,7 +900,7 @@ class DNAQC extends QScript {
     @Argument(doc = "the primers file; one line per primer that we expect to have on each end of the resulting merged read") var primers = primersFile
     @Argument(doc = "the sample name") var sample = sampleName
 
-    val memLimit = 5
+    val memLimit = 51
 
     var cmdString = "java -Xmx" + (memLimit - 1) + "g -jar " + binaryLoc + "/" + umiName
     cmdString += " --inputFileReads1 " + inReads1 + " --outputFastq1 " + outFASTA1
